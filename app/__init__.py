@@ -1,0 +1,1 @@
+"""Git Analytics application package."""

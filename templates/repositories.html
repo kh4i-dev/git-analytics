@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Repositories - Git Analytics</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Arial, sans-serif;
+        background: #f6f8fa;
+        color: #24292f;
+        padding: 32px;
+      }
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .header h1 { margin: 0; font-size: 24px; }
+      .user-info { color: #57606a; font-size: 14px; }
+      .flash {
+        padding: 12px 16px;
+        border-radius: 6px;
+        margin-bottom: 16px;
+        font-size: 14px;
+      }
+      .flash-success { background: #dafbe1; border: 1px solid #aceebb; color: #1a7f37; }
+      .flash-error { background: #ffebe9; border: 1px solid #ffc1c0; color: #cf222e; }
+      .actions { margin-bottom: 16px; }
+      button, .btn {
+        padding: 8px 14px;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+      }
+      .btn-primary {
+        background: #2da44e;
+        color: #fff;
+        border-color: #2da44e;
+        font-weight: 600;
+      }
+      .btn-primary:hover { background: #218838; }
+      .btn-danger {
+        background: #cf222e;
+        color: #fff;
+        border-color: #cf222e;
+        font-weight: 600;
+      }
+      .btn-outline {
+        background: #fff;
+        color: #24292f;
+      }
+      .btn-outline:hover { background: #f3f4f6; }
+      .btn-sm { padding: 4px 10px; font-size: 12px; }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border: 1px solid #d0d7de;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      th, td {
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid #d0d7de;
+        font-size: 14px;
+      }
+      th { background: #f6f8fa; font-weight: 600; }
+      tr:last-child td { border-bottom: none; }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .badge-success { background: #dafbe1; color: #1a7f37; }
+      .badge-failed { background: #ffebe9; color: #cf222e; }
+      .badge-pending { background: #fff8c5; color: #9a6700; }
+      .badge-syncing { background: #ddf4ff; color: #0969da; }
+      .empty { text-align: center; padding: 40px; color: #57606a; }
+      .repo-name { font-weight: 600; }
+      .private-badge {
+        display: inline-block;
+        padding: 1px 6px;
+        border: 1px solid #d0d7de;
+        border-radius: 4px;
+        font-size: 11px;
+        color: #57606a;
+        margin-left: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <h1>Repositories</h1>
+          <span class="user-info">Logged in as <strong>{{ github_username }}</strong></span>
+        </div>
+        <form method="post" action="/auth/logout">
+          <button type="submit" class="btn-danger">Logout</button>
+        </form>
+      </div>
+
+      {% set msg = request.query_params.get("imported") %}
+      {% if msg %}
+        <div class="flash flash-success">Imported {{ msg }} repository(ies) successfully.</div>
+      {% endif %}
+
+      {% set msg = request.query_params.get("synced") %}
+      {% if msg %}
+        <div class="flash flash-success">
+          Sync completed (mode: {{ request.query_params.get("mode") }}, status: {{ request.query_params.get("status") }}).
+        </div>
+      {% endif %}
+
+      {% set err = request.query_params.get("error") %}
+      {% if err %}
+        <div class="flash flash-error">
+          {% if err == "token_decrypt_failed" %}
+            Failed to decrypt GitHub token. Please re-login.
+          {% elif err == "import_failed" %}
+            Import failed: {{ request.query_params.get("message", "Unknown error") }}
+          {% elif err == "sync_failed" %}
+            Sync failed: {{ request.query_params.get("message", "Unknown error") }}
+          {% else %}
+            An error occurred: {{ err }}
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <div class="actions">
+        <form method="post" action="/repositories/import" style="display:inline">
+          <button type="submit" class="btn-primary">Import from GitHub</button>
+        </form>
+      </div>
+
+      {% if repositories %}
+        <table>
+          <thead>
+            <tr>
+              <th>Repository</th>
+              <th>Default Branch</th>
+              <th>Sync Status</th>
+              <th>Last Synced</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for repo in repositories %}
+            <tr>
+              <td>
+                <span class="repo-name">{{ repo.full_name }}</span>
+                {% if repo.is_private %}<span class="private-badge">Private</span>{% endif %}
+              </td>
+              <td>{{ repo.default_branch or "-" }}</td>
+              <td>
+                {% set s = repo.last_sync_status %}
+                {% if s == "success" %}
+                  <span class="badge badge-success">success</span>
+                {% elif s == "failed" %}
+                  <span class="badge badge-failed">failed</span>
+                {% elif s == "syncing" %}
+                  <span class="badge badge-syncing">syncing</span>
+                {% else %}
+                  <span class="badge badge-pending">pending</span>
+                {% endif %}
+                {% if repo.last_sync_error %}
+                  <br><small style="color:#cf222e">{{ repo.last_sync_error[:80] }}</small>
+                {% endif %}
+              </td>
+              <td>
+                {% if repo.last_synced_at %}
+                  {{ repo.last_synced_at.strftime("%Y-%m-%d %H:%M") }}
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+              <td>
+                <form method="post" action="/repositories/{{ repo.id }}/sync" style="display:inline">
+                  <button type="submit" class="btn btn-outline btn-sm">Sync</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty">
+          <p>No repositories imported yet.</p>
+          <p>Click <strong>Import from GitHub</strong> to fetch your repositories.</p>
+        </div>
+      {% endif %}
+    </div>
+  </body>
+</html>
