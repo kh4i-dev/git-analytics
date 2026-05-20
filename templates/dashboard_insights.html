@@ -1,0 +1,672 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Phân Tích Insights — {{ repo.full_name }} — Git Analytics{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* Extra styling for insights elements */
+  .insights-shell {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  
+  .insight-hero {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+  }
+  
+  @media (max-width: 768px) {
+    .insight-hero {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Activity score gauge card */
+  .score-card {
+    background: linear-gradient(135deg, rgba(35, 134, 54, 0.1) 0%, rgba(22, 27, 34, 0.9) 100%);
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .score-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -30%;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(57, 211, 83, 0.15) 0%, rgba(0,0,0,0) 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .score-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .score-level-badge {
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .score-level-badge.High { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+  .score-level-badge.Medium { background: var(--warn-bg); color: var(--warn-text); border: 1px solid var(--warn-border); }
+  .score-level-badge.Low { background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); }
+
+  .score-display {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin: 12px 0;
+  }
+  .score-number {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--text);
+  }
+  .score-total {
+    font-size: 16px;
+    color: var(--text-muted);
+  }
+  .score-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  /* Heatmap custom CSS grid */
+  .heatmap-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 11px);
+    grid-auto-flow: column;
+    gap: 3px;
+  }
+  .heatmap-cell {
+    width: 11px;
+    height: 11px;
+    border-radius: 2px;
+    transition: transform 0.1s ease;
+    cursor: pointer;
+  }
+  .heatmap-cell:hover {
+    transform: scale(1.3);
+    outline: 1px solid var(--text);
+    z-index: 10;
+  }
+
+  /* Sub-intelligence grids */
+  .intel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .intel-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .intel-card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .intel-card-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin: 4px 0;
+  }
+  .intel-card-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Progress ring */
+  .progress-bar-container {
+    width: 100%;
+    height: 4px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--text-link);
+    border-radius: 2px;
+  }
+
+  /* Skeletons */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--radius);
+  }
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .dashboard-title-group h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .dashboard-title-group p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div class="dashboard-title-group">
+    <h1>Insights</h1>
+    {% include 'components/repository_context.html' %}
+    <p>Số liệu nâng cao và phân tích chuyên sâu cho {{ repo.name }}.</p>
+  </div>
+</div>
+
+<div class="insights-shell" id="insights-container">
+  
+  <!-- Skeletons while loading -->
+  <div id="insights-skeleton">
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px;">
+      <div class="skeleton" style="height: 180px;"></div>
+      <div class="skeleton" style="height: 180px;"></div>
+    </div>
+    <div class="skeleton" style="height: 120px; margin-bottom: 20px;"></div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+      <div class="skeleton" style="height: 200px;"></div>
+      <div class="skeleton" style="height: 200px;"></div>
+      <div class="skeleton" style="height: 200px;"></div>
+    </div>
+  </div>
+
+  <!-- Real Content (hidden initially) -->
+  <div id="insights-content" style="display: none;" class="insights-shell">
+    
+    <!-- Hero Row -->
+    <div class="insight-hero">
+      
+      <!-- Coding Activity Streaks -->
+      <div class="card" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;" class="card-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Hoạt động Code
+        </div>
+        
+        <div style="border-right: 1px solid var(--border); padding-right: 10px;">
+          <div class="card-sub" style="font-size: 11px;">CHUỖI HIỆN TẠI</div>
+          <div class="card-value" id="current-streak">0</div>
+          <div class="card-sub">ngày liên tiếp</div>
+        </div>
+        <div>
+          <div class="card-sub" style="font-size: 11px;">CHUỖI DÀI NHẤT</div>
+          <div class="card-value" id="longest-streak">0</div>
+          <div class="card-sub">kỷ lục mọi thời đại</div>
+        </div>
+        
+        <div style="border-top: 1px solid var(--border); padding-top: 12px;">
+          <div class="card-sub" style="font-size:11px;">NGÀY HOẠT ĐỘNG</div>
+          <div class="card-value" style="font-size:22px" id="active-days">0</div>
+          <div class="card-sub" id="avg-commits-per-day">0.0 commit/ngày</div>
+        </div>
+        <div style="border-top: 1px solid var(--border); padding-top: 12px;">
+          <div class="card-sub" style="font-size:11px;">GIỜ CAO ĐIỂM</div>
+          <div class="card-value" style="font-size:16px; margin-top:6px; font-weight:600;" id="peak-hour-band">-</div>
+          <div class="card-sub" id="busiest-month">Tháng bận rộn nhất: -</div>
+        </div>
+      </div>
+      
+      <!-- Repository Activity Score -->
+      <div class="score-card card">
+        <div>
+          <div class="score-header">
+            <span class="card-title" style="color: rgba(255,255,255,0.7); margin-bottom: 0;">Điểm Hoạt động Hệ thống</span>
+            <span class="score-level-badge" id="score-level">-</span>
+          </div>
+          <div class="score-display">
+            <span class="score-number" id="score-num">0</span>
+            <span class="score-total">/100</span>
+          </div>
+        </div>
+        <div class="score-desc" id="score-details">
+          Không có hoạt động nào được ghi nhận trong 30 ngày qua. Hãy code để tăng điểm số của bạn!
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Heatmap Row -->
+    <div class="chart-card heatmap-card">
+      <div class="chart-title">Bản đồ nhiệt Đóng góp (365 ngày qua)</div>
+      <div class="heatmap-container" style="overflow-x: auto; padding-bottom: 8px;">
+        <div style="display: flex; gap: 8px; align-items: start; min-width: 720px;">
+          <div class="heatmap-weekdays" style="display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; font-size: 9px; color: var(--text-muted); line-height: 11px; padding-top: 1px;">
+            <span></span>
+            <span>T2</span>
+            <span></span>
+            <span>T4</span>
+            <span></span>
+            <span>T6</span>
+            <span></span>
+          </div>
+          <div class="heatmap-grid" id="heatmap-grid">
+            <!-- Cells added dynamically -->
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: var(--text-muted);">
+        <div id="heatmap-cell-hover-details">Rê chuột vào các ô để xem chi tiết hoạt động</div>
+        <div style="display: flex; align-items: center; gap: 4px;">
+          <span>Ít</span>
+          <div style="background:#161b22; width:11px; height:11px; border-radius:2px;"></div>
+          <div style="background:#0e4429; width:11px; height:11px; border-radius:2px;"></div>
+          <div style="background:#006d32; width:11px; height:11px; border-radius:2px;"></div>
+          <div style="background:#26a641; width:11px; height:11px; border-radius:2px;"></div>
+          <div style="background:#39d353; width:11px; height:11px; border-radius:2px;"></div>
+          <span>Nhiều</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-grid">
+      
+      <!-- Commit Keyword Distribution -->
+      <div class="chart-card">
+        <div class="chart-title">Từ khóa Conventional Commit</div>
+        <div class="chart-wrap">
+          <canvas id="keywordChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Commit Timing (Peak Hour) -->
+      <div class="chart-card">
+        <div class="chart-title">Hiệu suất theo Giờ trong Ngày (UTC)</div>
+        <div class="chart-wrap">
+          <canvas id="hourChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Commits by Day of Week -->
+      <div class="chart-card">
+        <div class="chart-title">Hoạt động theo Thứ trong Tuần</div>
+        <div class="chart-wrap">
+          <canvas id="weekdayChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pull Request Intelligence -->
+    <div>
+      <div class="section-title" style="display:flex;align-items:center;gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg>
+        Phân tích Pull Request
+      </div>
+      <div class="intel-grid">
+        
+        <div class="intel-card">
+          <span class="intel-card-title">Tỷ lệ Thành công</span>
+          <div class="intel-card-value" id="pr-success-pct">0%</div>
+          <div>
+            <div class="intel-card-sub" id="pr-counts">0 đã merge / 0 tổng số</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="pr-success-progress" style="width: 0%; background: var(--success-text);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="intel-card">
+          <span class="intel-card-title">Tốc độ Merge Trung bình</span>
+          <div class="intel-card-value" id="pr-merge-speed">-</div>
+          <span class="intel-card-sub" id="pr-throughput">0.0 PR / tuần</span>
+        </div>
+
+        <div class="intel-card">
+          <span class="intel-card-title">Thời gian PR Tồn đọng</span>
+          <div class="intel-card-value" id="pr-aging">-</div>
+          <span class="intel-card-sub" id="pr-open-count">0 pull request đang mở</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Issue Intelligence -->
+    <div style="margin-top: 10px;">
+      <div class="section-title" style="display:flex;align-items:center;gap:8px;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        Phân tích Issue
+      </div>
+      <div class="intel-grid">
+        
+        <div class="intel-card">
+          <span class="intel-card-title">Hiệu suất Đóng Issue</span>
+          <div class="intel-card-value" id="issue-closure-pct">0%</div>
+          <div>
+            <div class="intel-card-sub" id="issue-counts">0 đã đóng / 0 tổng số</div>
+            <div class="progress-bar-container">
+              <div class="progress-bar-fill" id="issue-closure-progress" style="width: 0%; background: var(--purple);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="intel-card">
+          <span class="intel-card-title">Thời gian Giải quyết Trung bình</span>
+          <div class="intel-card-value" id="issue-resolve-speed">-</div>
+          <span class="intel-card-sub" id="issue-open-count">0 issue đang mở</span>
+        </div>
+
+        <div class="intel-card">
+          <span class="intel-card-title">Tỷ lệ Bug / Cải tiến</span>
+          <div class="intel-card-value" id="issue-bug-ratio">0%</div>
+          <span class="intel-card-sub" id="issue-bug-details">0 bug / 0 cải tiến</span>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    const data = await fetchAnalytics("/api/v1/insights/{{ repo.id }}");
+    
+    // Hide skeleton and show real content
+    document.getElementById("insights-skeleton").style.display = "none";
+    document.getElementById("insights-content").style.display = "flex";
+
+    // 1. Coding Activity
+    const coding = data.coding_activity;
+    document.getElementById("current-streak").textContent = coding.current_streak;
+    document.getElementById("longest-streak").textContent = coding.longest_streak;
+    document.getElementById("active-days").textContent = coding.active_days;
+    document.getElementById("avg-commits-per-day").textContent = `${coding.avg_commits_per_active_day} commit / ngày hoạt động`;
+    document.getElementById("peak-hour-band").textContent = coding.peak_hour_band || "Chưa có commit nào";
+    
+    let busyMonth = "Chưa có commit nào";
+    if (coding.busiest_month) {
+      const parts = coding.busiest_month.split("-");
+      const dateObj = new Date(parts[0], parts[1] - 1);
+      busyMonth = dateObj.toLocaleString('vi-VN', { month: 'long', year: 'numeric' });
+    }
+    document.getElementById("busiest-month").textContent = `Tháng bận rộn nhất: ${busyMonth}`;
+
+    // 2. Activity Score
+    const score = data.activity_score;
+    document.getElementById("score-num").textContent = score.score;
+    
+    const badge = document.getElementById("score-level");
+    badge.className = `score-level-badge ${score.level}`;
+    const levelMap = {
+      "Low": "Thấp",
+      "Medium": "Trung bình",
+      "High": "Cao"
+    };
+    badge.textContent = levelMap[score.level] || score.level;
+    
+    let detailsText = `Trong 30 ngày qua, nhà phát triển này đã thực hiện <strong>${score.commits_30d}</strong> commit, tạo <strong>${score.prs_30d}</strong> pull request, và mở <strong>${score.issues_30d}</strong> issue.`;
+    if (score.score >= 70) {
+      detailsText += " Tốc độ xuất sắc! Hiệu suất coding cực kỳ tích cực.";
+    } else if (score.score >= 35) {
+      detailsText += " Nhịp độ làm việc cân bằng. Hoạt động ổn định tốt.";
+    } else {
+      detailsText += " Giai đoạn ít hoạt động. Tốc độ hiện tại đang thấp.";
+    }
+    document.getElementById("score-details").innerHTML = detailsText;
+
+    // 3. Heatmap Rendering
+    const heatmap = data.heatmap;
+    const grid = document.getElementById("heatmap-grid");
+    const hoverDetails = document.getElementById("heatmap-cell-hover-details");
+    
+    // Sort keys (dates) chronologically
+    const sortedDates = Object.keys(heatmap).sort();
+    
+    sortedDates.forEach(dateStr => {
+      const count = heatmap[dateStr];
+      const cell = document.createElement("div");
+      cell.className = "heatmap-cell";
+      
+      // Determine green color scale
+      if (count === 0) {
+        cell.style.background = "#161b22";
+      } else if (count === 1) {
+        cell.style.background = "#0e4429";
+      } else if (count <= 3) {
+        cell.style.background = "#006d32";
+      } else if (count <= 6) {
+        cell.style.background = "#26a641";
+      } else {
+        cell.style.background = "#39d353";
+      }
+      
+      // Hover event
+      cell.addEventListener("mouseenter", () => {
+        const prettyDate = new Date(dateStr).toLocaleDateString('vi-VN', {
+          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+        });
+        const commitText = count === 1 ? '1 commit' : `${count} commit`;
+        hoverDetails.innerHTML = `<strong>${commitText}</strong> vào ${prettyDate}`;
+      });
+      
+      cell.addEventListener("mouseleave", () => {
+        hoverDetails.textContent = "Rê chuột vào các ô để xem chi tiết hoạt động";
+      });
+      
+      grid.appendChild(cell);
+    });
+
+    // 4. Charts - Conventional Commit Keywords (Horizontal Bar Chart)
+    const commitIntel = data.commit_intelligence;
+    const kwLabels = Object.keys(commitIntel.keywords);
+    const kwValues = Object.values(commitIntel.keywords);
+    
+    // Only display conventional keywords if we have any, or provide placeholder
+    const showKeywords = kwValues.some(v => v > 0);
+    
+    new Chart(document.getElementById("keywordChart"), {
+      type: "bar",
+      data: {
+        labels: showKeywords ? kwLabels : ["Không tìm thấy từ khóa"],
+        datasets: [{
+          label: "Số lượng Commit",
+          data: showKeywords ? kwValues : [0],
+          backgroundColor: showKeywords 
+            ? kwLabels.map((_, i) => `hsla(${200 + i * 20}, 75%, 60%, 0.8)`)
+            : "rgba(139, 148, 158, 0.2)",
+          borderColor: showKeywords 
+            ? kwLabels.map((_, i) => `hsl(${200 + i * 20}, 75%, 60%)`)
+            : "rgba(139, 148, 158, 0.4)",
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            grid: { color: "#21262d" },
+            ticks: { color: "#8b949e", font: { family: "Inter" } }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { color: "#e6edf3", font: { family: "Inter", weight: "500" } }
+          }
+        }
+      }
+    });
+
+    // 5. Hour of Day Chart (Peak Hour)
+    const hourData = coding.hour_data;
+    const hours = hourData.map(h => `${h.hour}:00`);
+    const hourCounts = hourData.map(h => h.count);
+
+    new Chart(document.getElementById("hourChart"), {
+      type: "bar",
+      data: {
+        labels: hours,
+        datasets: [{
+          label: "Commit",
+          data: hourCounts,
+          backgroundColor: "rgba(88, 166, 255, 0.75)",
+          borderColor: "#58a6ff",
+          borderWidth: 1,
+          borderRadius: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: { 
+              color: "#8b949e", 
+              font: { size: 9 },
+              callback: function(value, index) {
+                // Show every 3rd hour label to prevent overlap
+                return index % 3 === 0 ? this.getLabelForValue(value) : '';
+              }
+            }
+          },
+          y: {
+            grid: { color: "#21262d" },
+            ticks: { color: "#8b949e" }
+          }
+        }
+      }
+    });
+
+    // 6. Weekday Activity Chart (Radar or Bar)
+    const weekdayData = coding.weekday_data;
+    const dayMap = {
+      "Sun": "CN",
+      "Mon": "T2",
+      "Tue": "T3",
+      "Wed": "T4",
+      "Thu": "T5",
+      "Fri": "T6",
+      "Sat": "T7"
+    };
+    const weekdays = weekdayData.map(w => dayMap[w.day] || w.day);
+    const weekdayCounts = weekdayData.map(w => w.count);
+
+    new Chart(document.getElementById("weekdayChart"), {
+      type: "radar",
+      data: {
+        labels: weekdays,
+        datasets: [{
+          label: "Commit",
+          data: weekdayCounts,
+          backgroundColor: "rgba(188, 140, 255, 0.15)",
+          borderColor: "#bc8cff",
+          pointBackgroundColor: "#bc8cff",
+          pointBorderColor: "#fff",
+          pointHoverBackgroundColor: "#fff",
+          pointHoverBorderColor: "#bc8cff",
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          r: {
+            angleLines: { color: "#30363d" },
+            grid: { color: "#30363d" },
+            pointLabels: { color: "#8b949e", font: { size: 10, weight: "bold" } },
+            ticks: { display: false }
+          }
+        }
+      }
+    });
+
+    // 7. Pull Request Intelligence Metrics
+    const prIntel = data.pr_intelligence;
+    document.getElementById("pr-success-pct").textContent = `${prIntel.success_ratio_pct}%`;
+    document.getElementById("pr-counts").textContent = `${prIntel.merged} đã merge / ${prIntel.total} tổng số`;
+    document.getElementById("pr-success-progress").style.width = `${prIntel.success_ratio_pct}%`;
+    document.getElementById("pr-merge-speed").textContent = prIntel.avg_merge_time_display || "N/A";
+    
+    let tpText = "Không có dữ liệu chu kỳ";
+    if (prIntel.throughput_per_week !== null) {
+      tpText = `${prIntel.throughput_per_week} PR đã merge / tuần`;
+    }
+    document.getElementById("pr-throughput").textContent = tpText;
+    
+    let ageText = "Không có PR đang mở";
+    if (prIntel.avg_pr_age_days !== null) {
+      ageText = `Tuổi backlog TB: ${prIntel.avg_pr_age_days} ngày`;
+    }
+    document.getElementById("pr-aging").textContent = ageText;
+    document.getElementById("pr-open-count").textContent = `${prIntel.open} pull request đang mở`;
+
+    // 8. Issue Intelligence Metrics
+    const issueIntel = data.issue_intelligence;
+    document.getElementById("issue-closure-pct").textContent = `${issueIntel.closure_rate_pct}%`;
+    document.getElementById("issue-counts").textContent = `${issueIntel.closed} đã đóng / ${issueIntel.total} tổng số`;
+    document.getElementById("issue-closure-progress").style.width = `${issueIntel.closure_rate_pct}%`;
+    document.getElementById("issue-resolve-speed").textContent = issueIntel.avg_resolution_display || "N/A";
+    document.getElementById("issue-open-count").textContent = `${issueIntel.open} issue đang mở`;
+    document.getElementById("issue-bug-ratio").textContent = `${issueIntel.bug_ratio_pct}%`;
+    document.getElementById("issue-bug-details").textContent = `${issueIntel.bug_count} bug / ${issueIntel.feature_count} cải tiến`;
+
+  } catch (err) {
+    console.error(err);
+    showError("Không thể tải thông tin phân tích người viết.");
+  }
+});
+</script>
+{% endblock %}

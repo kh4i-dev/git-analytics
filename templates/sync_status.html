@@ -1,0 +1,232 @@
+{% extends 'layouts/dashboard_base.html' %}
+
+{% block title %}Nhật Ký Đồng Bộ — Git Analytics{% endblock %}
+
+{% block content %}
+<div class="sync-status-container">
+  <!-- Page Header -->
+  <div class="dh-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <h1 style="font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px;">Trạng Thái Đồng Bộ</h1>
+      <p style="font-size: 14px; color: var(--text-muted);">Theo dõi hoạt động đồng bộ với GitHub API, tốc độ xử lý dữ liệu và giới hạn Rate Limit.</p>
+    </div>
+    
+    <div>
+      <a href="/repositories" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        Quản lý Repositories
+      </a>
+    </div>
+  </div>
+
+  <!-- Rate Limit & Sync Summary Cards -->
+  <div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
+    <!-- Live Rate Limit Card -->
+    <div class="card rate-limit-card" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+      <div class="card-glow"></div>
+      <div>
+        <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
+          <span class="pulse-dot active"></span>
+          GitHub API Rate Limit
+        </div>
+        <div class="card-value" style="font-size: 36px;">{{ rate_limit.remaining }} <span style="font-size: 18px; color: var(--text-muted);">/ {{ rate_limit.limit }}</span></div>
+      </div>
+      <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px;">
+        Được reset vào: <strong style="color: var(--text)">{{ rate_limit.reset_time_local }}</strong>
+      </div>
+    </div>
+
+    <!-- Sync Statistics Card -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div class="card-title">Tần suất & Tốc độ</div>
+        <div class="card-value" style="font-size: 36px;">{{ sync_stats.success_count }} <span style="font-size: 18px; color: var(--text-muted);">/ {{ sync_stats.total }} Repos</span></div>
+      </div>
+      <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px; display: flex; justify-content: space-between;">
+        <span>Lỗi: <strong style="color: var(--danger-text)">{{ sync_stats.failed_count }}</strong></span>
+        <span>Đang chạy: <strong style="color: var(--info-text)">{{ sync_stats.syncing_count }}</strong></span>
+      </div>
+    </div>
+
+    <!-- System Performance Card -->
+    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div class="card-title">Thời gian Đồng Bộ TB</div>
+        <div class="card-value" style="font-size: 36px;">{{ sync_stats.avg_duration_str }}</div>
+      </div>
+      <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px;">
+        Phương thức đồng bộ: <strong style="color: var(--text)">Tăng dần (Mặc định)</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Repository Logs Grid -->
+  <div style="margin-top: 24px;">
+    <div class="section-title">
+      Chi tiết nhật ký hoạt động đồng bộ
+      <span class="section-count">{{ repos | length }} repositories</span>
+    </div>
+    
+    <div class="table-wrap">
+      {% if repos %}
+        <table>
+          <thead>
+            <tr>
+              <th>Kho Lưu Trữ</th>
+              <th>Trạng thái</th>
+              <th>Thời gian bắt đầu</th>
+              <th>Hoàn thành</th>
+              <th>Thời lượng</th>
+              <th style="max-width: 250px;">Thông báo lỗi / Log chi tiết</th>
+              <th style="text-align: right;">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in repos %}
+              <tr>
+                <td>
+                  <div style="font-weight: 600; color: var(--text);">{{ r.name }}</div>
+                  <div style="font-size: 11px; color: var(--text-muted);">{{ r.owner }}</div>
+                </td>
+                <td>
+                  {% if r.last_sync_status == 'success' %}
+                    <span class="badge badge-open">✓ Thành công</span>
+                  {% elif r.last_sync_status == 'failed' %}
+                    <span class="badge badge-closed" style="background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger);">✕ Lỗi đồng bộ</span>
+                  {% elif r.last_sync_status == 'syncing' %}
+                    <span class="badge badge-merged" style="animation: pulse-op 1.5s infinite">↻ Đang đồng bộ</span>
+                  {% else %}
+                    <span class="badge badge-closed">○ Chờ xử lý</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 12px; color: var(--text-muted);">
+                  {{ r.sync_started_at.strftime('%H:%M:%S %d/%m') if r.sync_started_at else '—' }}
+                </td>
+                <td style="font-size: 12px; color: var(--text-muted);">
+                  {{ r.last_synced_at.strftime('%H:%M:%S %d/%m') if r.last_synced_at else '—' }}
+                </td>
+                <td style="font-weight: 500; font-size: 12px;">
+                  {{ r.duration_str }}
+                </td>
+                <td style="max-width: 250px; font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ r.last_sync_error or '' }}">
+                  {% if r.last_sync_error %}
+                    <span style="color: var(--danger-text)">{{ r.last_sync_error }}</span>
+                  {% elif r.last_sync_status == 'success' %}
+                    <span style="color: var(--success-text)">Đồng bộ hoàn tất thành công. Đã nạp commits/PRs.</span>
+                  {% elif r.last_sync_status == 'syncing' %}
+                    <span style="color: var(--info-text)">Đang kết nối GitHub và nạp dữ liệu...</span>
+                  {% else %}
+                    <span style="color: var(--text-muted)">Chưa có lịch sử đồng bộ.</span>
+                  {% endif %}
+                </td>
+                <td style="text-align: right;">
+                  <button onclick="triggerSync({{ r.id }}, this)" class="btn btn-outline btn-sm" {% if r.last_sync_status == 'syncing' %}disabled{% endif %}>
+                    <svg class="sync-icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    Đồng Bộ
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          </div>
+          <h3>Không tìm thấy repository nào</h3>
+          <p>Hãy import repository đầu tiên từ GitHub để bắt đầu đồng bộ.</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- System Worker Info -->
+  <div class="card" style="margin-top: 24px; background: rgba(22, 27, 34, 0.4);">
+    <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+      Chi tiết tiến trình nền
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-size: 13px;">
+      <div>
+        <span style="color: var(--text-muted)">Hệ thống chạy:</span> <strong style="color: var(--text)">FastAPI BackgroundTasks</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted)">Tự động Sync:</span> <strong style="color: var(--success-text)">Bật (Mỗi 1 giờ)</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted)">Database Engine:</span> <strong style="color: var(--text)">SQLite 3 (WAL mode)</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-muted)">Trạng thái kết nối:</span> <strong style="color: var(--success-text)">Đã kết nối (OK)</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .rate-limit-card {
+    border-color: var(--info-border);
+  }
+  .card-glow {
+    position: absolute;
+    top: -50px;
+    right: -50px;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(88, 166, 255, 0.1) 0%, rgba(0,0,0,0) 70%);
+    pointer-events: none;
+  }
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .pulse-dot.active {
+    background: var(--success-text);
+    box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.3);
+    animation: pulse-op 1.5s infinite;
+  }
+  @keyframes pulse-op {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+  }
+</style>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+async function triggerSync(repoId, btn) {
+  if (btn.disabled) return;
+  
+  // Disable button and animate icon
+  btn.disabled = true;
+  const originalText = btn.innerHTML;
+  btn.innerHTML = `<span class="spinner" style="display:block;margin-right:4px;"></span> Đang đồng bộ...`;
+  btn.classList.add('loading');
+  
+  try {
+    const res = await fetch(`/api/v1/sync/${repoId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin'
+    });
+    
+    if (!res.ok) {
+      const errData = await res.json();
+      throw new Error(errData?.error?.message || `HTTP ${res.status}`);
+    }
+    
+    // Refresh page on success to show new state
+    window.location.reload();
+  } catch (err) {
+    showError('Không thể kích hoạt đồng bộ: ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+    btn.classList.remove('loading');
+  }
+}
+</script>
+{% endblock %}

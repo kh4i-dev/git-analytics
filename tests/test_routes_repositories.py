@@ -350,3 +350,18 @@ def test_import_requires_login(db_session: Session) -> None:
 
     assert response.status_code == 302
     assert response.headers["location"] == "/login"
+
+
+def test_sync_requires_login(db_session: Session) -> None:
+    app = create_app()
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+
+    response = client.post("/repositories/999/sync", follow_redirects=False)
+
+    assert response.status_code == 302
+    assert response.headers["location"] == "/login"

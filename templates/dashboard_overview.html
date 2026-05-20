@@ -1,0 +1,280 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Tổng Quan — {{ repo.full_name }} — Git Analytics{% endblock %}
+{% block meta_desc %}Tổng quan phân tích cho {{ repo.full_name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* Scoped styles for activity rows */
+  .item-sha { font-family: 'Consolas','SF Mono',monospace; font-size: 12px; color: var(--text-link); text-decoration: none; }
+  .item-sha:hover { text-decoration: underline; }
+  .item-msg { color: var(--text); font-size: 13px; margin-top: 2px; }
+  .item-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .item-title { color: var(--text); font-weight: 500; font-size: 13px; margin-top: 2px; }
+  .item-num { color: var(--text-muted); font-size: 12px; }
+
+  /* Skeletons */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--radius);
+  }
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .chart-skeleton {
+    height: 100%;
+    width: 100%;
+  }
+  
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .dashboard-title-group h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .dashboard-title-group p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div class="dashboard-title-group">
+    <h1>{{ repo.name }} — Tổng Quan</h1>
+    {% include 'components/repository_context.html' %}
+    <p>Nhánh mặc định: <code class="code-branch" style="font-family:monospace;font-size:12px;color:var(--text-muted);background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border);">{{ repo.default_branch or "—" }}</code>
+    · Cập nhật đồng bộ để xem số liệu mới nhất.
+    </p>
+  </div>
+</div>
+
+<!-- Stat cards (rendered client-side via JS after API call) -->
+<div id="stats-grid" class="stats-grid">
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+  <div class="chart-card" style="grid-column: 1 / -1;">
+    <div class="chart-title">Commit Theo Ngày</div>
+    <div class="chart-wrap" id="wrap-commits-timeline">
+      <div class="chart-skeleton skeleton"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Trạng Thái Pull Request</div>
+    <div class="chart-wrap-sm" id="wrap-pr-status">
+      <div class="chart-skeleton skeleton" style="height:160px"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Trạng Thái Issue</div>
+    <div class="chart-wrap-sm" id="wrap-issue-status">
+      <div class="chart-skeleton skeleton" style="height:160px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Recent activity -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+  <!-- Recent commits -->
+  <div>
+    <div class="section-title">Commit Gần Đây <span id="badge-commits" class="section-count">…</span></div>
+    <div class="table-wrap" id="recent-commits">
+      <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
+    </div>
+  </div>
+  <!-- Recent PRs -->
+  <div>
+    <div class="section-title">Pull Request Gần Đây <span id="badge-prs" class="section-count">…</span></div>
+    <div class="table-wrap" id="recent-prs">
+      <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
+    </div>
+  </div>
+  <!-- Recent Issues -->
+  <div>
+    <div class="section-title">Issue Gần Đây <span id="badge-issues" class="section-count">…</span></div>
+    <div class="table-wrap" id="recent-issues">
+      <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+const REPO_ID = {{ repo.id }};
+const CHART_DEFAULTS = {
+  color: '#8b949e',
+  borderColor: '#30363d',
+};
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+
+function mkCard(title, value, sub) {
+  return `<div class="card">
+    <div class="card-title">${title}</div>
+    <div class="card-value">${value}</div>
+    ${sub ? `<div class="card-sub">${sub}</div>` : ''}
+  </div>`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+}
+
+function stateBadge(item) {
+  if (item.is_merged) return '<span class="badge badge-merged">đã merge</span>';
+  if (item.state === 'open') return '<span class="badge badge-open">đang mở</span>';
+  return '<span class="badge badge-closed">đã đóng</span>';
+}
+
+async function loadOverview() {
+  let data;
+  try {
+    data = await fetchAnalytics(`/api/v1/analytics/${REPO_ID}/overview`);
+  } catch(e) {
+    showError('Lỗi tải tổng quan: ' + e.message);
+    return;
+  }
+  const s = data.summary;
+
+  // Stat cards
+  document.getElementById('stats-grid').innerHTML =
+    mkCard('Tổng Commit', s.total_commits.toLocaleString(), `${s.active_days} ngày hoạt động`) +
+    mkCard('Pull Request', s.total_prs.toLocaleString(), `${s.merged_prs} đã merge · ${s.open_prs} đang mở`) +
+    mkCard('Issue Đang Mở', s.open_issues.toLocaleString(), `${s.closed_issues} đã đóng`) +
+    mkCard('Người Đóng Góp', s.total_contributors.toLocaleString(), '') +
+    mkCard('Đồng Bộ Lần Cuối', data.repository.last_synced_at ? fmtDate(data.repository.last_synced_at) : '—', data.repository.last_sync_status);
+
+  // Commits timeline
+  const cpd = data.charts.commits_per_day;
+  document.getElementById('wrap-commits-timeline').innerHTML = cpd.length
+    ? '<canvas id="chart-commits"></canvas>'
+    : `<div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></div>
+        <h3>Không có dữ liệu commit</h3>
+        <p>Hãy sync repository để tải dữ liệu commit.</p>
+      </div>`;
+  if (cpd.length) {
+    new Chart(document.getElementById('chart-commits'), {
+      type: 'line',
+      data: {
+        labels: cpd.map(d => d.date),
+        datasets: [{
+          label: 'Commits',
+          data: cpd.map(d => d.count),
+          borderColor: '#58a6ff',
+          backgroundColor: 'rgba(88,166,255,.1)',
+          tension: .3, fill: true, pointRadius: 2,
+        }]
+      },
+      options: { responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { ticks: { maxTicksLimit: 8 } } }
+      }
+    });
+  }
+
+  // PR doughnut
+  const prs = data.charts.pr_status;
+  document.getElementById('wrap-pr-status').innerHTML = '<canvas id="chart-pr"></canvas>';
+  new Chart(document.getElementById('chart-pr'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Đã Merge', 'Đang Mở', 'Đã Đóng'],
+      datasets: [{ data: [prs.merged, prs.open, prs.closed],
+        backgroundColor: ['#58a6ff','#3fb950','#8b949e'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Issue doughnut
+  const iss = data.charts.issue_status;
+  document.getElementById('wrap-issue-status').innerHTML = '<canvas id="chart-issue"></canvas>';
+  new Chart(document.getElementById('chart-issue'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Đang Mở', 'Đã Đóng'],
+      datasets: [{ data: [iss.open, iss.closed],
+        backgroundColor: ['#e3b341','#3fb950'], borderWidth: 0 }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Recent commits
+  const rc = data.recent.commits;
+  document.getElementById('badge-commits').textContent = rc.length;
+  document.getElementById('recent-commits').innerHTML = rc.length
+    ? `<table><tbody>${rc.map(c => `<tr>
+        <td>
+          <a class="item-sha" href="${c.html_url}" target="_blank" rel="noopener">${c.sha}</a>
+          <div class="item-msg">${escHtml(c.message.split('\n')[0].slice(0,72))}</div>
+          <div class="item-meta">${escHtml(c.author_login || c.author_name)} · ${fmtDate(c.committed_at)}</div>
+        </td></tr>`).join('')}</tbody></table>`
+    : `<div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></div>
+        <h3>Chưa có commit</h3>
+        <p>Đồng bộ repository để tải dữ liệu commit.</p>
+      </div>`;
+
+  // Recent PRs
+  const rp = data.recent.pull_requests;
+  document.getElementById('badge-prs').textContent = rp.length;
+  document.getElementById('recent-prs').innerHTML = rp.length
+    ? `<table><tbody>${rp.map(p => `<tr>
+        <td>
+          <div>${stateBadge(p)} <span class="item-num">#${p.number}</span></div>
+          <div class="item-title"><a href="${p.html_url}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">${escHtml(p.title)}</a></div>
+          <div class="item-meta">${escHtml(p.author_login)} · ${fmtDate(p.created_at)}</div>
+        </td></tr>`).join('')}</tbody></table>`
+    : `<div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg></div>
+        <h3>Chưa có Pull Request</h3>
+      </div>`;
+
+  // Recent Issues
+  const ri = data.recent.issues;
+  document.getElementById('badge-issues').textContent = ri.length;
+  document.getElementById('recent-issues').innerHTML = ri.length
+    ? `<table><tbody>${ri.map(i => `<tr>
+        <td>
+          <div><span class="badge ${i.state === 'open' ? 'badge-open' : 'badge-closed'}">${i.state === 'open' ? 'đang mở' : 'đã đóng'}</span> <span class="item-num">#${i.number}</span></div>
+          <div class="item-title"><a href="${i.html_url}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">${escHtml(i.title)}</a></div>
+          <div class="item-meta">${escHtml(i.author_login)} · ${fmtDate(i.created_at)}</div>
+        </td></tr>`).join('')}</tbody></table>`
+    : `<div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>Chưa có Issue</h3>
+      </div>`;
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+loadOverview();
+</script>
+{% endblock %}

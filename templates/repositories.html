@@ -1,209 +1,337 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Repositories - Git Analytics</title>
-    <style>
-      *, *::before, *::after { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: Arial, sans-serif;
-        background: #f6f8fa;
-        color: #24292f;
-        padding: 32px;
-      }
-      .container {
-        max-width: 960px;
-        margin: 0 auto;
-      }
-      .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 24px;
-      }
-      .header h1 { margin: 0; font-size: 24px; }
-      .user-info { color: #57606a; font-size: 14px; }
-      .flash {
-        padding: 12px 16px;
-        border-radius: 6px;
-        margin-bottom: 16px;
-        font-size: 14px;
-      }
-      .flash-success { background: #dafbe1; border: 1px solid #aceebb; color: #1a7f37; }
-      .flash-error { background: #ffebe9; border: 1px solid #ffc1c0; color: #cf222e; }
-      .actions { margin-bottom: 16px; }
-      button, .btn {
-        padding: 8px 14px;
-        border: 1px solid #d0d7de;
-        border-radius: 6px;
-        font-size: 14px;
-        cursor: pointer;
-        text-decoration: none;
-        display: inline-block;
-      }
-      .btn-primary {
-        background: #2da44e;
-        color: #fff;
-        border-color: #2da44e;
-        font-weight: 600;
-      }
-      .btn-primary:hover { background: #218838; }
-      .btn-danger {
-        background: #cf222e;
-        color: #fff;
-        border-color: #cf222e;
-        font-weight: 600;
-      }
-      .btn-outline {
-        background: #fff;
-        color: #24292f;
-      }
-      .btn-outline:hover { background: #f3f4f6; }
-      .btn-sm { padding: 4px 10px; font-size: 12px; }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        background: #fff;
-        border: 1px solid #d0d7de;
-        border-radius: 8px;
-        overflow: hidden;
-      }
-      th, td {
-        padding: 10px 12px;
-        text-align: left;
-        border-bottom: 1px solid #d0d7de;
-        font-size: 14px;
-      }
-      th { background: #f6f8fa; font-weight: 600; }
-      tr:last-child td { border-bottom: none; }
-      .badge {
-        display: inline-block;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 12px;
-        font-weight: 600;
-      }
-      .badge-success { background: #dafbe1; color: #1a7f37; }
-      .badge-failed { background: #ffebe9; color: #cf222e; }
-      .badge-pending { background: #fff8c5; color: #9a6700; }
-      .badge-syncing { background: #ddf4ff; color: #0969da; }
-      .empty { text-align: center; padding: 40px; color: #57606a; }
-      .repo-name { font-weight: 600; }
-      .private-badge {
-        display: inline-block;
-        padding: 1px 6px;
-        border: 1px solid #d0d7de;
-        border-radius: 4px;
-        font-size: 11px;
-        color: #57606a;
-        margin-left: 6px;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <div>
-          <h1>Repositories</h1>
-          <span class="user-info">Logged in as <strong>{{ github_username }}</strong></span>
-        </div>
-        <form method="post" action="/auth/logout">
-          <button type="submit" class="btn-danger">Logout</button>
-        </form>
-      </div>
+{% extends 'layouts/dashboard_base.html' %}
 
-      {% set msg = request.query_params.get("imported") %}
-      {% if msg %}
-        <div class="flash flash-success">Imported {{ msg }} repository(ies) successfully.</div>
-      {% endif %}
+{% block title %}Kho Lưu Trữ — Git Analytics{% endblock %}
+{% block meta_desc %}Quản lý repositories đã kết nối{% endblock %}
 
-      {% set msg = request.query_params.get("synced") %}
-      {% if msg %}
-        <div class="flash flash-success">
-          Sync completed (mode: {{ request.query_params.get("mode") }}, status: {{ request.query_params.get("status") }}).
-        </div>
-      {% endif %}
-
-      {% set err = request.query_params.get("error") %}
-      {% if err %}
-        <div class="flash flash-error">
-          {% if err == "token_decrypt_failed" %}
-            Failed to decrypt GitHub token. Please re-login.
-          {% elif err == "import_failed" %}
-            Import failed: {{ request.query_params.get("message", "Unknown error") }}
-          {% elif err == "sync_failed" %}
-            Sync failed: {{ request.query_params.get("message", "Unknown error") }}
-          {% else %}
-            An error occurred: {{ err }}
-          {% endif %}
-        </div>
-      {% endif %}
-
-      <div class="actions">
-        <form method="post" action="/repositories/import" style="display:inline">
-          <button type="submit" class="btn-primary">Import from GitHub</button>
-        </form>
-      </div>
-
-      {% if repositories %}
-        <table>
-          <thead>
-            <tr>
-              <th>Repository</th>
-              <th>Default Branch</th>
-              <th>Sync Status</th>
-              <th>Last Synced</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for repo in repositories %}
-            <tr>
-              <td>
-                <span class="repo-name">{{ repo.full_name }}</span>
-                {% if repo.is_private %}<span class="private-badge">Private</span>{% endif %}
-              </td>
-              <td>{{ repo.default_branch or "-" }}</td>
-              <td>
-                {% set s = repo.last_sync_status %}
-                {% if s == "success" %}
-                  <span class="badge badge-success">success</span>
-                {% elif s == "failed" %}
-                  <span class="badge badge-failed">failed</span>
-                {% elif s == "syncing" %}
-                  <span class="badge badge-syncing">syncing</span>
-                {% else %}
-                  <span class="badge badge-pending">pending</span>
-                {% endif %}
-                {% if repo.last_sync_error %}
-                  <br><small style="color:#cf222e">{{ repo.last_sync_error[:80] }}</small>
-                {% endif %}
-              </td>
-              <td>
-                {% if repo.last_synced_at %}
-                  {{ repo.last_synced_at.strftime("%Y-%m-%d %H:%M") }}
-                {% else %}
-                  -
-                {% endif %}
-              </td>
-              <td>
-                <form method="post" action="/repositories/{{ repo.id }}/sync" style="display:inline">
-                  <button type="submit" class="btn btn-outline btn-sm">Sync</button>
-                </form>
-              </td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      {% else %}
-        <div class="empty">
-          <p>No repositories imported yet.</p>
-          <p>Click <strong>Import from GitHub</strong> to fetch your repositories.</p>
-        </div>
-      {% endif %}
+{% block content %}
+<div class="repo-container">
+  <!-- Flash Notifications -->
+  {% set imported = request.query_params.get("imported") %}
+  {% if imported %}
+    <div class="flash-alert flash-success" role="alert">
+      <span class="flash-alert-icon">✓</span>
+      <span>Đã import <strong>{{ imported }}</strong> repository từ GitHub.</span>
     </div>
-  </body>
-</html>
+  {% endif %}
+
+  {% set synced = request.query_params.get("synced") %}
+  {% if synced %}
+    <div class="flash-alert flash-success" role="alert">
+      <span class="flash-alert-icon">✓</span>
+      <span>
+        Đồng bộ hoàn tất — chế độ: <strong>{{ request.query_params.get("mode", "full") }}</strong>,
+        trạng thái: <strong>{{ request.query_params.get("status", "success") }}</strong>.
+      </span>
+    </div>
+  {% endif %}
+
+  {% set err = request.query_params.get("error") %}
+  {% if err %}
+    <div class="flash-alert flash-error" role="alert">
+      <span class="flash-alert-icon">✕</span>
+      <span>
+        {% if err == "token_decrypt_failed" %}
+          Không thể giải mã token GitHub — vui lòng đăng xuất và đăng nhập lại.
+        {% elif err == "import_failed" %}
+          Import thất bại: {{ request.query_params.get("message", "Lỗi không xác định.") }}
+        {% elif err == "sync_failed" %}
+          Đồng bộ thất bại: {{ request.query_params.get("message", "Lỗi không xác định.") }}
+        {% else %}
+          Có lỗi xảy ra. Vui lòng thử lại.
+        {% endif %}
+      </span>
+    </div>
+  {% endif %}
+
+  <!-- Toolbar -->
+  <div class="repo-toolbar">
+    <div class="repo-toolbar-left">
+      <div class="repo-title-row">
+        <h1 class="repo-page-title">Kho Lưu Trữ</h1>
+        {% if repositories %}
+          <span class="count-badge">{{ repositories | length }}</span>
+        {% endif %}
+      </div>
+      <p class="repo-page-sub">Quản lý và đồng bộ các repository từ GitHub của bạn.</p>
+    </div>
+    <form method="post" action="/repositories/import" class="js-submit-form" style="flex-shrink:0">
+      <button id="btn-import" type="submit" class="btn btn-primary js-loading-btn">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="btn-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                Import Từ GitHub
+        </span>
+      </button>
+    </form>
+  </div>
+
+  {% if repositories %}
+    <!-- Repository table -->
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Kho Lưu Trữ</th>
+            <th>Loại</th>
+            <th>Nhánh mặc định</th>
+            <th>Trạng thái</th>
+            <th>Đồng bộ lần cuối</th>
+            <th style="width: 100px;">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for repo in repositories %}
+          <tr>
+            <!-- Name -->
+            <td>
+              <div class="repo-name-group">
+                <span class="repo-owner-label">{{ repo.owner }}/</span>
+                <span class="repo-name-label">{{ repo.name }}</span>
+              </div>
+            </td>
+
+            <!-- Visibility -->
+            <td>
+              {% if repo.is_private %}
+                <span class="badge badge-private">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  Riêng Tư
+                </span>
+              {% else %}
+                <span class="badge badge-public">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" x2="22" y1="12" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                  Công Khai
+                </span>
+              {% endif %}
+            </td>
+
+            <!-- Default branch -->
+            <td>
+              <span class="code-branch">{{ repo.default_branch or "—" }}</span>
+            </td>
+
+            <!-- Sync status -->
+            <td>
+              {% set s = repo.last_sync_status %}
+              <div class="status-cell">
+                {% if s == "success" %}
+                  <span class="badge badge-open">✓ Thành Công</span>
+                {% elif s == "failed" %}
+                  <span class="badge badge-closed" style="background:var(--danger-bg); color:var(--danger-text); border-color:var(--danger-border);">✕ Thất Bại</span>
+                {% elif s == "syncing" %}
+                  <span class="badge badge-merged">↻ Đang đồng bộ...</span>
+                {% else %}
+                  <span class="badge badge-label">○ Chờ</span>
+                {% endif %}
+                
+                {% if repo.last_sync_error %}
+                  <div class="sync-error-text" title="{{ repo.last_sync_error }}">
+                    {{ repo.last_sync_error[:60] }}{% if repo.last_sync_error | length > 60 %}...{% endif %}
+                  </div>
+                {% endif %}
+              </div>
+            </td>
+
+            <!-- Last synced at -->
+            <td class="text-muted">
+              {% if repo.last_synced_at %}
+                {{ repo.last_synced_at.strftime("%Y-%m-%d %H:%M") }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+
+            <!-- Actions -->
+            <td>
+              <div class="repo-actions-list">
+                <a id="btn-analytics-{{ repo.id }}" href="/dashboard/{{ repo.id }}" class="btn btn-outline btn-sm">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                  Phân Tích
+                </a>
+                <a id="btn-open-{{ repo.id }}" href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                  GitHub
+                </a>
+                <form method="post" action="/repositories/{{ repo.id }}/sync" class="js-submit-form">
+                  <button id="btn-sync-{{ repo.id }}" type="submit" class="btn btn-outline btn-sm js-loading-btn">
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span class="btn-label">↻ Đồng Bộ</span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  {% else %}
+    <!-- Empty state -->
+    <div class="empty-state">
+      <div class="empty-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <h3>Chưa có repository nào</h3>
+      <p>Import các GitHub repository của bạn để bắt đầu theo dõi commits, pull requests, issues và developer insights.</p>
+      <form method="post" action="/repositories/import" class="js-submit-form" style="margin-top: 20px;">
+        <button id="btn-import-empty" type="submit" class="btn btn-primary js-loading-btn">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Import Từ GitHub
+          </span>
+        </button>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+<style>
+  .repo-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .flash-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .flash-alert-icon { font-size: 15px; font-weight: bold; }
+  .flash-success {
+    background: var(--success-bg);
+    border: 1px solid var(--success-border);
+    color: var(--success-text);
+  }
+  .flash-error {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger-border);
+    color: var(--danger-text);
+  }
+
+  .repo-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+  
+  .repo-toolbar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .repo-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .repo-page-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+  }
+  
+  .repo-page-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .count-badge {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+  }
+
+  .repo-name-group {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+  }
+  .repo-owner-label {
+    color: var(--text-muted);
+  }
+  .repo-name-label {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .code-branch {
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--text-muted);
+    background: var(--surface-2);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  .status-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .sync-error-text {
+    font-size: 11px;
+    color: var(--danger-text);
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .repo-actions-list {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .text-muted {
+    color: var(--text-muted);
+  }
+
+  .badge-public {
+    background: rgba(46, 160, 67, 0.15);
+    color: var(--success-text);
+    border: 1px solid var(--success-border);
+  }
+  
+  .badge-private {
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+</style>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+  // Disable button + show spinner on form submit
+  document.querySelectorAll('.js-submit-form').forEach(function (form) {
+    form.addEventListener('submit', function () {
+      var btn = form.querySelector('.js-loading-btn');
+      if (!btn) return;
+      btn.classList.add('loading');
+      btn.disabled = true;
+    });
+  });
+</script>
+{% endblock %}

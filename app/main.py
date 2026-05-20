@@ -6,7 +6,11 @@ from fastapi import FastAPI, Request, Response
 from app.core.config import settings
 from app.core.exception_handlers import register_exception_handlers
 from app.core.logging import configure_logging, set_trace_id
+from app.routes.api_analytics import router as api_analytics_router
+from app.routes.api_insights import router as api_insights_router
 from app.routes.auth import router as auth_router
+from app.routes.dashboard import router as dashboard_router
+from app.routes.explore import router as explore_router
 from app.routes.health import router as health_router
 from app.routes.repositories import router as repositories_router
 
@@ -35,6 +39,10 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
     app.include_router(auth_router)
     app.include_router(repositories_router)
+    app.include_router(dashboard_router)
+    app.include_router(api_analytics_router)
+    app.include_router(api_insights_router)
+    app.include_router(explore_router)
     app.include_router(health_router)
     return app
 

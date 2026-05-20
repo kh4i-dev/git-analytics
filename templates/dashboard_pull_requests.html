@@ -1,0 +1,208 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Phân Tích Pull Request — {{ repo.full_name }} — Git Analytics{% endblock %}
+{% block meta_desc %}Phân tích pull request cho {{ repo.full_name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* Scoped styles */
+  .item-title { color: var(--text); font-weight: 500; font-size: 13px; }
+  .item-num { color: var(--text-muted); font-size: 12px; }
+
+  /* Skeletons */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--radius);
+  }
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .chart-skeleton {
+    height: 100%;
+    width: 100%;
+  }
+
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .dashboard-title-group h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .dashboard-title-group p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div class="dashboard-title-group">
+    <h1>Phân Tích Pull Request — {{ repo.name }}</h1>
+    {% include 'components/repository_context.html' %}
+    <p>Tỷ lệ merge, tốc độ review, phân bố trạng thái và lịch sử pull request.</p>
+  </div>
+</div>
+
+<!-- Summary cards -->
+<div id="stats-grid" class="stats-grid">
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Phân Bố Trạng Thái PR</div>
+    <div class="chart-wrap" id="wrap-pr-status">
+      <div class="chart-skeleton skeleton"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Tỷ Lệ Merge</div>
+    <div class="chart-wrap" id="wrap-merge-rate">
+      <div class="chart-skeleton skeleton"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PR table -->
+<div class="section-title">Pull Request Gần Đây <span id="badge-count" class="section-count">…</span></div>
+<div class="table-wrap" id="pr-table">
+  <div style="padding:32px;text-align:center">
+    <div class="skeleton" style="height:14px;width:50%;margin:auto"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+const REPO_ID = {{ repo.id }};
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function stateBadge(p) {
+  if (p.is_merged) return '<span class="badge badge-merged">đã merge</span>';
+  if (p.state === 'open') return '<span class="badge badge-open">đang mở</span>';
+  return '<span class="badge badge-closed">đã đóng</span>';
+}
+
+async function load() {
+  let data;
+  try {
+    data = await fetchAnalytics(`/api/v1/analytics/${REPO_ID}/pull-requests`);
+  } catch(e) {
+    showError('Lỗi tải dữ liệu pull request: ' + e.message);
+    return;
+  }
+
+  const s = data.summary;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="card">
+      <div class="card-title">Tổng PR</div>
+      <div class="card-value">${s.total.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Đã Merge</div>
+      <div class="card-value" style="color:var(--info-text)">${s.merged.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Đang Mở</div>
+      <div class="card-value" style="color:var(--success-text)">${s.open.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tgian Merge TB</div>
+      <div class="card-value">${s.avg_merge_time_hours !== null ? s.avg_merge_time_hours + 'h' : '—'}</div>
+      <div class="card-sub">giờ</div>
+    </div>`;
+
+  // Status doughnut
+  document.getElementById('wrap-pr-status').innerHTML = '<canvas id="chart-pr-status"></canvas>';
+  new Chart(document.getElementById('chart-pr-status'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Đã Merge','Đang Mở','Đã Đóng'],
+      datasets: [{
+        data: [s.merged, s.open, s.closed],
+        backgroundColor: ['#58a6ff','#3fb950','#8b949e'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Merge rate bar
+  document.getElementById('wrap-merge-rate').innerHTML = '<canvas id="chart-merge-rate"></canvas>';
+  new Chart(document.getElementById('chart-merge-rate'), {
+    type: 'bar',
+    data: {
+      labels: ['Đã Merge','Đang Mở','Đã Đóng'],
+      datasets: [{
+        label: 'Số lượng',
+        data: [s.merged, s.open, s.closed],
+        backgroundColor: ['#58a6ff','#3fb950','#8b949e'],
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+
+  // Table
+  const prs = data.recent;
+  document.getElementById('badge-count').textContent = prs.length;
+  if (prs.length) {
+    document.getElementById('pr-table').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th>Tiêu Đề</th><th>Tác Giả</th><th>Trạng Thái</th><th>Ngày Mở</th><th>Ngày Merge</th><th style="width:50px;"></th>
+        </tr></thead>
+        <tbody>${prs.map(p => `<tr>
+          <td><span class="item-num">#${p.number}</span></td>
+          <td><span class="item-title">${escHtml(p.title)}</span></td>
+          <td><span style="color:var(--text-muted);font-size:12px">${escHtml(p.author_login)}</span></td>
+          <td>${stateBadge(p)}</td>
+          <td><span style="color:var(--text-muted);font-size:12px">${fmtDate(p.created_at)}</span></td>
+          <td><span style="color:var(--text-muted);font-size:12px">${fmtDate(p.merged_at)}</span></td>
+          <td><a href="${p.html_url}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">↗</a></td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+  } else {
+    document.getElementById('pr-table').innerHTML =
+      `<div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg></div>
+        <h3>Chưa có Pull Request</h3>
+        <p>Đồng bộ repository để tải dữ liệu pull request.</p>
+      </div>`;
+  }
+}
+
+load();
+</script>
+{% endblock %}

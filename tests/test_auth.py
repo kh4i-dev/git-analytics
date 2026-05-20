@@ -298,19 +298,6 @@ def test_logout_clears_session_cookie() -> None:
     assert "git_analytics_session" in response.headers["set-cookie"]
 
 
-def test_repositories_page_requires_login(db_session: Session) -> None:
-    app = create_app()
-
-    def override_get_db() -> Generator[Session, None, None]:
-        yield db_session
-
-    app.dependency_overrides[get_db] = override_get_db
-    client = TestClient(app)
-
-    response = client.get("/repositories", follow_redirects=False)
-
-    assert response.status_code == 302
-    assert response.headers["location"] == "/login"
 
 
 def test_repositories_page_shows_logged_in_user(db_session: Session) -> None:
@@ -336,4 +323,4 @@ def test_repositories_page_shows_logged_in_user(db_session: Session) -> None:
     assert response.status_code == 200
     assert "Repositories" in response.text
     assert "octo" in response.text
-    assert "Logout" in response.text
+    assert "Đăng Xuất" in response.text

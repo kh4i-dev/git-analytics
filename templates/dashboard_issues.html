@@ -1,0 +1,214 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Phân Tích Issue — {{ repo.full_name }} — Git Analytics{% endblock %}
+{% block meta_desc %}Phân tích issue cho {{ repo.full_name }}{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* Scoped styles */
+  .item-title { color: var(--text); font-weight: 500; font-size: 13px; }
+  .item-num { color: var(--text-muted); font-size: 12px; }
+
+  /* Skeletons */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--radius);
+  }
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .chart-skeleton {
+    height: 100%;
+    width: 100%;
+  }
+
+  .dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+  .dashboard-title-group h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .dashboard-title-group p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+  <div class="dashboard-title-group">
+    <h1>Phân Tích Issue — {{ repo.name }}</h1>
+    {% include 'components/repository_context.html' %}
+    <p>Tỷ lệ giải quyết, thống kê nhãn, phân bố trạng thái và lịch sử issue tracker.</p>
+  </div>
+</div>
+
+<!-- Summary cards -->
+<div id="stats-grid" class="stats-grid">
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:88px"></div>
+</div>
+
+<!-- Charts -->
+<div class="charts-grid">
+  <div class="chart-card">
+    <div class="chart-title">Đang Mở vs Đã Đóng</div>
+    <div class="chart-wrap" id="wrap-state">
+      <div class="chart-skeleton skeleton"></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Issue Theo Nhãn</div>
+    <div class="chart-wrap" id="wrap-labels">
+      <div class="chart-skeleton skeleton"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Issues table -->
+<div class="section-title">Issue Gần Đây <span id="badge-count" class="section-count">…</span></div>
+<div class="table-wrap" id="issue-table">
+  <div style="padding:32px;text-align:center">
+    <div class="skeleton" style="height:14px;width:50%;margin:auto"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+const REPO_ID = {{ repo.id }};
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+async function load() {
+  let data;
+  try {
+    data = await fetchAnalytics(`/api/v1/analytics/${REPO_ID}/issues`);
+  } catch(e) {
+    showError('Lỗi tải dữ liệu issue: ' + e.message);
+    return;
+  }
+
+  const s = data.summary;
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="card">
+      <div class="card-title">Tổng Issue</div>
+      <div class="card-value">${s.total.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Đang Mở</div>
+      <div class="card-value" style="color:var(--warn-text)">${s.open.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Đã Đóng</div>
+      <div class="card-value" style="color:var(--success-text)">${s.closed.toLocaleString()}</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Tgian Đóng TB</div>
+      <div class="card-value">${s.avg_close_time_hours !== null ? s.avg_close_time_hours + 'h' : '—'}</div>
+      <div class="card-sub">giờ</div>
+    </div>`;
+
+  // State doughnut
+  document.getElementById('wrap-state').innerHTML = '<canvas id="chart-state"></canvas>';
+  new Chart(document.getElementById('chart-state'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Đang Mở','Đã Đóng'],
+      datasets: [{
+        data: [s.open, s.closed],
+        backgroundColor: ['#e3b341','#3fb950'],
+        borderWidth: 0,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Labels bar
+  const byLabel = data.charts.by_label;
+  if (byLabel && byLabel.length) {
+    document.getElementById('wrap-labels').innerHTML = '<canvas id="chart-labels"></canvas>';
+    new Chart(document.getElementById('chart-labels'), {
+      type: 'bar',
+      data: {
+        labels: byLabel.map(l => l[0]),
+        datasets: [{
+          label: 'Số lượng',
+          data: byLabel.map(l => l[1]),
+          backgroundColor: '#bc8cff',
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+  } else {
+    document.getElementById('wrap-labels').innerHTML =
+      `<div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" x2="7.01" y1="7" y2="7"/></svg></div>
+        <h3>Không có dữ liệu nhãn</h3>
+      </div>`;
+  }
+
+  // Table
+  const issues = data.recent;
+  document.getElementById('badge-count').textContent = issues.length;
+  if (issues.length) {
+    document.getElementById('issue-table').innerHTML = `
+      <table>
+        <thead><tr>
+          <th>#</th><th>Tiêu Đề</th><th>Tác Giả</th><th>Nhãn</th><th>Trạng Thái</th><th>Ngày Mở</th><th>Ngày Đóng</th><th style="width:50px;"></th>
+        </tr></thead>
+        <tbody>${issues.map(i => `<tr>
+          <td><span class="item-num">#${i.number}</span></td>
+          <td><span class="item-title">${escHtml(i.title)}</span></td>
+          <td><span style="color:var(--text-muted);font-size:12px">${escHtml(i.author_login)}</span></td>
+          <td>${(i.labels || []).slice(0,3).map(l => `<span class="badge badge-label">${escHtml(l)}</span>`).join(' ')}</td>
+          <td><span class="badge ${i.state === 'open' ? 'badge-open' : 'badge-closed'}">${i.state === 'open' ? 'đang mở' : 'đã đóng'}</span></td>
+          <td><span style="color:var(--text-muted);font-size:12px">${fmtDate(i.created_at)}</span></td>
+          <td><span style="color:var(--text-muted);font-size:12px">${fmtDate(i.closed_at)}</span></td>
+          <td><a href="${i.html_url}" target="_blank" rel="noopener" class="btn btn-outline btn-sm">↗</a></td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+  } else {
+    document.getElementById('issue-table').innerHTML =
+      `<div class="empty-state">
+        <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
+        <h3>Chưa có Issue</h3>
+        <p>Đồng bộ repository để tải dữ liệu issue.</p>
+      </div>`;
+  }
+}
+
+load();
+</script>
+{% endblock %}

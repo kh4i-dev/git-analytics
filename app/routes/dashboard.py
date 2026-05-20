@@ -1,0 +1,378 @@
+import logging
+from datetime import datetime, UTC
+
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.core.exceptions import AuthenticationException
+from app.core.session import parse_session_cookie
+from app.db.session import get_db
+from app.models.user import User
+from app.repositories import RepositoryRepository, UserRepository
+from app.services.analytics_service import AnalyticsService
+from app.core.security import decrypt_token
+from app.clients.github_client import GitHubClient
+
+logger = logging.getLogger(__name__)
+router = APIRouter(tags=["Dashboard"])
+templates = Jinja2Templates(directory="templates")
+
+
+def _authenticate(request: Request, db: Session) -> User | None:
+    cookie = request.cookies.get(settings.session_cookie_name)
+    if not cookie:
+        return None
+    try:
+        user_id = parse_session_cookie(cookie)
+    except AuthenticationException:
+        return None
+    return UserRepository(db).get_by_id(user_id)
+
+
+def _login_redirect() -> Response:
+    r = RedirectResponse("/login", status_code=302)
+    r.delete_cookie(settings.session_cookie_name)
+    return r
+
+
+def _get_repo_or_none(db: Session, user_id: int, repo_id: int):
+    return RepositoryRepository(db).get_by_user_and_id(user_id, repo_id)
+
+
+@router.get("/dashboard", response_class=HTMLResponse, response_model=None)
+@router.get("/dashboard/global", response_class=HTMLResponse, response_model=None)
+async def global_dashboard(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    stats = AnalyticsService(db).get_global_overview(user.id)
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard_global.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "stats": stats,
+            "active_page": "global_dashboard",
+        },
+    )
+
+
+@router.get("/settings", response_class=HTMLResponse, response_model=None)
+async def settings_page(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="settings.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "active_page": "settings",
+        },
+    )
+
+
+@router.get("/account", response_class=HTMLResponse, response_model=None)
+async def account_page(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="account.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "active_page": "account",
+        },
+    )
+
+
+@router.get("/sync-status", response_class=HTMLResponse, response_model=None)
+async def sync_status_page(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    
+    # Calculate sync durations and statistics
+    total = len(repos)
+    success_count = sum(1 for r in repos if r.last_sync_status == "success")
+    failed_count = sum(1 for r in repos if r.last_sync_status == "failed")
+    syncing_count = sum(1 for r in repos if r.last_sync_status == "syncing")
+    
+    durations = []
+    for r in repos:
+        r.duration_str = "—"
+        if r.last_synced_at and r.sync_started_at:
+            if r.last_synced_at > r.sync_started_at:
+                delta = r.last_synced_at - r.sync_started_at
+                seconds = int(delta.total_seconds())
+                durations.append(seconds)
+                r.duration_str = f"{seconds}s"
+            elif r.last_sync_status == "syncing":
+                # currently running
+                delta = datetime.now(UTC).replace(tzinfo=None) - r.sync_started_at.replace(tzinfo=None)
+                seconds = max(0, int(delta.total_seconds()))
+                r.duration_str = f"{seconds}s (chạy)"
+    
+    avg_duration_str = "—"
+    if durations:
+        avg_duration_str = f"{int(sum(durations) / len(durations))}s"
+        
+    sync_stats = {
+        "total": total,
+        "success_count": success_count,
+        "failed_count": failed_count,
+        "syncing_count": syncing_count,
+        "avg_duration_str": avg_duration_str,
+    }
+    
+    # Fetch GitHub API Rate Limit
+    rate_limit = {"limit": 5000, "remaining": 5000, "reset_time_local": "N/A"}
+    try:
+        token = decrypt_token(user.encrypted_github_token)
+        async with GitHubClient(token) as client:
+            rl_data = await client.get_rate_limit()
+            rate_limit["limit"] = rl_data.get("limit") or 5000
+            rate_limit["remaining"] = rl_data.get("remaining") or 5000
+            if rl_data.get("reset_at"):
+                dt = datetime.fromisoformat(rl_data["reset_at"].replace("Z", "+00:00"))
+                rate_limit["reset_time_local"] = dt.strftime("%H:%M:%S")
+    except Exception as e:
+        logger.warning(f"Failed to fetch rate limit in sync_status_page: {e}")
+        
+    return templates.TemplateResponse(
+        request=request,
+        name="sync_status.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "rate_limit": rate_limit,
+            "sync_stats": sync_stats,
+            "active_page": "sync_status",
+        },
+    )
+
+
+@router.get("/developer-news", response_class=HTMLResponse, response_model=None)
+async def developer_news_page(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="developer_news.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "active_page": "developer_news",
+        },
+    )
+
+
+@router.get("/ai-tools", response_class=HTMLResponse, response_model=None)
+async def ai_tools_page(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="ai_tools.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "active_page": "ai_tools",
+        },
+    )
+
+
+@router.get("/team", response_class=HTMLResponse, response_model=None)
+async def team_members_page(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    stats = AnalyticsService(db).get_global_overview(user.id)
+    return templates.TemplateResponse(
+        request=request,
+        name="team_members.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "stats": stats,
+            "active_page": "team",
+        },
+    )
+
+
+@router.get("/dashboard/{repo_id}", response_class=HTMLResponse, response_model=None)
+async def dashboard_overview(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repo = _get_repo_or_none(db, user.id, repo_id)
+    if repo is None:
+        return RedirectResponse("/repositories", status_code=302)
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard_overview.html",
+        context={
+            "request": request,
+            "user": user,
+            "repo": repo,
+            "repos": repos,
+            "active_page": "overview",
+        },
+    )
+
+
+@router.get("/dashboard/{repo_id}/commits", response_class=HTMLResponse, response_model=None)
+async def dashboard_commits(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repo = _get_repo_or_none(db, user.id, repo_id)
+    if repo is None:
+        return RedirectResponse("/repositories", status_code=302)
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard_commits.html",
+        context={
+            "request": request,
+            "user": user,
+            "repo": repo,
+            "repos": repos,
+            "active_page": "commits",
+        },
+    )
+
+
+@router.get(
+    "/dashboard/{repo_id}/pull-requests",
+    response_class=HTMLResponse,
+    response_model=None,
+)
+async def dashboard_pull_requests(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repo = _get_repo_or_none(db, user.id, repo_id)
+    if repo is None:
+        return RedirectResponse("/repositories", status_code=302)
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard_pull_requests.html",
+        context={
+            "request": request,
+            "user": user,
+            "repo": repo,
+            "repos": repos,
+            "active_page": "pull_requests",
+        },
+    )
+
+
+@router.get("/dashboard/{repo_id}/issues", response_class=HTMLResponse, response_model=None)
+async def dashboard_issues(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repo = _get_repo_or_none(db, user.id, repo_id)
+    if repo is None:
+        return RedirectResponse("/repositories", status_code=302)
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard_issues.html",
+        context={
+            "request": request,
+            "user": user,
+            "repo": repo,
+            "repos": repos,
+            "active_page": "issues",
+        },
+    )
+
+
+@router.get("/dashboard/{repo_id}/insights", response_class=HTMLResponse, response_model=None)
+async def dashboard_insights(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repo = _get_repo_or_none(db, user.id, repo_id)
+    if repo is None:
+        return RedirectResponse("/repositories", status_code=302)
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="dashboard_insights.html",
+        context={
+            "request": request,
+            "user": user,
+            "repo": repo,
+            "repos": repos,
+            "active_page": "insights",
+        },
+    )

@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="{% block meta_desc %}Bảng Điều Khiển Git Analytics{% endblock %}">
+  <title>{% block title %}Git Analytics{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  {% block extra_head %}{% endblock %}
+  <style>
+    :root {
+      --bg:             #090d13;
+      --surface:        #0d1117;
+      --surface-2:      #161b22;
+      --surface-3:      #21262d;
+      --border:         #30363d;
+      --border-sub:     #21262d;
+      --text:           #e6edf3;
+      --text-muted:     #8b949e;
+      --text-link:      #58a6ff;
+      --accent:         #238636;
+      --accent-h:       #2ea043;
+      --danger:         #da3633;
+      --danger-bg:      #3d0f10;
+      --danger-text:    #f85149;
+      --success-bg:     #0d4429;
+      --success-border: #238636;
+      --success-text:   #3fb950;
+      --warn-bg:        #2d2208;
+      --warn-border:    #9e6a03;
+      --warn-text:      #e3b341;
+      --info-bg:        #0c2d6b;
+      --info-border:    #1f6feb;
+      --info-text:      #79c0ff;
+      --purple:         #bc8cff;
+      --radius:         6px;
+      --radius-lg:      10px;
+      --sidebar-w:      240px;
+      --page-max-w:     1200px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shell { display: flex; flex: 1; min-height: 0; }
+
+    /* ── Main content ─────────────────────────────────── */
+    .main-content {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    /* ── Page body ───────────────────────────────────── */
+    .page-body {
+      padding: 28px 32px 48px;
+      flex: 1;
+      overflow-y: auto;
+      max-width: calc(var(--page-max-w) + 64px);
+    }
+
+    /* ── Buttons ─────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      font-size: 13px; font-weight: 500; font-family: inherit;
+      cursor: pointer;
+      border: 1px solid transparent;
+      text-decoration: none;
+      transition: background .12s, border-color .12s;
+      white-space: nowrap;
+    }
+    .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-primary:hover { background: var(--accent-h); }
+    .btn-outline { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+    .btn-outline:hover { background: #2d333a; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* spinner inside button */
+    .btn .spinner {
+      display: none;
+      width: 12px; height: 12px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+    }
+    .btn.loading .spinner { display: block; }
+    .btn.loading .btn-label { opacity: .7; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Cards ───────────────────────────────────────── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .card:hover {
+      border-color: #444d56;
+      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+    }
+    .card-title {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .card-value {
+      font-size: 30px; font-weight: 700; color: var(--text);
+      line-height: 1;
+      letter-spacing: -0.5px;
+    }
+    .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+
+    /* ── Stat grid ───────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* ── Chart containers ────────────────────────────── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .chart-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+    }
+    .chart-title {
+      font-size: 13px; font-weight: 600; color: var(--text);
+      margin-bottom: 14px;
+    }
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap-sm { position: relative; height: 160px; }
+
+    /* ── Section heading ─────────────────────────────── */
+    .section-title {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-count {
+      font-size: 11px; font-weight: 500;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1px 7px;
+      color: var(--text-muted);
+    }
+
+    /* ── Table ───────────────────────────────────────── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: var(--surface-2); }
+    th {
+      padding: 8px 14px;
+      text-align: left;
+      font-size: 11px; font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase; letter-spacing: .5px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border-sub);
+      vertical-align: middle;
+      font-size: 13px;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.02); }
+
+    /* ── Badges ──────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px; font-weight: 600;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-merged  { background: var(--info-bg);    color: var(--info-text);    border-color: var(--info-border); }
+    .badge-open    { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+    .badge-closed  { background: var(--surface-2);  color: var(--text-muted);   border-color: var(--border); }
+    .badge-label   { background: var(--surface-2);  color: var(--text-muted);   border-color: var(--border); font-size: 10px; padding: 1px 6px; }
+
+    /* ── Empty state ───────────────────────────────────── */
+    .empty-state {
+      text-align: center; padding: 52px 24px;
+      color: var(--text-muted); font-size: 14px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-lg);
+    }
+    .empty-icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 48px; height: 48px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin: 0 auto 16px;
+      color: var(--text-muted);
+    }
+    .empty-state h3 { color: var(--text); font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+    .empty-state p { font-size: 13px; line-height: 1.6; max-width: 380px; margin: 0 auto; }
+
+    /* ── Error toast ─────────────────────────────────── */
+    #error-toast {
+      display: none;
+      position: fixed; bottom: 20px; right: 20px; z-index: 999;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger);
+      color: var(--danger-text);
+      padding: 10px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      max-width: 360px;
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+  <!-- Sidebar Component -->
+  {% include 'components/sidebar.html' %}
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Topbar Component -->
+    {% include 'components/topbar.html' %}
+
+    <!-- Page Content -->
+    <main class="page-body">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<!-- Error toast -->
+<div id="error-toast"></div>
+
+<script>
+function switchRepo(repoId) {
+  if (!repoId) return;
+  // Map current sub-page
+  const activePage = '{{ active_page }}';
+  const pageMap = {
+    'overview': `/dashboard/${repoId}`,
+    'insights': `/dashboard/${repoId}/insights`,
+    'commits': `/dashboard/${repoId}/commits`,
+    'pull_requests': `/dashboard/${repoId}/pull-requests`,
+    'issues': `/dashboard/${repoId}/issues`
+  };
+  const targetUrl = pageMap[activePage] || `/dashboard/${repoId}`;
+  window.location.href = targetUrl;
+}
+
+function showError(msg) {
+  const t = document.getElementById('error-toast');
+  t.textContent = '✕ ' + msg;
+  t.style.display = 'block';
+  setTimeout(() => { t.style.display = 'none'; }, 5000);
+}
+
+async function fetchAnalytics(path) {
+  const res = await fetch(path, { credentials: 'same-origin' });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message);
+  return json.data;
+}
+</script>
+{% block page_scripts %}{% endblock %}
+</body>
+</html>

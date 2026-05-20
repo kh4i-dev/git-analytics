@@ -1,0 +1,230 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Thành Viên - Git Analytics{% endblock %}
+
+{% block extra_head %}
+<style>
+  .team-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .team-header h1 {
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 750;
+  }
+  .team-header p {
+    margin-top: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .team-card,
+  .member-panel {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, rgba(22, 27, 34, .88), rgba(13, 17, 23, .98));
+  }
+  .team-card {
+    padding: 16px;
+  }
+  .team-card span {
+    display: block;
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .team-card strong {
+    display: block;
+    margin-top: 8px;
+    color: var(--text);
+    font-size: 28px;
+  }
+  .member-panel {
+    overflow: hidden;
+  }
+  .member-panel-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .member-panel-header h2 {
+    color: var(--text);
+    font-size: 16px;
+  }
+  .member-table {
+    width: 100%;
+    min-width: 760px;
+  }
+  .member-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .member-avatar {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #2f81f7, #8957e5);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    overflow: hidden;
+  }
+  .member-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  a.member-avatar,
+  a.member-username {
+    text-decoration: none;
+  }
+  a.member-avatar:hover {
+    border-color: rgba(88, 166, 255, .55);
+    box-shadow: 0 0 0 3px rgba(88, 166, 255, .10);
+  }
+  .member-cell strong {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+  }
+  .member-username {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+  a.member-username:hover {
+    color: var(--text-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .member-cell span {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+  .score-pill {
+    display: inline-flex;
+    justify-content: center;
+    min-width: 48px;
+    padding: 4px 8px;
+    border: 1px solid rgba(88, 166, 255, .24);
+    border-radius: 999px;
+    color: var(--text-link);
+    background: rgba(88, 166, 255, .08);
+    font-weight: 700;
+  }
+  @media (max-width: 960px) {
+    .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .team-header { align-items: flex-start; flex-direction: column; }
+    .team-grid { grid-template-columns: 1fr; }
+    .member-panel { overflow-x: auto; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set team = stats.team %}
+<section class="team-header">
+  <div>
+    <h1>Thành Viên</h1>
+    <p>Quản lý và đánh giá hoạt động nhóm từ commits, pull requests và issues đã đồng bộ.</p>
+  </div>
+  <a class="btn btn-outline" href="/api/v1/analytics/export/xlsx">Xuất Excel</a>
+</section>
+
+<section class="team-grid">
+  <article class="team-card"><span>Người Đóng Góp</span><strong>{{ team.summary.contributors }}</strong></article>
+  <article class="team-card"><span>Tổng Commit</span><strong>{{ team.summary.commits }}</strong></article>
+  <article class="team-card"><span>PR Đã Merge</span><strong>{{ team.summary.prs_merged }}</strong></article>
+  <article class="team-card"><span>Issue Đã Giải Quyết</span><strong>{{ team.summary.issues_closed }}</strong></article>
+</section>
+
+<section class="member-panel">
+  <div class="member-panel-header">
+    <div>
+      <h2>Bảng KPI Thành Viên</h2>
+      <p class="card-sub">Avatar, GitHub username, commits, PR đã merge, issue đã giải quyết và điểm hoạt động.</p>
+    </div>
+  </div>
+  {% if team.members %}
+  <table class="member-table">
+    <thead>
+      <tr>
+        <th>Thành Viên</th>
+        <th>Commit</th>
+        <th>PR Đã Merge</th>
+        <th>Issue Đã Giải Quyết</th>
+        <th>Ngày Hoạt Động</th>
+        <th>Điểm Hoạt Động</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in team.members %}
+      <tr>
+        <td>
+          <div class="member-cell">
+            {% if member.login %}
+              <a class="member-avatar" href="https://github.com/{{ member.login }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ member.login }} on GitHub">
+                {% if member.avatar_url %}
+                <img src="{{ member.avatar_url }}" alt="{{ member.login or member.name }}">
+                {% else %}
+                {{ (member.login or member.name or "U")[0].upper() }}
+                {% endif %}
+              </a>
+            {% else %}
+              <div class="member-avatar">
+                {% if member.avatar_url %}
+                <img src="{{ member.avatar_url }}" alt="{{ member.login or member.name }}">
+                {% else %}
+                {{ (member.login or member.name or "U")[0].upper() }}
+                {% endif %}
+              </div>
+            {% endif %}
+            <div>
+              {% if member.login %}
+                <a class="member-username" href="https://github.com/{{ member.login }}" target="_blank" rel="noopener noreferrer">{{ member.login }}</a>
+              {% else %}
+                <strong>{{ member.name }}</strong>
+              {% endif %}
+              <span>{{ member.name }}</span>
+            </div>
+          </div>
+        </td>
+        <td>{{ member.commits }}</td>
+        <td>{{ member.prs_merged }}</td>
+        <td>{{ member.issues_closed }}</td>
+        <td>{{ member.active_days }}</td>
+        <td><span class="score-pill">{{ member.score }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    </div>
+    <h3>Chưa có thành viên</h3>
+    <p>Đồng bộ dữ liệu repository để xây dựng bảng KPI thành viên.</p>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

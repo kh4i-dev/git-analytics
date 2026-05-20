@@ -1,0 +1,319 @@
+{% macro icon(name) %}
+<svg class="nav-svg-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  {% if name == 'bar-chart' %}
+    <line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/>
+  {% elif name == 'folder-git' %}
+    <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/>
+    <circle cx="12" cy="13" r="2"/>
+    <path d="M16 18c-2.21 0-4-1.79-4-4v5"/>
+    <path d="M19 15l-3-3 3-3"/>
+  {% elif name == 'layout-dashboard' %}
+    <rect width="7" height="9" x="3" y="3" rx="1"/>
+    <rect width="7" height="5" x="14" y="3" rx="1"/>
+    <rect width="7" height="9" x="14" y="12" rx="1"/>
+    <rect width="7" height="5" x="3" y="16" rx="1"/>
+  {% elif name == 'sparkles' %}
+    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+    <path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>
+  {% elif name == 'git-commit' %}
+    <circle cx="12" cy="12" r="3"/>
+    <line x1="3" x2="9" y1="12" y2="12"/>
+    <line x1="15" x2="21" y1="12" y2="12"/>
+  {% elif name == 'git-pull-request' %}
+    <circle cx="18" cy="18" r="3"/>
+    <circle cx="6" cy="6" r="3"/>
+    <path d="M13 6h3a2 2 0 0 1 2 2v7"/>
+    <line x1="6" x2="6" y1="9" y2="21"/>
+  {% elif name == 'circle-dot' %}
+    <circle cx="12" cy="12" r="10"/>
+    <circle cx="12" cy="12" r="3"/>
+  {% elif name == 'compass' %}
+    <circle cx="12" cy="12" r="10"/>
+    <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+  {% elif name == 'newspaper' %}
+    <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a4 4 0 0 1-4-4V6"/>
+    <path d="M18 14h-8"/><path d="M15 18h-5"/>
+    <path d="M10 6h8v4h-8V6z"/>
+  {% elif name == 'bot' %}
+    <path d="M12 8V4H8"/>
+    <rect width="16" height="12" x="4" y="8" rx="2"/>
+    <path d="M2 14h2"/><path d="M20 14h2"/>
+    <path d="M15 13v2"/><path d="M9 13v2"/>
+  {% elif name == 'refresh-cw' %}
+    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+    <path d="M21 3v5h-5"/>
+    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+    <path d="M8 16H3v5"/>
+  {% elif name == 'settings' %}
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+    <circle cx="12" cy="12" r="3"/>
+  {% elif name == 'user' %}
+    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+    <circle cx="12" cy="7" r="4"/>
+  {% elif name == 'users' %}
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+    <circle cx="9" cy="7" r="4"/>
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+  {% endif %}
+</svg>
+{% endmacro %}
+
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+    </div>
+    <span class="sidebar-brand-name">Git Analytics</span>
+  </div>
+
+  <div class="sidebar-repo-section">
+    <div class="sidebar-section-label">Kho Lưu Trữ</div>
+    <select id="repo-switcher" class="repo-select" onchange="window.location.href = this.value ? `/dashboard/${this.value}` : '/dashboard'">
+      <option value="" {% if not repo %}selected{% endif %}>Tất cả Repos</option>
+      {% for r in repos %}
+      <option value="{{ r.id }}" {% if repo and r.id == repo.id %}selected{% endif %}>
+        {{ r.full_name }}
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-label">TỔNG QUAN</div>
+    <a href="/dashboard/global" class="nav-link {% if active_page == 'global_dashboard' %}active{% endif %}">
+      {{ icon('bar-chart') }} <span>Bảng Điều Khiển</span>
+    </a>
+    <a href="/repositories" class="nav-link {% if active_page == 'repositories' %}active{% endif %}">
+      {{ icon('folder-git') }} <span>Kho Lưu Trữ</span>
+    </a>
+    <a href="/team" class="nav-link {% if active_page == 'team' %}active{% endif %}">
+      {{ icon('users') }} <span>Thành Viên</span>
+    </a>
+
+    <div class="nav-label" style="margin-top:12px">PHÂN TÍCH</div>
+    {% if repo %}
+      <a href="/dashboard/{{ repo.id }}" class="nav-link {% if active_page == 'overview' %}active{% endif %}">
+        {{ icon('layout-dashboard') }} <span>Tổng quan Repo</span>
+      </a>
+      <a href="/dashboard/{{ repo.id }}/commits" class="nav-link {% if active_page == 'commits' %}active{% endif %}">
+        {{ icon('git-commit') }} <span>Phân tích Commit</span>
+      </a>
+      <a href="/dashboard/{{ repo.id }}/pull-requests" class="nav-link {% if active_page == 'pull_requests' %}active{% endif %}">
+        {{ icon('git-pull-request') }} <span>Pull Request</span>
+      </a>
+      <a href="/dashboard/{{ repo.id }}/issues" class="nav-link {% if active_page == 'issues' %}active{% endif %}">
+        {{ icon('circle-dot') }} <span>Issue</span>
+      </a>
+      <a href="/dashboard/{{ repo.id }}/insights" class="nav-link {% if active_page == 'insights' %}active{% endif %}">
+        {{ icon('sparkles') }} <span>Insights</span>
+      </a>
+    {% else %}
+      <div class="nav-link nav-link-disabled" title="Chọn một repository để xem phân tích">
+        {{ icon('layout-dashboard') }} <span>Tổng quan Repo</span>
+      </div>
+      <div class="nav-link nav-link-disabled" title="Chọn một repository để xem phân tích">
+        {{ icon('git-commit') }} <span>Phân tích Commit</span>
+      </div>
+      <div class="nav-link nav-link-disabled" title="Chọn một repository để xem phân tích">
+        {{ icon('git-pull-request') }} <span>Pull Request</span>
+      </div>
+      <div class="nav-link nav-link-disabled" title="Chọn một repository để xem phân tích">
+        {{ icon('circle-dot') }} <span>Issue</span>
+      </div>
+      <div class="nav-link nav-link-disabled" title="Chọn một repository để xem phân tích">
+        {{ icon('sparkles') }} <span>Insights</span>
+      </div>
+    {% endif %}
+
+    <div class="nav-label" style="margin-top:12px">KHÁM PHÁ</div>
+    <a href="/explore" class="nav-link {% if active_page == 'explore' %}active{% endif %}">
+      {{ icon('compass') }} <span>Xu hướng GitHub</span>
+    </a>
+    <a href="/developer-news" class="nav-link {% if active_page == 'developer_news' %}active{% endif %}">
+      {{ icon('newspaper') }} <span>Tin tức Developer</span>
+    </a>
+    <a href="/ai-tools" class="nav-link {% if active_page == 'ai_tools' %}active{% endif %}">
+      {{ icon('bot') }} <span>Công cụ AI</span>
+    </a>
+
+    <div class="nav-label" style="margin-top:12px">HỆ THỐNG</div>
+    <a href="/sync-status" class="nav-link {% if active_page == 'sync_status' %}active{% endif %}">
+      {{ icon('refresh-cw') }} <span>Trạng thái đồng bộ</span>
+    </a>
+    <a href="/account" class="nav-link {% if active_page == 'account' %}active{% endif %}">
+      {{ icon('user') }} <span>Tài khoản</span>
+    </a>
+    <a href="/settings" class="nav-link {% if active_page == 'settings' %}active{% endif %}">
+      {{ icon('settings') }} <span>Cài đặt</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-row">
+      <div class="user-avatar">{{ user.github_login[0].upper() if user and user.github_login else 'U' }}</div>
+      <span class="user-name">{{ user.github_login if user else 'Người dùng' }}</span>
+    </div>
+    <form method="post" action="/auth/logout">
+      <button id="btn-logout" type="submit" class="btn-logout">Đăng Xuất</button>
+    </form>
+  </div>
+</aside>
+
+<style>
+  /* ── Sidebar shell ───────────────────────────────────── */
+  .sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* ── Brand ───────────────────────────────────────────── */
+  .sidebar-brand {
+    display: flex; align-items: center; gap: 9px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .sidebar-logo {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, #58a6ff, var(--purple));
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .sidebar-brand-name {
+    font-size: 14px; font-weight: 700;
+    color: var(--text); letter-spacing: -0.3px;
+    white-space: nowrap;
+  }
+
+  /* ── Repo switcher ───────────────────────────────────── */
+  .sidebar-repo-section { padding: 12px 14px 4px; }
+  .sidebar-section-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--text-muted);
+    padding: 0 4px 5px;
+  }
+  .repo-select {
+    width: 100%;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 12px;
+    padding: 6px 10px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color .15s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238b949e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 28px;
+  }
+  .repo-select:focus { border-color: var(--text-link); }
+
+  /* ── Nav ─────────────────────────────────────────────── */
+  .sidebar-nav { padding: 10px 10px 24px; flex: 1; }
+
+  .nav-label {
+    font-size: 10px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .8px; color: var(--text-muted);
+    padding: 8px 6px 3px;
+  }
+
+  .nav-link, .nav-link-disabled {
+    display: flex; align-items: center; gap: 9px;
+    padding: 6px 8px;
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 13px; font-weight: 500;
+    transition: background .1s, color .1s;
+    margin-bottom: 1px;
+    line-height: 1;
+  }
+
+  /* SVG icon inherits color from the link */
+  .nav-svg-icon {
+    flex-shrink: 0;
+    display: block;
+    transition: color .1s;
+  }
+
+  .nav-link span { line-height: 1.4; }
+
+  .nav-link:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .nav-link:hover .nav-svg-icon { color: var(--text); }
+
+  .nav-link.active {
+    background: rgba(88, 166, 255, 0.08);
+    color: var(--text-link);
+    font-weight: 600;
+  }
+  .nav-link.active .nav-svg-icon { color: var(--text-link); }
+
+  .nav-link-disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* ── Footer ──────────────────────────────────────────── */
+  .sidebar-footer {
+    padding: 14px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .user-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 2px 0;
+    margin-bottom: 10px;
+  }
+  .user-avatar {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: linear-gradient(135deg, #58a6ff, var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+    letter-spacing: 0;
+  }
+  .user-name {
+    font-size: 12px; font-weight: 500; color: var(--text);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .btn-logout {
+    width: 100%;
+    padding: 6px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    text-align: center;
+    transition: background .12s, color .12s, border-color .12s;
+  }
+  .btn-logout:hover {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border-color: var(--danger);
+  }
+</style>

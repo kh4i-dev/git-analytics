@@ -54,8 +54,11 @@ async def repositories_page(
         name="repositories.html",
         context={
             "request": request,
+            "user": user,
             "github_username": user.github_login,
             "repositories": repos,
+            "repos": repos,
+            "active_page": "repositories",
         },
     )
 

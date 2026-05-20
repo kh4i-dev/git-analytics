@@ -133,6 +133,64 @@ class CommitRepository(BaseRepository[Commit]):
         except SQLAlchemyError as exc:
             self._raise_database_error(exc)
 
+    def commits_by_weekday(self, repo_id: int) -> list[dict[str, Any]]:
+        """Returns commit counts grouped by day-of-week (0=Sun … 6=Sat)."""
+        day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        try:
+            rows = self.db.execute(
+                select(
+                    func.strftime("%w", Commit.committed_at).label("weekday"),
+                    func.count(Commit.id).label("count"),
+                )
+                .where(Commit.repo_id == repo_id)
+                .group_by(func.strftime("%w", Commit.committed_at))
+            ).all()
+        except SQLAlchemyError as exc:
+            self._raise_database_error(exc)
+
+        counts = {i: 0 for i in range(7)}
+        for row in rows:
+            if row.weekday is not None:
+                counts[int(row.weekday)] = row.count
+        return [
+            {"day": day_names[i], "day_index": i, "count": counts[i]}
+            for i in range(7)
+        ]
+
+    def commits_by_hour(self, repo_id: int) -> list[dict[str, Any]]:
+        """Returns commit counts grouped by hour-of-day (0-23, UTC)."""
+        try:
+            rows = self.db.execute(
+                select(
+                    func.strftime("%H", Commit.committed_at).label("hour"),
+                    func.count(Commit.id).label("count"),
+                )
+                .where(Commit.repo_id == repo_id)
+                .group_by(func.strftime("%H", Commit.committed_at))
+            ).all()
+        except SQLAlchemyError as exc:
+            self._raise_database_error(exc)
+
+        counts = {i: 0 for i in range(24)}
+        for row in rows:
+            if row.hour is not None:
+                counts[int(row.hour)] = row.count
+        return [{"hour": i, "count": counts[i]} for i in range(24)]
+
+    def get_recent_messages(self, repo_id: int, limit: int = 500) -> list[str]:
+        """Returns recent commit messages for keyword analysis."""
+        try:
+            return list(
+                self.db.scalars(
+                    select(Commit.message)
+                    .where(Commit.repo_id == repo_id, Commit.message.is_not(None))
+                    .order_by(Commit.committed_at.desc())
+                    .limit(limit)
+                ).all()
+            )
+        except SQLAlchemyError as exc:
+            self._raise_database_error(exc)
+
     def _apply_without_flush(self, commit: Commit, data: Mapping[str, Any]) -> None:
         for field, value in data.items():
             setattr(commit, field, value)

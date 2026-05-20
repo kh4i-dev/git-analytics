@@ -1,0 +1,527 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Khám Phá Hệ Sinh Thái Dev — Git Analytics{% endblock %}
+
+{% block extra_head %}
+<style>
+  .explore-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .explore-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 8px;
+  }
+  .explore-title-group h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+  .explore-title-group p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* Filters */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .lang-btn {
+    background: var(--surface-2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .lang-btn:hover {
+    color: var(--text);
+    border-color: var(--text-muted);
+  }
+  .lang-btn.active {
+    background: var(--text-link);
+    color: #0d1117;
+    border-color: var(--text-link);
+    font-weight: 600;
+  }
+
+  .select-timeframe {
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    outline: none;
+    cursor: pointer;
+  }
+  .select-timeframe:focus {
+    border-color: var(--text-link);
+  }
+
+  /* Two Column Feed Layout */
+  .explore-feed {
+    display: grid;
+    grid-template-columns: 2fr 1.1fr;
+    gap: 20px;
+  }
+  @media (max-width: 992px) {
+    .explore-feed {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Repo Grid card */
+  .repos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 14px;
+  }
+  .repo-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .repo-card:hover {
+    border-color: var(--text-muted);
+    transform: translateY(-2px);
+  }
+  .repo-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .repo-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+  }
+  .repo-name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-link);
+    text-decoration: none;
+    word-break: break-all;
+  }
+  .repo-name:hover {
+    text-decoration: underline;
+  }
+  .repo-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.4;
+    margin-bottom: 14px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    height: 50px;
+  }
+  .repo-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-top: 1px solid var(--border-sub);
+    padding-top: 10px;
+  }
+  .repo-meta-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .repo-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 4px;
+    font-size: 9px;
+  }
+
+  /* News List card */
+  .news-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    height: fit-content;
+  }
+  .news-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .news-item {
+    border-bottom: 1px solid var(--border-sub);
+    padding-bottom: 10px;
+    transition: opacity 0.15s ease;
+  }
+  .news-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .news-item:hover {
+    opacity: 0.9;
+  }
+  .news-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    line-height: 1.4;
+    display: block;
+  }
+  .news-title:hover {
+    color: var(--text-link);
+    text-decoration: underline;
+  }
+  .news-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 5px;
+  }
+
+  /* Skeletons */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--radius);
+  }
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  .inline-title-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-link);
+    vertical-align: -3px;
+    margin-right: 6px;
+  }
+  .empty-state .empty-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="explore-container">
+  
+  <!-- Top header row -->
+  <div class="explore-header">
+    <div class="explore-title-group">
+      <h1>Khám phá Hệ sinh thái</h1>
+      <p>Khám phá các dự án xu hướng, tin tức hàng đầu cho developer và các framework AI / LLM tiên tiến nhất.</p>
+    </div>
+    
+    <!-- Language & Days Filters -->
+    <div class="filter-bar">
+      <div id="language-buttons" style="display:flex; gap:6px;">
+        <button class="lang-btn active" data-lang="all">Tất cả</button>
+        <button class="lang-btn" data-lang="python">Python</button>
+        <button class="lang-btn" data-lang="javascript">JavaScript</button>
+        <button class="lang-btn" data-lang="typescript">TypeScript</button>
+        <button class="lang-btn" data-lang="go">Go</button>
+        <button class="lang-btn" data-lang="rust">Rust</button>
+      </div>
+      
+      <select id="timeframe-select" class="select-timeframe">
+        <option value="7">Tuần qua</option>
+        <option value="30">Tháng qua</option>
+        <option value="3">3 ngày qua</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Skeletons while fetching data -->
+  <div id="explore-skeleton">
+    <div class="explore-feed">
+      <div>
+        <div class="section-title">Kho Lưu Trữ Thịnh Hành</div>
+        <div class="repos-grid">
+          <div class="skeleton" style="height: 150px;"></div>
+          <div class="skeleton" style="height: 150px;"></div>
+          <div class="skeleton" style="height: 150px;"></div>
+          <div class="skeleton" style="height: 150px;"></div>
+        </div>
+      </div>
+      <div>
+        <div class="skeleton" style="height: 400px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main content layout -->
+  <div id="explore-content" style="display:none;" class="explore-container">
+    
+    <div class="explore-feed">
+      
+      <!-- Column 1: Trending Repos -->
+      <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div class="section-title" style="margin-bottom:0">
+            <span data-icon="flame"></span> Xu hướng GitHub <span class="section-count" id="trending-count">0</span>
+          </div>
+        </div>
+        <div class="repos-grid" id="trending-repos-grid">
+          <!-- Loaded via JS -->
+        </div>
+
+        <div class="section-title" style="margin-top: 30px; margin-bottom: 12px;">
+          <span data-icon="bot"></span> Công Cụ AI & Dev Nổi Bật <span class="section-count" id="ai-count">0</span>
+        </div>
+        <div class="repos-grid" id="ai-repos-grid">
+          <!-- Loaded via JS -->
+        </div>
+      </div>
+
+      <!-- Column 2: Hacker News Feed -->
+      <div>
+        <div class="news-card">
+          <div class="section-title" style="border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+            <span data-icon="newspaper"></span> Tin tức Developer (Hacker News)
+          </div>
+          <div class="news-list" id="hn-news-list">
+            <!-- Loaded via JS -->
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+let currentLanguage = 'all';
+let currentTimeframe = 7;
+
+document.addEventListener("DOMContentLoaded", () => {
+  hydrateStaticIcons();
+  // Load initial data
+  loadExploreData();
+
+  // Setup language buttons
+  const buttons = document.querySelectorAll("#language-buttons .lang-btn");
+  buttons.forEach(btn => {
+    btn.addEventListener("click", (e) => {
+      buttons.forEach(b => b.classList.remove("active"));
+      e.target.classList.add("active");
+      currentLanguage = e.target.getAttribute("data-lang");
+      loadTrendingOnly(); // quick fetch just for trending repos to feel ultra fast
+    });
+  });
+
+  // Setup timeframe select
+  document.getElementById("timeframe-select").addEventListener("change", (e) => {
+    currentTimeframe = parseInt(e.target.value);
+    loadTrendingOnly();
+  });
+});
+
+function iconSvg(name) {
+  const icons = {
+    flame: '<path d="M8.5 14.5A2.5 2.5 0 0 0 11 17c1.38 0 2.5-1.12 2.5-2.5 0-.77-.35-1.46-.9-1.92-.7-.59-1.1-1.43-1.1-2.34 0-1.2.68-2.23 1.67-2.75A7 7 0 1 1 5 14.5c0-1.86.73-3.55 1.93-4.8.27 1.8.83 3.4 1.57 4.8Z"/>',
+    bot: '<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/>',
+    newspaper: '<path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a4 4 0 0 1-4-4V6"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/>',
+    inbox: '<polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
+    star: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>',
+    fork: '<circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v1a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V9"/><path d="M12 12v3"/>',
+    message: '<path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>',
+    triangle: '<path d="m12 5 8 14H4Z"/>'
+  };
+  return `<svg class="inline-title-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.inbox}</svg>`;
+}
+
+function hydrateStaticIcons() {
+  document.querySelectorAll("[data-icon]").forEach((el) => {
+    el.innerHTML = iconSvg(el.dataset.icon);
+  });
+}
+
+async function loadExploreData() {
+  showSkeletons();
+  try {
+    const data = await fetchAnalytics(`/api/v1/explore/trending?language=${currentLanguage}&days=${currentTimeframe}`);
+    
+    // Hide skeleton and show content
+    document.getElementById("explore-skeleton").style.display = "none";
+    document.getElementById("explore-content").style.display = "flex";
+
+    renderTrending(data.trending_repos);
+    renderAI(data.ai_tools);
+    renderHN(data.hn_news);
+  } catch (err) {
+    console.error(err);
+    showError("Không thể tải bảng tin hệ sinh thái developer.");
+  }
+}
+
+async function loadTrendingOnly() {
+  const grid = document.getElementById("trending-repos-grid");
+  grid.innerHTML = `
+    <div class="skeleton" style="height: 150px; grid-column: 1/-1;"></div>
+  `;
+  try {
+    const data = await fetchAnalytics(`/api/v1/explore/trending?language=${currentLanguage}&days=${currentTimeframe}`);
+    renderTrending(data.trending_repos);
+  } catch (err) {
+    console.error(err);
+    showError("Lọc các repository thịnh hành thất bại.");
+  }
+}
+
+function showSkeletons() {
+  document.getElementById("explore-skeleton").style.display = "block";
+  document.getElementById("explore-content").style.display = "none";
+}
+
+function renderTrending(repos) {
+  const grid = document.getElementById("trending-repos-grid");
+  document.getElementById("trending-count").textContent = repos.length;
+  grid.innerHTML = "";
+  
+  if (repos.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1;">
+        <div class="empty-icon">${iconSvg("inbox")}</div>
+        <h3>Không tìm thấy repository thịnh hành nào</h3>
+        <p>Hãy thử thay đổi bộ lọc ngôn ngữ hoặc mở rộng khoảng thời gian.</p>
+      </div>
+    `;
+    return;
+  }
+
+  repos.forEach(repo => {
+    grid.appendChild(createRepoCard(repo));
+  });
+}
+
+function renderAI(repos) {
+  const grid = document.getElementById("ai-repos-grid");
+  document.getElementById("ai-count").textContent = repos.length;
+  grid.innerHTML = "";
+  
+  if (repos.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column: 1/-1;">
+        <div class="empty-icon">${iconSvg("bot")}</div>
+        <h3>Không có repository AI nào khả dụng</h3>
+      </div>
+    `;
+    return;
+  }
+
+  repos.forEach(repo => {
+    grid.appendChild(createRepoCard(repo));
+  });
+}
+
+function renderHN(articles) {
+  const list = document.getElementById("hn-news-list");
+  list.innerHTML = "";
+  
+  if (articles.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state" style="padding: 20px 0;">
+        <div class="empty-icon">${iconSvg("newspaper")}</div>
+        <p>Hiện tại không có tin tức nào được lưu trữ.</p>
+      </div>
+    `;
+    return;
+  }
+
+  articles.forEach(art => {
+    const item = document.createElement("div");
+    item.className = "news-item";
+    
+    // Calculate readable timestamp
+    const dateStr = new Date(art.time * 1000).toLocaleTimeString('vi-VN', {
+      hour: '2-digit', minute: '2-digit'
+    }) + " - " + new Date(art.time * 1000).toLocaleDateString('vi-VN', {
+      month: 'short', day: 'numeric'
+    });
+
+    item.innerHTML = `
+      <a href="${art.url}" target="_blank" rel="noopener noreferrer" class="news-title">
+        ${art.title}
+      </a>
+      <div class="news-meta">
+        <span>${iconSvg("triangle")} ${art.score} điểm bởi <strong>${art.by}</strong></span>
+        <a href="${art.hn_url}" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted); text-decoration:none;">
+          ${iconSvg("message")} ${art.comments}
+        </a>
+      </div>
+      <div style="font-size: 10px; color:var(--text-muted); margin-top:2px;">
+        ${dateStr}
+      </div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+function createRepoCard(repo) {
+  const card = document.createElement("div");
+  card.className = "repo-card";
+  
+  const desc = repo.description || "Không có mô tả.";
+  const langBadge = repo.language ? `<span class="repo-tag">${repo.language}</span>` : "";
+  
+  card.innerHTML = `
+    <div>
+      <div class="repo-card-header">
+        <img class="repo-avatar" src="${repo.owner_avatar}" alt="${repo.owner_login}" onerror="this.style.display='none'">
+        <a href="${repo.html_url}" target="_blank" rel="noopener noreferrer" class="repo-name">
+          ${repo.full_name}
+        </a>
+      </div>
+      <p class="repo-desc">${desc}</p>
+    </div>
+    <div class="repo-meta">
+      <div class="repo-meta-left">
+        <span>${iconSvg("star")} ${repo.stars.toLocaleString()}</span>
+        <span>${iconSvg("fork")} ${repo.forks.toLocaleString()}</span>
+      </div>
+      ${langBadge}
+    </div>
+  `;
+  return card;
+}
+</script>
+{% endblock %}

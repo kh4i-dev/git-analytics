@@ -1,0 +1,116 @@
+<header class="topbar">
+  <div class="topbar-left">
+    <span class="topbar-crumb">
+      {% if active_page == 'global_dashboard' %}
+        <span class="topbar-page">Bảng Điều Khiển</span>
+      {% elif active_page == 'repositories' %}
+        <span class="topbar-page">Kho Lưu Trữ</span>
+      {% elif active_page == 'explore' %}
+        <span class="topbar-page">Khám Phá</span>
+      {% elif active_page == 'settings' %}
+        <span class="topbar-page">Cài Đặt</span>
+      {% elif active_page == 'account' %}
+        <span class="topbar-page">Tài Khoản</span>
+      {% elif active_page == 'sync_status' %}
+        <span class="topbar-page">Trạng Thái Đồng Bộ</span>
+      {% elif active_page == 'developer_news' %}
+        <span class="topbar-page">Tin Tức Developer</span>
+      {% elif active_page == 'ai_tools' %}
+        <span class="topbar-page">Công Cụ AI</span>
+      {% else %}
+        <!-- Repo specific pages -->
+        <a href="/repositories">Kho Lưu Trữ</a>
+        {% if repo %}
+          <span class="topbar-crumb-sep">/</span>
+          <a href="/dashboard/{{ repo.id }}">{{ repo.full_name }}</a>
+          {% if active_page != 'overview' %}
+            <span class="topbar-crumb-sep">/</span>
+            <span class="topbar-page">{% block page_title %}{% endblock %}</span>
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    </span>
+  </div>
+
+  <div class="topbar-right">
+    {% if user %}
+      <span class="topbar-user-chip">
+        <span class="topbar-user-dot">{{ user.github_login[0].upper() if user and user.github_login else 'U' }}</span>
+        <span class="topbar-user-name">{{ user.github_login if user else '' }}</span>
+      </span>
+    {% endif %}
+    {% if repo %}
+      {% set s = repo.last_sync_status %}
+      <span class="sync-badge {{ s }}">
+        {% if s == 'success' %}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        {% elif s == 'failed' %}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        {% elif s == 'syncing' %}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        {% else %}
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
+        {% endif %}
+        {% if s == 'success' %}Thành công{% elif s == 'failed' %}Thất bại{% elif s == 'syncing' %}Đang đồng bộ{% else %}Chờ xử lý{% endif %}
+      </span>
+      <form method="post" action="/repositories/{{ repo.id }}/sync" style="margin:0" class="js-submit-form">
+        <button type="submit" class="btn btn-outline btn-sm js-loading-btn">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-label">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+            Đồng Bộ
+          </span>
+        </button>
+      </form>
+    {% endif %}
+  </div>
+</header>
+
+<style>
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+    gap: 12px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 8px; }
+  .topbar-crumb { font-size: 13px; color: var(--text-muted); }
+  .topbar-crumb a { color: var(--text-link); text-decoration: none; font-weight: 500; }
+  .topbar-crumb a:hover { text-decoration: underline; }
+  .topbar-crumb-sep { margin: 0 6px; color: var(--border); }
+  .topbar-page { font-size: 13px; font-weight: 600; color: var(--text); }
+
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+
+  .topbar-user-chip {
+    display: flex; align-items: center; gap: 6px;
+    padding: 3px 10px 3px 4px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 12px; font-weight: 500; color: var(--text-muted);
+  }
+  .topbar-user-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: linear-gradient(135deg, #58a6ff, var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .topbar-user-name { white-space: nowrap; }
+
+  .sync-badge {
+    display: flex; align-items: center; gap: 5px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px; font-weight: 600;
+    border: 1px solid transparent;
+    text-transform: capitalize;
+  }
+  .sync-badge.success { background: var(--success-bg); color: var(--success-text); border-color: var(--success-border); }
+  .sync-badge.pending { background: var(--warn-bg);    color: var(--warn-text);    border-color: var(--warn-border); }
+  .sync-badge.failed  { background: var(--danger-bg);  color: var(--danger-text);  border-color: var(--danger); }
+  .sync-badge.syncing { background: var(--info-bg);    color: var(--info-text);    border-color: var(--info-border); }
+</style>
