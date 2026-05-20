@@ -31,8 +31,9 @@ def _get_user_id(request: Request, db) -> int:
 async def api_insights(
     request: Request,
     repo_id: int,
+    branch: str | None = None,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     user_id = _get_user_id(request, db)
-    data = InsightsService(db).get_insights(user_id, repo_id)
+    data = InsightsService(db).get_insights(user_id, repo_id, branch)
     return JSONResponse(success_response(request, data))

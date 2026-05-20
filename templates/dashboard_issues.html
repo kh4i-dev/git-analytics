@@ -51,7 +51,7 @@
   <div class="dashboard-title-group">
     <h1>Phân Tích Issue — {{ repo.name }}</h1>
     {% include 'components/repository_context.html' %}
-    <p>Tỷ lệ giải quyết, thống kê nhãn, phân bố trạng thái và lịch sử issue tracker.</p>
+    <p>Thống kê tỷ lệ giải quyết, nhãn và lịch sử issue.</p>
   </div>
 </div>
 
@@ -66,13 +66,13 @@
 <!-- Charts -->
 <div class="charts-grid">
   <div class="chart-card">
-    <div class="chart-title">Đang Mở vs Đã Đóng</div>
+    <div class="chart-title">Tình Trạng Issue</div>
     <div class="chart-wrap" id="wrap-state">
       <div class="chart-skeleton skeleton"></div>
     </div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Issue Theo Nhãn</div>
+    <div class="chart-title">Phân Bố Nhãn</div>
     <div class="chart-wrap" id="wrap-labels">
       <div class="chart-skeleton skeleton"></div>
     </div>
@@ -80,7 +80,7 @@
 </div>
 
 <!-- Issues table -->
-<div class="section-title">Issue Gần Đây <span id="badge-count" class="section-count">…</span></div>
+<div class="section-title">Issue Mới Nhất <span id="badge-count" class="section-count">…</span></div>
 <div class="table-wrap" id="issue-table">
   <div style="padding:32px;text-align:center">
     <div class="skeleton" style="height:14px;width:50%;margin:auto"></div>
@@ -118,15 +118,15 @@ async function load() {
       <div class="card-value">${s.total.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Đang Mở</div>
+      <div class="card-title">Open</div>
       <div class="card-value" style="color:var(--warn-text)">${s.open.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Đã Đóng</div>
+      <div class="card-title">Closed</div>
       <div class="card-value" style="color:var(--success-text)">${s.closed.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Tgian Đóng TB</div>
+      <div class="card-title">Close Time TB</div>
       <div class="card-value">${s.avg_close_time_hours !== null ? s.avg_close_time_hours + 'h' : '—'}</div>
       <div class="card-sub">giờ</div>
     </div>`;
@@ -136,7 +136,7 @@ async function load() {
   new Chart(document.getElementById('chart-state'), {
     type: 'doughnut',
     data: {
-      labels: ['Đang Mở','Đã Đóng'],
+      labels: ['Open','Closed'],
       datasets: [{
         data: [s.open, s.closed],
         backgroundColor: ['#e3b341','#3fb950'],
@@ -175,7 +175,7 @@ async function load() {
     document.getElementById('wrap-labels').innerHTML =
       `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" x2="7.01" y1="7" y2="7"/></svg></div>
-        <h3>Không có dữ liệu nhãn</h3>
+        <h3>Chưa ghi nhận nhãn</h3>
       </div>`;
   }
 
@@ -203,8 +203,8 @@ async function load() {
     document.getElementById('issue-table').innerHTML =
       `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <h3>Chưa có Issue</h3>
-        <p>Đồng bộ repository để tải dữ liệu issue.</p>
+        <h3>Chưa có issue nào</h3>
+        <p>Dữ liệu issue hiển thị sau khi đồng bộ.</p>
       </div>`;
   }
 }

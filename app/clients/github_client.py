@@ -73,10 +73,13 @@ class GitHubClient:
         owner: str,
         repo: str,
         since: datetime | str | None = None,
+        sha: str | None = None,
     ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {}
         if since is not None:
             params["since"] = self._format_datetime(since)
+        if sha:
+            params["sha"] = sha
         return await self._paginate(f"/repos/{owner}/{repo}/commits", params=params)
 
     async def list_pull_requests(
@@ -118,6 +121,9 @@ class GitHubClient:
 
     async def list_contributors(self, owner: str, repo: str) -> list[dict[str, Any]]:
         return await self._paginate(f"/repos/{owner}/{repo}/contributors")
+
+    async def list_branches(self, owner: str, repo: str) -> list[dict[str, Any]]:
+        return await self._paginate(f"/repos/{owner}/{repo}/branches")
 
     async def _paginate(
         self,

@@ -25,6 +25,7 @@ class PullRequest(Base):
     __table_args__ = (
         UniqueConstraint("repo_id", "number", name="uq_pull_requests_repo_number"),
         Index("ix_prs_repo_state", "repo_id", "state"),
+        Index("ix_prs_repo_base_branch", "repo_id", "base_branch"),
         Index("ix_prs_repo_created", "repo_id", "created_at"),
         Index("ix_prs_repo_merged", "repo_id", "merged_at"),
     )
@@ -39,6 +40,8 @@ class PullRequest(Base):
     )
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str] = mapped_column(String(500), nullable=False)
+    base_branch: Mapped[str | None] = mapped_column(String(255))
+    head_branch: Mapped[str | None] = mapped_column(String(255))
     state: Mapped[str] = mapped_column(String(20), nullable=False)
     is_merged: Mapped[bool] = mapped_column(
         Boolean,

@@ -8,13 +8,13 @@
   <div class="dh-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
     <div>
       <h1 style="font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px;">Trạng Thái Đồng Bộ</h1>
-      <p style="font-size: 14px; color: var(--text-muted);">Theo dõi hoạt động đồng bộ với GitHub API, tốc độ xử lý dữ liệu và giới hạn Rate Limit.</p>
+      <p style="font-size: 14px; color: var(--text-muted);">Theo dõi trạng thái đồng bộ, tốc độ xử lý và giới hạn API.</p>
     </div>
     
     <div>
       <a href="/repositories" class="btn btn-primary">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        Quản lý Repositories
+        Quản Lý Repository
       </a>
     </div>
   </div>
@@ -39,7 +39,7 @@
     <!-- Sync Statistics Card -->
     <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
       <div>
-        <div class="card-title">Tần suất & Tốc độ</div>
+        <div class="card-title">Sync Frequency</div>
         <div class="card-value" style="font-size: 36px;">{{ sync_stats.success_count }} <span style="font-size: 18px; color: var(--text-muted);">/ {{ sync_stats.total }} Repos</span></div>
       </div>
       <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px; display: flex; justify-content: space-between;">
@@ -51,7 +51,7 @@
     <!-- System Performance Card -->
     <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
       <div>
-        <div class="card-title">Thời gian Đồng Bộ TB</div>
+        <div class="card-title">Sync Time TB</div>
         <div class="card-value" style="font-size: 36px;">{{ sync_stats.avg_duration_str }}</div>
       </div>
       <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px;">
@@ -63,8 +63,8 @@
   <!-- Repository Logs Grid -->
   <div style="margin-top: 24px;">
     <div class="section-title">
-      Chi tiết nhật ký hoạt động đồng bộ
-      <span class="section-count">{{ repos | length }} repositories</span>
+      Lịch Sử Đồng Bộ
+      <span class="section-count">{{ repos | length }} repository</span>
     </div>
     
     <div class="table-wrap">
@@ -134,8 +134,8 @@
           <div class="empty-icon">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           </div>
-          <h3>Không tìm thấy repository nào</h3>
-          <p>Hãy import repository đầu tiên từ GitHub để bắt đầu đồng bộ.</p>
+          <h3>Chưa có repository</h3>
+          <p>Import repository từ GitHub để bắt đầu đồng bộ dữ liệu.</p>
         </div>
       {% endif %}
     </div>

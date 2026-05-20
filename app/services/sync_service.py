@@ -1,6 +1,7 @@
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
+import json
 from typing import Any, Protocol
 
 from sqlalchemy.orm import Session
@@ -18,6 +19,7 @@ from app.core.security import decrypt_token
 from app.models.contributor import Contributor
 from app.models.repository import Repository
 from app.repositories import (
+    BranchRepository,
     CommitRepository,
     ContributorRepository,
     IssueRepository,
@@ -37,7 +39,10 @@ class GitHubClientProtocol(Protocol):
         owner: str,
         repo: str,
         since: datetime | str | None = None,
+        sha: str | None = None,
     ) -> list[dict[str, Any]]: ...
+
+    async def list_branches(self, owner: str, repo: str) -> list[dict[str, Any]]: ...
 
     async def list_pull_requests(
         self,
@@ -93,6 +98,7 @@ class SyncService:
         self.user_repo = UserRepository(db)
         self.repository_repo = RepositoryRepository(db)
         self.contributor_repo = ContributorRepository(db)
+        self.branch_repo = BranchRepository(db)
         self.commit_repo = CommitRepository(db)
         self.pull_request_repo = PullRequestRepository(db)
         self.issue_repo = IssueRepository(db)
@@ -185,7 +191,48 @@ class SyncService:
         repo = repository.name
 
         raw_contributors = await client.list_contributors(owner, repo)
-        raw_commits = await client.list_commits(owner, repo, since=since)
+        raw_branches = await self._list_branches(client, repository)
+        branches_to_sync = self._branches_to_sync(repository, raw_branches)
+        branch_rows = [
+            {
+                "repository_id": repository.id,
+                "github_branch_name": branch["name"],
+                "is_default": branch["name"] == repository.default_branch,
+                "last_commit_sha": (branch.get("commit") or {}).get("sha"),
+            }
+            for branch in raw_branches
+            if isinstance(branch.get("name"), str)
+        ]
+        branches_count = self.branch_repo.upsert_many(branch_rows)
+
+        raw_commits: list[dict[str, Any]] = []
+        branch_last_sha: dict[str, str | None] = {}
+        existing_branches = {
+            branch.github_branch_name: branch
+            for branch in self.branch_repo.list_by_repo(repository.id)
+        }
+        for branch_name in branches_to_sync:
+            branch = existing_branches.get(branch_name)
+            branch_since = self._ensure_utc(branch.synced_at) if branch else None
+            if branch_since is None:
+                branch_since = since
+            branch_commits = await self._list_commits_for_branch(
+                client,
+                owner,
+                repo,
+                since=branch_since,
+                branch_name=branch_name,
+            )
+            if branch_commits:
+                branch_last_sha[branch_name] = branch_commits[0].get("sha")
+            else:
+                branch_last_sha[branch_name] = (
+                    branch.last_commit_sha if branch else None
+                )
+            for raw_commit in branch_commits:
+                raw_commit["_branch_name"] = branch_name
+                raw_commits.append(raw_commit)
+
         raw_pull_requests = await client.list_pull_requests(
             owner,
             repo,
@@ -224,8 +271,17 @@ class SyncService:
         commits_count = self.commit_repo.upsert_many(commit_rows)
         pull_requests_count = self.pull_request_repo.upsert_many(pull_request_rows)
         issues_count = self.issue_repo.upsert_many(issue_rows)
+        synced_at = self._utc_now()
+        for branch_name, last_sha in branch_last_sha.items():
+            self.branch_repo.mark_synced(
+                repository.id,
+                branch_name,
+                last_commit_sha=last_sha,
+                synced_at=synced_at,
+            )
 
         return {
+            "branches": branches_count,
             "contributors": contributors_count,
             "commits": commits_count,
             "pull_requests": pull_requests_count,
@@ -258,6 +314,7 @@ class SyncService:
             "repo_id": repo_id,
             "contributor_id": contributor.id if contributor else None,
             "sha": raw["sha"],
+            "branch_name": raw.get("_branch_name"),
             "message": commit.get("message"),
             "author_name": author.get("name") or author_login or "Unknown",
             "author_email": author_email,
@@ -292,6 +349,8 @@ class SyncService:
             "contributor_id": contributor.id if contributor else None,
             "number": raw["number"],
             "title": raw.get("title") or "",
+            "base_branch": (raw.get("base") or {}).get("ref"),
+            "head_branch": (raw.get("head") or {}).get("ref"),
             "state": raw.get("state") or "closed",
             "is_merged": raw.get("merged_at") is not None,
             "author_login": author_login,
@@ -386,6 +445,83 @@ class SyncService:
                 "source_type": "github_user" if github_login else "git_email",
             }
         )
+
+    async def _list_branches(
+        self,
+        client: GitHubClientProtocol,
+        repository: Repository,
+    ) -> list[dict[str, Any]]:
+        list_branches = getattr(client, "list_branches", None)
+        if list_branches is None:
+            return self._default_branch_payload(repository)
+        branches = await list_branches(repository.owner, repository.name)
+        if branches:
+            return branches
+        return self._default_branch_payload(repository)
+
+    async def _list_commits_for_branch(
+        self,
+        client: GitHubClientProtocol,
+        owner: str,
+        repo: str,
+        *,
+        since: datetime | None,
+        branch_name: str,
+    ) -> list[dict[str, Any]]:
+        try:
+            return await client.list_commits(owner, repo, since=since, sha=branch_name)
+        except TypeError:
+            return await client.list_commits(owner, repo, since=since)
+
+    def _default_branch_payload(self, repository: Repository) -> list[dict[str, Any]]:
+        branch_name = repository.default_branch or "main"
+        return [{"name": branch_name, "commit": {"sha": None}}]
+
+    def _branches_to_sync(
+        self,
+        repository: Repository,
+        raw_branches: list[dict[str, Any]],
+    ) -> list[str]:
+        names = [
+            branch["name"]
+            for branch in raw_branches
+            if isinstance(branch.get("name"), str)
+        ]
+        if not names:
+            return [repository.default_branch or "main"]
+
+        mode = repository.branch_sync_mode or "default_only"
+        if mode == "all":
+            return names
+        if mode == "selected":
+            selected = self._selected_branch_patterns(repository.selected_branches)
+            matched = [
+                name
+                for name in names
+                if any(self._branch_matches(name, pattern) for pattern in selected)
+            ]
+            return matched or [repository.default_branch or names[0]]
+        default_branch = repository.default_branch or names[0]
+        return [default_branch] if default_branch in names else [names[0]]
+
+    def _selected_branch_patterns(self, value: str | None) -> list[str]:
+        if not value:
+            return []
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return [item.strip() for item in value.split(",") if item.strip()]
+        if isinstance(parsed, list):
+            return [str(item).strip() for item in parsed if str(item).strip()]
+        return []
+
+    def _branch_matches(self, name: str, pattern: str) -> bool:
+        if pattern == name:
+            return True
+        if "*" not in pattern:
+            return False
+        prefix, _, suffix = pattern.partition("*")
+        return name.startswith(prefix) and name.endswith(suffix)
 
     def _mark_failed(self, repo_id: int, exc: Exception) -> None:
         try:

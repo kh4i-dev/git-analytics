@@ -196,7 +196,7 @@
   <div class="dashboard-title-group">
     <h1>Insights</h1>
     {% include 'components/repository_context.html' %}
-    <p>Số liệu nâng cao và phân tích chuyên sâu cho {{ repo.name }}.</p>
+    <p>Phân tích chuyên sâu về hiệu suất coding cho {{ repo.name }}.</p>
   </div>
 </div>
 
@@ -226,27 +226,27 @@
       <div class="card" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
         <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;" class="card-title">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Hoạt động Code
+          Coding Activity
         </div>
         
         <div style="border-right: 1px solid var(--border); padding-right: 10px;">
-          <div class="card-sub" style="font-size: 11px;">CHUỖI HIỆN TẠI</div>
+          <div class="card-sub" style="font-size: 11px;">STREAK HIỆN TẠI</div>
           <div class="card-value" id="current-streak">0</div>
           <div class="card-sub">ngày liên tiếp</div>
         </div>
         <div>
-          <div class="card-sub" style="font-size: 11px;">CHUỖI DÀI NHẤT</div>
+          <div class="card-sub" style="font-size: 11px;">STREAK KỶ LỤC</div>
           <div class="card-value" id="longest-streak">0</div>
-          <div class="card-sub">kỷ lục mọi thời đại</div>
+          <div class="card-sub">cao nhất mọi thời đại</div>
         </div>
         
         <div style="border-top: 1px solid var(--border); padding-top: 12px;">
-          <div class="card-sub" style="font-size:11px;">NGÀY HOẠT ĐỘNG</div>
+          <div class="card-sub" style="font-size:11px;">NGÀY CODE</div>
           <div class="card-value" style="font-size:22px" id="active-days">0</div>
           <div class="card-sub" id="avg-commits-per-day">0.0 commit/ngày</div>
         </div>
         <div style="border-top: 1px solid var(--border); padding-top: 12px;">
-          <div class="card-sub" style="font-size:11px;">GIỜ CAO ĐIỂM</div>
+          <div class="card-sub" style="font-size:11px;">PEAK TIME</div>
           <div class="card-value" style="font-size:16px; margin-top:6px; font-weight:600;" id="peak-hour-band">-</div>
           <div class="card-sub" id="busiest-month">Tháng bận rộn nhất: -</div>
         </div>
@@ -256,7 +256,7 @@
       <div class="score-card card">
         <div>
           <div class="score-header">
-            <span class="card-title" style="color: rgba(255,255,255,0.7); margin-bottom: 0;">Điểm Hoạt động Hệ thống</span>
+            <span class="card-title" style="color: rgba(255,255,255,0.7); margin-bottom: 0;">Activity Score</span>
             <span class="score-level-badge" id="score-level">-</span>
           </div>
           <div class="score-display">
@@ -265,7 +265,7 @@
           </div>
         </div>
         <div class="score-desc" id="score-details">
-          Không có hoạt động nào được ghi nhận trong 30 ngày qua. Hãy code để tăng điểm số của bạn!
+          Chưa ghi nhận hoạt động trong 30 ngày qua. Viết code để tăng điểm!
         </div>
       </div>
 
@@ -273,7 +273,7 @@
 
     <!-- Heatmap Row -->
     <div class="chart-card heatmap-card">
-      <div class="chart-title">Bản đồ nhiệt Đóng góp (365 ngày qua)</div>
+      <div class="chart-title">Contribution Heatmap (365 ngày)</div>
       <div class="heatmap-container" style="overflow-x: auto; padding-bottom: 8px;">
         <div style="display: flex; gap: 8px; align-items: start; min-width: 720px;">
           <div class="heatmap-weekdays" style="display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; font-size: 9px; color: var(--text-muted); line-height: 11px; padding-top: 1px;">
@@ -291,7 +291,7 @@
         </div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: var(--text-muted);">
-        <div id="heatmap-cell-hover-details">Rê chuột vào các ô để xem chi tiết hoạt động</div>
+        <div id="heatmap-cell-hover-details">Di chuột qua ô để xem chi tiết</div>
         <div style="display: flex; align-items: center; gap: 4px;">
           <span>Ít</span>
           <div style="background:#161b22; width:11px; height:11px; border-radius:2px;"></div>
@@ -309,7 +309,7 @@
       
       <!-- Commit Keyword Distribution -->
       <div class="chart-card">
-        <div class="chart-title">Từ khóa Conventional Commit</div>
+        <div class="chart-title">Conventional Commit Keywords</div>
         <div class="chart-wrap">
           <canvas id="keywordChart"></canvas>
         </div>
@@ -317,7 +317,7 @@
 
       <!-- Commit Timing (Peak Hour) -->
       <div class="chart-card">
-        <div class="chart-title">Hiệu suất theo Giờ trong Ngày (UTC)</div>
+        <div class="chart-title">Hiệu Suất Theo Giờ (UTC)</div>
         <div class="chart-wrap">
           <canvas id="hourChart"></canvas>
         </div>
@@ -325,7 +325,7 @@
 
       <!-- Commits by Day of Week -->
       <div class="chart-card">
-        <div class="chart-title">Hoạt động theo Thứ trong Tuần</div>
+        <div class="chart-title">Hoạt Động Theo Ngày</div>
         <div class="chart-wrap">
           <canvas id="weekdayChart"></canvas>
         </div>
@@ -337,15 +337,15 @@
     <div>
       <div class="section-title" style="display:flex;align-items:center;gap:8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg>
-        Phân tích Pull Request
+        Pull Request Insights
       </div>
       <div class="intel-grid">
         
         <div class="intel-card">
-          <span class="intel-card-title">Tỷ lệ Thành công</span>
+          <span class="intel-card-title">Tỷ Lệ Merge</span>
           <div class="intel-card-value" id="pr-success-pct">0%</div>
           <div>
-            <div class="intel-card-sub" id="pr-counts">0 đã merge / 0 tổng số</div>
+            <div class="intel-card-sub" id="pr-counts">0 merged / 0 total</div>
             <div class="progress-bar-container">
               <div class="progress-bar-fill" id="pr-success-progress" style="width: 0%; background: var(--success-text);"></div>
             </div>
@@ -353,13 +353,13 @@
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">Tốc độ Merge Trung bình</span>
+          <span class="intel-card-title">Tốc Độ Merge TB</span>
           <div class="intel-card-value" id="pr-merge-speed">-</div>
           <span class="intel-card-sub" id="pr-throughput">0.0 PR / tuần</span>
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">Thời gian PR Tồn đọng</span>
+          <span class="intel-card-title">PR Tồn Đọng</span>
           <div class="intel-card-value" id="pr-aging">-</div>
           <span class="intel-card-sub" id="pr-open-count">0 pull request đang mở</span>
         </div>
@@ -371,18 +371,32 @@
     <div style="margin-top: 10px;">
       <div class="section-title" style="display:flex;align-items:center;gap:8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-        Phân tích Issue
+        Issue Insights
       </div>
       <div class="intel-grid">
         
         <div class="intel-card">
-          <span class="intel-card-title">Hiệu suất Đóng Issue</span>
+          <span class="intel-card-title">Tỷ Lệ Đóng</span>
           <div class="intel-card-value" id="issue-closure-pct">0%</div>
           <div>
-            <div class="intel-card-sub" id="issue-counts">0 đã đóng / 0 tổng số</div>
+            <div class="intel-card-sub" id="issue-counts">0 closed / 0 total</div>
             <div class="progress-bar-container">
               <div class="progress-bar-fill" id="issue-closure-progress" style="width: 0%; background: var(--purple);"></div>
             </div>
+          </div>
+        </div>
+
+        <div class="intel-card">
+          <span class="intel-card-title">Close Time TB</span>
+          <div class="intel-card-value" id="issue-close-speed">-</div>
+          <span class="intel-card-sub" id="issue-open-count">0 issue đang mở</span>
+        </div>
+
+        <div class="intel-card">
+          <span class="intel-card-title">Bug / Feature Ratio</span>
+          <div class="intel-card-value" id="issue-ratio">-</div>
+          <span class="intel-card-sub" id="issue-bug-feature">0 bug / 0 feature</span>
+        </div>
           </div>
         </div>
 
@@ -491,7 +505,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       
       cell.addEventListener("mouseleave", () => {
-        hoverDetails.textContent = "Rê chuột vào các ô để xem chi tiết hoạt động";
+        hoverDetails.textContent = "Di chuột qua ô để xem chi tiết";
       });
       
       grid.appendChild(cell);

@@ -283,6 +283,16 @@ function switchRepo(repoId) {
   window.location.href = targetUrl;
 }
 
+function switchBranchFilter(branch) {
+  const url = new URL(window.location.href);
+  if (!branch || branch === 'all') {
+    url.searchParams.delete('branch');
+  } else {
+    url.searchParams.set('branch', branch);
+  }
+  window.location.href = url.toString();
+}
+
 function showError(msg) {
   const t = document.getElementById('error-toast');
   t.textContent = '✕ ' + msg;
@@ -291,12 +301,28 @@ function showError(msg) {
 }
 
 async function fetchAnalytics(path) {
+  const current = new URL(window.location.href);
+  const branch = current.searchParams.get('branch');
+  if (branch) {
+    const url = new URL(path, window.location.origin);
+    if (!url.searchParams.has('branch')) {
+      url.searchParams.set('branch', branch);
+    }
+    path = url.pathname + url.search;
+  }
   const res = await fetch(path, { credentials: 'same-origin' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json.error) throw new Error(json.error.message);
   return json.data;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  const branchSelect = document.getElementById('branch-filter-select');
+  if (!branchSelect) return;
+  const selected = new URL(window.location.href).searchParams.get('branch') || 'all';
+  branchSelect.value = selected;
+});
 </script>
 {% block page_scripts %}{% endblock %}
 </body>

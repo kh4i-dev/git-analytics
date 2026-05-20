@@ -70,10 +70,11 @@ async def export_global_analytics(
 async def analytics_overview(
     request: Request,
     repo_id: int,
+    branch: str | None = None,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     user_id = _get_user_id(request, db)
-    data = AnalyticsService(db).get_overview(user_id, repo_id)
+    data = AnalyticsService(db).get_overview(user_id, repo_id, branch)
     return JSONResponse(success_response(request, data))
 
 
@@ -81,10 +82,11 @@ async def analytics_overview(
 async def analytics_commits(
     request: Request,
     repo_id: int,
+    branch: str | None = None,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     user_id = _get_user_id(request, db)
-    data = AnalyticsService(db).get_commits(user_id, repo_id)
+    data = AnalyticsService(db).get_commits(user_id, repo_id, branch)
     return JSONResponse(success_response(request, data))
 
 
@@ -92,10 +94,11 @@ async def analytics_commits(
 async def analytics_pull_requests(
     request: Request,
     repo_id: int,
+    branch: str | None = None,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     user_id = _get_user_id(request, db)
-    data = AnalyticsService(db).get_pull_requests(user_id, repo_id)
+    data = AnalyticsService(db).get_pull_requests(user_id, repo_id, branch)
     return JSONResponse(success_response(request, data))
 
 
@@ -103,10 +106,11 @@ async def analytics_pull_requests(
 async def analytics_issues(
     request: Request,
     repo_id: int,
+    branch: str | None = None,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     user_id = _get_user_id(request, db)
-    data = AnalyticsService(db).get_issues(user_id, repo_id)
+    data = AnalyticsService(db).get_issues(user_id, repo_id, branch)
     return JSONResponse(success_response(request, data))
 
 
@@ -114,8 +118,9 @@ async def analytics_issues(
 async def analytics_contributors(
     request: Request,
     repo_id: int,
+    branch: str | None = None,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     user_id = _get_user_id(request, db)
-    data = AnalyticsService(db).get_contributors(user_id, repo_id)
+    data = AnalyticsService(db).get_contributors(user_id, repo_id, branch)
     return JSONResponse(success_response(request, data))

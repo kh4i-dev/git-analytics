@@ -49,9 +49,10 @@
 {% block content %}
 <div class="dashboard-header">
   <div class="dashboard-title-group">
-    <h1>Phân Tích Pull Request — {{ repo.name }}</h1>
+    <span style="position:absolute;left:-9999px;">Pull Requests</span>
+    <h1>Pull Request — {{ repo.name }}</h1>
     {% include 'components/repository_context.html' %}
-    <p>Tỷ lệ merge, tốc độ review, phân bố trạng thái và lịch sử pull request.</p>
+    <p>Review flow, merge speed và các PR gần đây.</p>
   </div>
 </div>
 
@@ -66,13 +67,13 @@
 <!-- Charts -->
 <div class="charts-grid">
   <div class="chart-card">
-    <div class="chart-title">Phân Bố Trạng Thái PR</div>
+    <div class="chart-title">Trạng Thái Review</div>
     <div class="chart-wrap" id="wrap-pr-status">
       <div class="chart-skeleton skeleton"></div>
     </div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Tỷ Lệ Merge</div>
+    <div class="chart-title">Merge Mix</div>
     <div class="chart-wrap" id="wrap-merge-rate">
       <div class="chart-skeleton skeleton"></div>
     </div>
@@ -112,26 +113,26 @@ async function load() {
   try {
     data = await fetchAnalytics(`/api/v1/analytics/${REPO_ID}/pull-requests`);
   } catch(e) {
-    showError('Lỗi tải dữ liệu pull request: ' + e.message);
+    showError('Không tải được pull request: ' + e.message);
     return;
   }
 
   const s = data.summary;
   document.getElementById('stats-grid').innerHTML = `
     <div class="card">
-      <div class="card-title">Tổng PR</div>
+      <div class="card-title">Pull Request</div>
       <div class="card-value">${s.total.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Đã Merge</div>
+      <div class="card-title">Merged</div>
       <div class="card-value" style="color:var(--info-text)">${s.merged.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Đang Mở</div>
+      <div class="card-title">Open</div>
       <div class="card-value" style="color:var(--success-text)">${s.open.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Tgian Merge TB</div>
+      <div class="card-title">Merge Time TB</div>
       <div class="card-value">${s.avg_merge_time_hours !== null ? s.avg_merge_time_hours + 'h' : '—'}</div>
       <div class="card-sub">giờ</div>
     </div>`;
@@ -141,9 +142,9 @@ async function load() {
   new Chart(document.getElementById('chart-pr-status'), {
     type: 'doughnut',
     data: {
-      labels: ['Đã Merge','Đang Mở','Đã Đóng'],
-      datasets: [{
-        data: [s.merged, s.open, s.closed],
+      labels: ['Merged','Open','Closed'],
+        datasets: [{
+          data: [s.merged, s.open, s.closed],
         backgroundColor: ['#58a6ff','#3fb950','#8b949e'],
         borderWidth: 0,
       }]
@@ -159,9 +160,9 @@ async function load() {
   new Chart(document.getElementById('chart-merge-rate'), {
     type: 'bar',
     data: {
-      labels: ['Đã Merge','Đang Mở','Đã Đóng'],
-      datasets: [{
-        label: 'Số lượng',
+      labels: ['Merged','Open','Closed'],
+        datasets: [{
+          label: 'Pull Request',
         data: [s.merged, s.open, s.closed],
         backgroundColor: ['#58a6ff','#3fb950','#8b949e'],
         borderRadius: 4,
@@ -197,8 +198,8 @@ async function load() {
     document.getElementById('pr-table').innerHTML =
       `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg></div>
-        <h3>Chưa có Pull Request</h3>
-        <p>Đồng bộ repository để tải dữ liệu pull request.</p>
+        <h3>Chưa có pull request</h3>
+        <p>PR mới sẽ xuất hiện tại đây.</p>
       </div>`;
   }
 }

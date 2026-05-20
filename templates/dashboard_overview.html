@@ -56,7 +56,7 @@
     <h1>{{ repo.name }} — Tổng Quan</h1>
     {% include 'components/repository_context.html' %}
     <p>Nhánh mặc định: <code class="code-branch" style="font-family:monospace;font-size:12px;color:var(--text-muted);background:var(--surface-2);padding:1px 5px;border-radius:4px;border:1px solid var(--border);">{{ repo.default_branch or "—" }}</code>
-    · Cập nhật đồng bộ để xem số liệu mới nhất.
+    · Dữ liệu cập nhật sau mỗi lần đồng bộ.
     </p>
   </div>
 </div>
@@ -73,19 +73,19 @@
 <!-- Charts -->
 <div class="charts-grid">
   <div class="chart-card" style="grid-column: 1 / -1;">
-    <div class="chart-title">Commit Theo Ngày</div>
+    <div class="chart-title">Xu Hướng Commit</div>
     <div class="chart-wrap" id="wrap-commits-timeline">
       <div class="chart-skeleton skeleton"></div>
     </div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Trạng Thái Pull Request</div>
+    <div class="chart-title">Tình Trạng Pull Request</div>
     <div class="chart-wrap-sm" id="wrap-pr-status">
       <div class="chart-skeleton skeleton" style="height:160px"></div>
     </div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Trạng Thái Issue</div>
+    <div class="chart-title">Tình Trạng Issue</div>
     <div class="chart-wrap-sm" id="wrap-issue-status">
       <div class="chart-skeleton skeleton" style="height:160px"></div>
     </div>
@@ -96,21 +96,21 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
   <!-- Recent commits -->
   <div>
-    <div class="section-title">Commit Gần Đây <span id="badge-commits" class="section-count">…</span></div>
+    <div class="section-title">Commit Mới Nhất <span id="badge-commits" class="section-count">…</span></div>
     <div class="table-wrap" id="recent-commits">
       <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
     </div>
   </div>
   <!-- Recent PRs -->
   <div>
-    <div class="section-title">Pull Request Gần Đây <span id="badge-prs" class="section-count">…</span></div>
+    <div class="section-title">Pull Request Mới Nhất <span id="badge-prs" class="section-count">…</span></div>
     <div class="table-wrap" id="recent-prs">
       <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
     </div>
   </div>
   <!-- Recent Issues -->
   <div>
-    <div class="section-title">Issue Gần Đây <span id="badge-issues" class="section-count">…</span></div>
+    <div class="section-title">Issue Mới Nhất <span id="badge-issues" class="section-count">…</span></div>
     <div class="table-wrap" id="recent-issues">
       <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
     </div>
@@ -160,10 +160,10 @@ async function loadOverview() {
   // Stat cards
   document.getElementById('stats-grid').innerHTML =
     mkCard('Tổng Commit', s.total_commits.toLocaleString(), `${s.active_days} ngày hoạt động`) +
-    mkCard('Pull Request', s.total_prs.toLocaleString(), `${s.merged_prs} đã merge · ${s.open_prs} đang mở`) +
-    mkCard('Issue Đang Mở', s.open_issues.toLocaleString(), `${s.closed_issues} đã đóng`) +
-    mkCard('Người Đóng Góp', s.total_contributors.toLocaleString(), '') +
-    mkCard('Đồng Bộ Lần Cuối', data.repository.last_synced_at ? fmtDate(data.repository.last_synced_at) : '—', data.repository.last_sync_status);
+    mkCard('Pull Request', s.total_prs.toLocaleString(), `${s.merged_prs} merged · ${s.open_prs} open`) +
+    mkCard('Issue Mở', s.open_issues.toLocaleString(), `${s.closed_issues} closed`) +
+    mkCard('Contributors', s.total_contributors.toLocaleString(), '') +
+    mkCard('Đồng Bộ', data.repository.last_synced_at ? fmtDate(data.repository.last_synced_at) : '—', data.repository.last_sync_status);
 
   // Commits timeline
   const cpd = data.charts.commits_per_day;
@@ -171,8 +171,8 @@ async function loadOverview() {
     ? '<canvas id="chart-commits"></canvas>'
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></div>
-        <h3>Không có dữ liệu commit</h3>
-        <p>Hãy sync repository để tải dữ liệu commit.</p>
+        <h3>Chưa ghi nhận commit</h3>
+        <p>Kết nối repository để theo dõi lịch sử commit.</p>
       </div>`;
   if (cpd.length) {
     new Chart(document.getElementById('chart-commits'), {
@@ -180,7 +180,7 @@ async function loadOverview() {
       data: {
         labels: cpd.map(d => d.date),
         datasets: [{
-          label: 'Commits',
+          label: 'Số commit',
           data: cpd.map(d => d.count),
           borderColor: '#58a6ff',
           backgroundColor: 'rgba(88,166,255,.1)',
@@ -200,7 +200,7 @@ async function loadOverview() {
   new Chart(document.getElementById('chart-pr'), {
     type: 'doughnut',
     data: {
-      labels: ['Đã Merge', 'Đang Mở', 'Đã Đóng'],
+      labels: ['Merged', 'Open', 'Closed'],
       datasets: [{ data: [prs.merged, prs.open, prs.closed],
         backgroundColor: ['#58a6ff','#3fb950','#8b949e'], borderWidth: 0 }]
     },
@@ -215,7 +215,7 @@ async function loadOverview() {
   new Chart(document.getElementById('chart-issue'), {
     type: 'doughnut',
     data: {
-      labels: ['Đang Mở', 'Đã Đóng'],
+      labels: ['Open', 'Closed'],
       datasets: [{ data: [iss.open, iss.closed],
         backgroundColor: ['#e3b341','#3fb950'], borderWidth: 0 }]
     },
@@ -236,8 +236,8 @@ async function loadOverview() {
         </td></tr>`).join('')}</tbody></table>`
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></div>
-        <h3>Chưa có commit</h3>
-        <p>Đồng bộ repository để tải dữ liệu commit.</p>
+        <h3>Chưa có commit nào</h3>
+        <p>Dữ liệu commit sẽ hiển thị sau khi đồng bộ.</p>
       </div>`;
 
   // Recent PRs
@@ -252,7 +252,7 @@ async function loadOverview() {
         </td></tr>`).join('')}</tbody></table>`
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg></div>
-        <h3>Chưa có Pull Request</h3>
+        <h3>Chưa có pull request nào</h3>
       </div>`;
 
   // Recent Issues
@@ -267,7 +267,7 @@ async function loadOverview() {
         </td></tr>`).join('')}</tbody></table>`
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <h3>Chưa có Issue</h3>
+        <h3>Chưa có issue nào</h3>
       </div>`;
 }
 

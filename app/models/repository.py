@@ -19,6 +19,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.branch import Branch
     from app.models.commit import Commit
     from app.models.contributor import Contributor
     from app.models.issue import Issue
@@ -55,6 +56,13 @@ class Repository(Base):
         server_default=false(),
     )
     default_branch: Mapped[str | None] = mapped_column(String(255))
+    branch_sync_mode: Mapped[str] = mapped_column(
+        String(30),
+        nullable=False,
+        default="default_only",
+        server_default="default_only",
+    )
+    selected_branches: Mapped[str | None] = mapped_column(Text)
     html_url: Mapped[str] = mapped_column(String(500), nullable=False)
     last_synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     last_sync_status: Mapped[str] = mapped_column(
@@ -83,6 +91,10 @@ class Repository(Base):
         cascade="all, delete-orphan",
     )
     commits: Mapped[list["Commit"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+    )
+    branches: Mapped[list["Branch"]] = relationship(
         back_populates="repository",
         cascade="all, delete-orphan",
     )

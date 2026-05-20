@@ -17,6 +17,7 @@ class Commit(Base):
         UniqueConstraint("repo_id", "sha", name="uq_commits_repo_sha"),
         Index("ix_commits_repo_date", "repo_id", "committed_at"),
         Index("ix_commits_repo_author", "repo_id", "author_login"),
+        Index("ix_commits_repo_branch", "repo_id", "branch_name"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -28,6 +29,7 @@ class Commit(Base):
         ForeignKey("contributors.id", ondelete="SET NULL"),
     )
     sha: Mapped[str] = mapped_column(String(40), nullable=False)
+    branch_name: Mapped[str | None] = mapped_column(String(255))
     message: Mapped[str | None] = mapped_column(Text)
     author_name: Mapped[str] = mapped_column(String(255), nullable=False)
     author_email: Mapped[str] = mapped_column(String(255), nullable=False)

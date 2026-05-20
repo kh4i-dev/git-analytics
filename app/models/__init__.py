@@ -1,3 +1,4 @@
+from app.models.branch import Branch
 from app.models.commit import Commit
 from app.models.contributor import Contributor
 from app.models.issue import Issue
@@ -6,6 +7,7 @@ from app.models.repository import Repository
 from app.models.user import User
 
 __all__ = [
+    "Branch",
     "Commit",
     "Contributor",
     "Issue",

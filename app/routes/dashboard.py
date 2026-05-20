@@ -87,6 +87,39 @@ async def settings_page(
     )
 
 
+@router.post("/settings/repositories/{repo_id}/branches")
+async def update_repository_branch_settings(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repo = RepositoryRepository(db).get_by_user_and_id(user.id, repo_id)
+    if repo is None:
+        return RedirectResponse("/settings?error=repo_not_found", status_code=302)
+
+    form = await request.form()
+    mode = str(form.get("branch_sync_mode") or "default_only")
+    if mode not in {"default_only", "selected", "all"}:
+        mode = "default_only"
+    selected = [
+        item.strip()
+        for item in str(form.get("selected_branches") or "").split(",")
+        if item.strip()
+    ]
+    RepositoryRepository(db).update(
+        repo,
+        {
+            "branch_sync_mode": mode,
+            "selected_branches": ",".join(selected) if selected else None,
+        },
+    )
+    db.commit()
+    return RedirectResponse("/settings?branch_settings=updated", status_code=302)
+
+
 @router.get("/account", response_class=HTMLResponse, response_model=None)
 async def account_page(
     request: Request,

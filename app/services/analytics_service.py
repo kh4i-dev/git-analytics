@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.exceptions import AuthorizationException, RepositoryNotFoundException
 from app.models.repository import Repository
+from app.models.branch import Branch
 from app.models.commit import Commit
 from app.models.pull_request import PullRequest
 from app.models.issue import Issue
@@ -788,19 +789,61 @@ class AnalyticsService:
 
     # ── Overview ─────────────────────────────────────────────────────────────
 
-    def get_overview(self, user_id: int, repo_id: int) -> dict[str, Any]:
+    def get_branch_options(self, user_id: int, repo_id: int) -> dict[str, Any]:
+        repo = self._get_repo(user_id, repo_id)
+        branches = self.db.scalars(
+            select(Branch)
+            .where(Branch.repository_id == repo_id)
+            .order_by(Branch.is_default.desc(), Branch.github_branch_name.asc())
+        ).all()
+        names = [branch.github_branch_name for branch in branches]
+        if not names and repo.default_branch:
+            names = [repo.default_branch]
+        patterns = ["feature/*", "release/*"]
+        return {
+            "selected": "all",
+            "options": [
+                {"label": "All branches", "value": "all"},
+                *[
+                    {
+                        "label": name,
+                        "value": name,
+                        "is_default": name == repo.default_branch,
+                    }
+                    for name in names
+                ],
+                *[{"label": pattern, "value": pattern, "is_pattern": True} for pattern in patterns],
+            ],
+        }
+
+    def get_overview(
+        self,
+        user_id: int,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> dict[str, Any]:
         repo = self._get_repo(user_id, repo_id)
 
-        total_commits = len(self.commit_repo.list_by_repo(repo_id, page=1, per_page=100))
-        pr_summary = self.pr_repo.pr_status_summary(repo_id)
+        commits_per_day = self.commit_repo.commits_per_day(repo_id, branch_filter)
+        total_commits = sum(day["count"] for day in commits_per_day)
+        pr_summary = self.pr_repo.pr_status_summary(repo_id, branch_filter)
         issue_state = self.issue_repo.issues_by_state(repo_id)
         contributors = self.contributor_repo.list_by_repo(repo_id, page=1, per_page=100)
 
-        recent_commits = self.commit_repo.list_by_repo(repo_id, page=1, per_page=5)
-        recent_prs = self.pr_repo.list_by_repo(repo_id, page=1, per_page=5)
+        recent_commits = self.commit_repo.list_by_repo(
+            repo_id,
+            page=1,
+            per_page=5,
+            branch_filter=branch_filter,
+        )
+        recent_prs = self.pr_repo.list_by_repo(
+            repo_id,
+            page=1,
+            per_page=5,
+            branch_filter=branch_filter,
+        )
         recent_issues = self.issue_repo.list_by_repo(repo_id, page=1, per_page=5)
 
-        commits_per_day = self.commit_repo.commits_per_day(repo_id)
         active_days = len(commits_per_day)
 
         return {
@@ -811,6 +854,10 @@ class AnalyticsService:
                 "default_branch": repo.default_branch,
                 "last_synced_at": repo.last_synced_at.isoformat() if repo.last_synced_at else None,
                 "last_sync_status": repo.last_sync_status,
+            },
+            "branch_filter": {
+                **self.get_branch_options(user_id, repo_id),
+                "selected": branch_filter or "all",
             },
             "summary": {
                 "total_commits": total_commits,
@@ -840,12 +887,22 @@ class AnalyticsService:
 
     # ── Commits ───────────────────────────────────────────────────────────────
 
-    def get_commits(self, user_id: int, repo_id: int) -> dict[str, Any]:
+    def get_commits(
+        self,
+        user_id: int,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> dict[str, Any]:
         self._get_repo(user_id, repo_id)
 
-        commits_per_day = self.commit_repo.commits_per_day(repo_id)
-        by_contributor = self.commit_repo.commits_by_contributor(repo_id)
-        recent = self.commit_repo.list_by_repo(repo_id, page=1, per_page=20)
+        commits_per_day = self.commit_repo.commits_per_day(repo_id, branch_filter)
+        by_contributor = self.commit_repo.commits_by_contributor(repo_id, branch_filter)
+        recent = self.commit_repo.list_by_repo(
+            repo_id,
+            page=1,
+            per_page=20,
+            branch_filter=branch_filter,
+        )
 
         active_days = len([d for d in commits_per_day if d["count"] > 0])
         total = sum(d["count"] for d in commits_per_day)
@@ -854,6 +911,10 @@ class AnalyticsService:
             "summary": {
                 "total": total,
                 "active_days": active_days,
+            },
+            "branch_filter": {
+                **self.get_branch_options(user_id, repo_id),
+                "selected": branch_filter or "all",
             },
             "charts": {
                 "per_day": commits_per_day,
@@ -864,11 +925,21 @@ class AnalyticsService:
 
     # ── Pull Requests ─────────────────────────────────────────────────────────
 
-    def get_pull_requests(self, user_id: int, repo_id: int) -> dict[str, Any]:
+    def get_pull_requests(
+        self,
+        user_id: int,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> dict[str, Any]:
         self._get_repo(user_id, repo_id)
 
-        summary = self.pr_repo.pr_status_summary(repo_id)
-        recent = self.pr_repo.list_by_repo(repo_id, page=1, per_page=20)
+        summary = self.pr_repo.pr_status_summary(repo_id, branch_filter)
+        recent = self.pr_repo.list_by_repo(
+            repo_id,
+            page=1,
+            per_page=20,
+            branch_filter=branch_filter,
+        )
 
         # average merge time (hours) from recent set
         merge_times = []
@@ -886,6 +957,10 @@ class AnalyticsService:
                 "closed": summary.get("closed", 0),
                 "avg_merge_time_hours": avg_merge_hours,
             },
+            "branch_filter": {
+                **self.get_branch_options(user_id, repo_id),
+                "selected": branch_filter or "all",
+            },
             "charts": {
                 "status": summary,
             },
@@ -894,7 +969,12 @@ class AnalyticsService:
 
     # ── Issues ────────────────────────────────────────────────────────────────
 
-    def get_issues(self, user_id: int, repo_id: int) -> dict[str, Any]:
+    def get_issues(
+        self,
+        user_id: int,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> dict[str, Any]:
         self._get_repo(user_id, repo_id)
 
         by_state = self.issue_repo.issues_by_state(repo_id)
@@ -921,6 +1001,10 @@ class AnalyticsService:
                 "closed": by_state.get("closed", 0),
                 "avg_close_time_hours": avg_close_hours,
             },
+            "branch_filter": {
+                **self.get_branch_options(user_id, repo_id),
+                "selected": branch_filter or "all",
+            },
             "charts": {
                 "by_state": by_state,
                 "by_label": sorted(label_counts.items(), key=lambda x: x[1], reverse=True)[:10],
@@ -930,14 +1014,23 @@ class AnalyticsService:
 
     # ── Contributors ──────────────────────────────────────────────────────────
 
-    def get_contributors(self, user_id: int, repo_id: int) -> dict[str, Any]:
+    def get_contributors(
+        self,
+        user_id: int,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> dict[str, Any]:
         self._get_repo(user_id, repo_id)
 
-        by_commits = self.commit_repo.commits_by_contributor(repo_id)
+        by_commits = self.commit_repo.commits_by_contributor(repo_id, branch_filter)
 
         return {
             "summary": {
                 "total": len(by_commits),
+            },
+            "branch_filter": {
+                **self.get_branch_options(user_id, repo_id),
+                "selected": branch_filter or "all",
             },
             "top_contributors": by_commits[:20],
         }
@@ -1140,6 +1233,7 @@ def _fmt_commit(c) -> dict[str, Any]:
         "author_avatar_url": c.author_avatar_url,
         "committed_at": c.committed_at.isoformat() if c.committed_at else None,
         "html_url": c.html_url,
+        "branch_name": c.branch_name,
     }
 
 
@@ -1155,6 +1249,8 @@ def _fmt_pr(p) -> dict[str, Any]:
         "merged_at": p.merged_at.isoformat() if p.merged_at else None,
         "closed_at": p.closed_at.isoformat() if p.closed_at else None,
         "html_url": p.html_url,
+        "base_branch": p.base_branch,
+        "head_branch": p.head_branch,
     }
 
 

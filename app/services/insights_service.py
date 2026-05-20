@@ -25,14 +25,28 @@ class InsightsService:
             raise RepositoryNotFoundException("Repository not found.")
         return repo
 
-    def get_insights(self, user_id: int, repo_id: int) -> dict[str, Any]:
+    def get_insights(
+        self,
+        user_id: int,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> dict[str, Any]:
         repo = self._get_repo(user_id, repo_id)
 
-        cpd = self.commit_repo.commits_per_day(repo_id)
-        weekday_data = self.commit_repo.commits_by_weekday(repo_id)
-        hour_data = self.commit_repo.commits_by_hour(repo_id)
-        messages = self.commit_repo.get_recent_messages(repo_id, limit=500)
-        prs = self.pr_repo.list_by_repo(repo_id, page=1, per_page=100)
+        cpd = self.commit_repo.commits_per_day(repo_id, branch_filter)
+        weekday_data = self.commit_repo.commits_by_weekday(repo_id, branch_filter)
+        hour_data = self.commit_repo.commits_by_hour(repo_id, branch_filter)
+        messages = self.commit_repo.get_recent_messages(
+            repo_id,
+            limit=500,
+            branch_filter=branch_filter,
+        )
+        prs = self.pr_repo.list_by_repo(
+            repo_id,
+            page=1,
+            per_page=100,
+            branch_filter=branch_filter,
+        )
         issues = self.issue_repo.list_by_repo(repo_id, page=1, per_page=100)
 
         heatmap = _build_heatmap(cpd)
@@ -48,6 +62,7 @@ class InsightsService:
                 "full_name": repo.full_name,
                 "last_synced_at": repo.last_synced_at.isoformat() if repo.last_synced_at else None,
             },
+            "branch_filter": branch_filter or "all",
             "activity_score": score,
             "heatmap": heatmap,
             "coding_activity": coding,

@@ -2,7 +2,7 @@
   <div class="topbar-left">
     <span class="topbar-crumb">
       {% if active_page == 'global_dashboard' %}
-        <span class="topbar-page">Bảng Điều Khiển</span>
+        <span class="topbar-page">Dashboard</span>
       {% elif active_page == 'repositories' %}
         <span class="topbar-page">Kho Lưu Trữ</span>
       {% elif active_page == 'explore' %}
@@ -14,7 +14,7 @@
       {% elif active_page == 'sync_status' %}
         <span class="topbar-page">Trạng Thái Đồng Bộ</span>
       {% elif active_page == 'developer_news' %}
-        <span class="topbar-page">Tin Tức Developer</span>
+        <span class="topbar-page">Tin Tức Dev</span>
       {% elif active_page == 'ai_tools' %}
         <span class="topbar-page">Công Cụ AI</span>
       {% else %}
@@ -40,6 +40,22 @@
       </span>
     {% endif %}
     {% if repo %}
+      <div class="branch-selector" title="Branch filter">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+        <select id="branch-filter-select" onchange="switchBranchFilter(this.value)">
+          <option value="all">All branches</option>
+          {% set branch_names = [] %}
+          {% for branch in repo.branches %}
+            {% set _ = branch_names.append(branch.github_branch_name) %}
+            <option value="{{ branch.github_branch_name }}">{{ branch.github_branch_name }}</option>
+          {% endfor %}
+          {% if repo.default_branch and repo.default_branch not in branch_names %}
+            <option value="{{ repo.default_branch }}">{{ repo.default_branch }}</option>
+          {% endif %}
+          <option value="feature/*">feature/*</option>
+          <option value="release/*">release/*</option>
+        </select>
+      </div>
       {% set s = repo.last_sync_status %}
       <span class="sync-badge {{ s }}">
         {% if s == 'success' %}
@@ -83,6 +99,30 @@
   .topbar-page { font-size: 13px; font-weight: 600; color: var(--text); }
 
   .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .branch-selector {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+  }
+  .branch-selector select {
+    max-width: 160px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 12px;
+  }
+  .branch-selector option {
+    background: var(--surface);
+    color: var(--text);
+  }
 
   .topbar-user-chip {
     display: flex; align-items: center; gap: 6px;

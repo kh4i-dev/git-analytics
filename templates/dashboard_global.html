@@ -529,14 +529,14 @@ function shortRepoName(name) {
 function emptyChart(canvasId, message) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  canvas.parentElement.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="bar-chart-3"></i></div><h3>Chưa có dữ liệu</h3><p>${message}</p></div>`;
+  canvas.parentElement.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="bar-chart-3"></i></div><h3>Trống</h3><p>${message}</p></div>`;
 }
 
 function renderHeatmap() {
   const target = document.getElementById('commit-heatmap');
   const days = dashboardData.heatmap.days || [];
   if (!days.some(day => day.count > 0)) {
-    target.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="calendar-days"></i></div><h3>Chưa có bản đồ nhiệt</h3><p>Đồng bộ lịch sử commit để xem cường độ coding hằng ngày.</p></div>`;
+    target.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="calendar-days"></i></div><h3>Chưa ghi nhận hoạt động</h3><p>Heatmap hiển thị sau khi có dữ liệu commit trong 365 ngày qua.</p></div>`;
     return;
   }
   target.innerHTML = `<div class="heatmap-grid">${days.map(day => `<span class="heatmap-day level-${day.level}" title="${day.label}" aria-label="${day.label}"></span>`).join('')}</div>`;
@@ -545,7 +545,7 @@ function renderHeatmap() {
 function renderLineChart() {
   const rows = dashboardData.charts.global_commits_per_day || [];
   if (!rows.length) {
-    emptyChart('commit-trend-chart', 'Đồng bộ commit để hiển thị xu hướng 30 ngày.');
+    emptyChart('commit-trend-chart', 'Chưa ghi nhận commit trong 30 ngày qua.');
     return;
   }
   new Chart(document.getElementById('commit-trend-chart'), {
@@ -577,7 +577,7 @@ function renderLineChart() {
 function renderRepoRanking() {
   const rows = dashboardData.most_active_repositories || [];
   if (!rows.length) {
-    emptyChart('repo-ranking-chart', 'Đồng bộ repositories để so sánh hoạt động commit.');
+    emptyChart('repo-ranking-chart', 'Chưa đủ dữ liệu để xếp hạng repository.');
     return;
   }
   new Chart(document.getElementById('repo-ranking-chart'), {
@@ -606,7 +606,7 @@ function renderRepoRanking() {
 function renderTeamChart() {
   const rows = (dashboardData.team.leaderboard || []).slice(0, 6);
   if (!rows.length) {
-    emptyChart('team-activity-chart', 'Đồng bộ hoạt động nhóm để hiển thị so sánh đóng góp.');
+    emptyChart('team-activity-chart', 'Chưa ghi nhận hoạt động nhóm.');
     return;
   }
   new Chart(document.getElementById('team-activity-chart'), {
@@ -614,9 +614,9 @@ function renderTeamChart() {
     data: {
       labels: rows.map(row => row.login || row.name),
       datasets: [
-        { label: 'Commit', data: rows.map(row => row.commits), backgroundColor: '#58a6ff', borderRadius: 4 },
-        { label: 'PR đã merge', data: rows.map(row => row.prs_merged), backgroundColor: '#bc8cff', borderRadius: 4 },
-        { label: 'Issue đã đóng', data: rows.map(row => row.issues_closed), backgroundColor: '#3fb950', borderRadius: 4 }
+        { label: 'Commits', data: rows.map(row => row.commits), backgroundColor: '#58a6ff', borderRadius: 4 },
+        { label: 'PR Merged', data: rows.map(row => row.prs_merged), backgroundColor: '#bc8cff', borderRadius: 4 },
+        { label: 'Issues Closed', data: rows.map(row => row.issues_closed), backgroundColor: '#3fb950', borderRadius: 4 }
       ]
     },
     options: {
@@ -634,7 +634,7 @@ function renderTeamChart() {
 function renderKpiCharts() {
   const contributorRows = dashboardData.kpi_charts.commits_by_contributor || [];
   if (!contributorRows.length || !contributorRows.some(row => row.value > 0)) {
-    emptyChart('commits-contributor-pie', 'Đồng bộ commit để hiển thị phân bố người đóng góp.');
+    emptyChart('commits-contributor-pie', 'Chưa có dữ liệu phân bố contributor.');
   } else {
     new Chart(document.getElementById('commits-contributor-pie'), {
       type: 'pie',
@@ -652,7 +652,7 @@ function renderKpiCharts() {
 
   const issueRows = dashboardData.kpi_charts.issues_resolved_by_user || [];
   if (!issueRows.length || !issueRows.some(row => row.value > 0)) {
-    emptyChart('issues-user-bar', 'Đồng bộ issue đã đóng để hiển thị xếp hạng giải quyết.');
+    emptyChart('issues-user-bar', 'Chưa phát hiện issue đã xử lý.');
   } else {
     new Chart(document.getElementById('issues-user-bar'), {
       type: 'bar',
@@ -681,12 +681,12 @@ function renderFlowCharts() {
   const prData = dashboardData.health.raw || {};
   const hasPrData = dashboardData.summary.total_prs > 0;
   if (!hasPrData) {
-    emptyChart('pr-metrics-chart', 'Đồng bộ pull request để xem hiệu suất merge.');
+    emptyChart('pr-metrics-chart', 'Chưa có dữ liệu pull request.');
   } else {
     new Chart(document.getElementById('pr-metrics-chart'), {
       type: 'doughnut',
       data: {
-        labels: ['Tốc độ merge', 'Rủi ro còn lại'],
+        labels: ['Merge Speed', 'Remaining Risk'],
         datasets: [{
           data: [dashboardData.health.metrics.pr_merge_speed, 100 - dashboardData.health.metrics.pr_merge_speed],
           backgroundColor: ['#58a6ff', '#30363d'],
@@ -699,12 +699,12 @@ function renderFlowCharts() {
 
   const hasIssueData = dashboardData.summary.total_issues > 0;
   if (!hasIssueData) {
-    emptyChart('issue-metrics-chart', 'Đồng bộ issue để xem sức khỏe giải quyết.');
+    emptyChart('issue-metrics-chart', 'Chưa có dữ liệu issue.');
   } else {
     new Chart(document.getElementById('issue-metrics-chart'), {
       type: 'pie',
       data: {
-        labels: ['Issue đã đóng', 'Issue đang mở', 'Issue tồn đọng'],
+        labels: ['Closed', 'Open', 'Stale'],
         datasets: [{
           data: [prData.closed_issues || 0, prData.open_issues || 0, prData.stale_issues || 0],
           backgroundColor: ['#3fb950', '#e3b341', '#f85149'],

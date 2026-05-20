@@ -8,6 +8,14 @@ from app.models.pull_request import PullRequest
 from app.repositories.base import BaseRepository
 
 
+def _branch_predicate(branch_filter: str | None):
+    if not branch_filter or branch_filter == "all":
+        return None
+    if "*" in branch_filter:
+        return PullRequest.base_branch.like(branch_filter.replace("*", "%"))
+    return PullRequest.base_branch == branch_filter
+
+
 class PullRequestRepository(BaseRepository[PullRequest]):
     def get_by_id(self, pull_request_id: int) -> PullRequest | None:
         try:
@@ -32,12 +40,17 @@ class PullRequestRepository(BaseRepository[PullRequest]):
         *,
         page: int = 1,
         per_page: int = 20,
+        branch_filter: str | None = None,
     ) -> Sequence[PullRequest]:
         offset, limit = self._pagination(page, per_page)
+        predicates = [PullRequest.repo_id == repo_id]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             return self.db.scalars(
                 select(PullRequest)
-                .where(PullRequest.repo_id == repo_id)
+                .where(*predicates)
                 .order_by(PullRequest.created_at.desc(), PullRequest.id.desc())
                 .offset(offset)
                 .limit(limit)
@@ -88,7 +101,15 @@ class PullRequestRepository(BaseRepository[PullRequest]):
         self._flush()
         return count
 
-    def pr_status_summary(self, repo_id: int) -> dict[str, int]:
+    def pr_status_summary(
+        self,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> dict[str, int]:
+        predicates = [PullRequest.repo_id == repo_id]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             rows = self.db.execute(
                 select(
@@ -96,7 +117,7 @@ class PullRequestRepository(BaseRepository[PullRequest]):
                     PullRequest.is_merged.label("is_merged"),
                     func.count(PullRequest.id).label("count"),
                 )
-                .where(PullRequest.repo_id == repo_id)
+                .where(*predicates)
                 .group_by(PullRequest.state, PullRequest.is_merged)
             ).all()
         except SQLAlchemyError as exc:

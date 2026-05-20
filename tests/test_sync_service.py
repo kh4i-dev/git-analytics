@@ -15,6 +15,7 @@ from app.models.contributor import Contributor
 from app.models.issue import Issue
 from app.models.pull_request import PullRequest
 from app.models.repository import Repository
+from app.models.branch import Branch
 from app.repositories import RepositoryRepository, UserRepository
 from app.services.sync_service import SyncService
 
@@ -91,6 +92,10 @@ class FakeGitHubClient:
                 "html_url": "https://github.com/octo/repo/commit/abc123",
             }
         ]
+
+    async def list_branches(self, owner: str, repo: str) -> list[dict[str, Any]]:
+        self.calls.append(("list_branches", (owner, repo)))
+        return [{"name": "main", "commit": {"sha": "abc123"}}]
 
     async def list_pull_requests(
         self,
@@ -222,10 +227,12 @@ def test_sync_repository_full_sync_persists_github_data(db_session: Session) -> 
     contributors = db_session.scalars(
         select(Contributor).where(Contributor.repo_id == repo_id)
     ).all()
+    branch = db_session.scalar(select(Branch).where(Branch.repository_id == repo_id))
 
     assert result.mode == "full"
     assert result.synced == {
         "contributors": 1,
+        "branches": 1,
         "commits": 1,
         "pull_requests": 1,
         "issues": 1,
@@ -236,6 +243,11 @@ def test_sync_repository_full_sync_persists_github_data(db_session: Session) -> 
     assert repository.last_synced_at is not None
     assert commit is not None
     assert commit.sha == "abc123"
+    assert commit.branch_name == "main"
+    assert branch is not None
+    assert branch.github_branch_name == "main"
+    assert branch.last_commit_sha == "abc123"
+    assert branch.synced_at is not None
     assert pull_request is not None
     assert pull_request.is_merged is True
     assert issue is not None

@@ -77,6 +77,42 @@
       </div>
     </div>
 
+    <!-- Repository Branch Settings -->
+    <div class="card">
+      <h3 style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+        Branch Analytics
+      </h3>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        {% for repo_item in repos %}
+        <form method="post" action="/settings/repositories/{{ repo_item.id }}/branches" class="branch-settings-row">
+          <div class="branch-settings-main">
+            <div class="branch-settings-repo">{{ repo_item.full_name }}</div>
+            <div class="branch-settings-meta">Default: <code>{{ repo_item.default_branch or "main" }}</code></div>
+          </div>
+          <select name="branch_sync_mode" class="branch-select" onchange="toggleSelectedBranches(this)">
+            <option value="default_only" {% if repo_item.branch_sync_mode == "default_only" %}selected{% endif %}>Sync default branch only</option>
+            <option value="selected" {% if repo_item.branch_sync_mode == "selected" %}selected{% endif %}>Sync selected branches</option>
+            <option value="all" {% if repo_item.branch_sync_mode == "all" %}selected{% endif %}>Sync all branches</option>
+          </select>
+          <input
+            name="selected_branches"
+            class="branch-input"
+            value="{{ repo_item.selected_branches or '' }}"
+            placeholder="dev, feature/*, release/*"
+            {% if repo_item.branch_sync_mode != "selected" %}disabled{% endif %}
+          >
+          <button type="submit" class="btn btn-outline btn-sm">Save</button>
+        </form>
+        {% else %}
+        <div class="empty-state">
+          <h3>No repositories imported</h3>
+          <p>Import repositories before configuring branch sync.</p>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
     <!-- Environment details -->
     <div class="card" style="background: rgba(22, 27, 34, 0.4);">
       <h3 style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
@@ -147,6 +183,56 @@
     transform: translateX(22px);
     background-color: var(--success-text);
   }
+  .branch-settings-row {
+    display: grid;
+    grid-template-columns: minmax(180px, 1fr) 210px minmax(170px, 230px) auto;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 0;
+    border-top: 1px solid var(--border-sub);
+  }
+  .branch-settings-row:first-of-type { border-top: 0; padding-top: 0; }
+  .branch-settings-main { min-width: 0; }
+  .branch-settings-repo {
+    overflow: hidden;
+    color: var(--text);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 13px;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .branch-settings-meta {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+  .branch-settings-meta code {
+    padding: 1px 5px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+  }
+  .branch-select,
+  .branch-input {
+    width: 100%;
+    min-height: 32px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font: inherit;
+    font-size: 13px;
+    padding: 5px 8px;
+  }
+  .branch-input:disabled {
+    opacity: .45;
+  }
+  @media (max-width: 860px) {
+    .branch-settings-row {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -164,5 +250,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('auto-sync-check').checked = false;
   }
 });
+
+function toggleSelectedBranches(select) {
+  const input = select.closest('.branch-settings-row').querySelector('.branch-input');
+  input.disabled = select.value !== 'selected';
+}
 </script>
 {% endblock %}

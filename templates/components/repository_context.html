@@ -9,7 +9,7 @@
     </svg>
   </div>
   <div class="repository-context-copy">
-    <span class="repository-context-label">{{ "Kho Lưu Trữ" if has_repo_context else "Workspace" }}</span>
+    <span class="repository-context-label">{{ "Repository" if has_repo_context else "Workspace" }}</span>
     {% if has_repo_context %}
       {% if repo.html_url %}
         <a class="repository-context-name" href="{{ repo.html_url }}" target="_blank" rel="noopener">{{ repo.full_name }}</a>
@@ -17,7 +17,7 @@
         <span class="repository-context-name">{{ repo.full_name }}</span>
       {% endif %}
     {% else %}
-      <span class="repository-context-name">Tất cả repositories</span>
+      <span class="repository-context-name">Tất cả Repository</span>
     {% endif %}
   </div>
   {% if has_repo_context and repo.default_branch %}

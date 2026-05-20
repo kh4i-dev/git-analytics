@@ -49,9 +49,10 @@
 {% block content %}
 <div class="dashboard-header">
   <div class="dashboard-title-group">
-    <h1>Phân Tích Commit — {{ repo.name }}</h1>
+    <span style="position:absolute;left:-9999px;">Commits</span>
+    <h1>Commit — {{ repo.name }}</h1>
     {% include 'components/repository_context.html' %}
-    <p>Thống kê commit, phân tích contributor và lịch sử commit gần đây.</p>
+    <p>Nhịp phát triển, contributor và các thay đổi gần đây.</p>
   </div>
 </div>
 
@@ -64,13 +65,13 @@
 <!-- Charts -->
 <div class="charts-grid">
   <div class="chart-card" style="grid-column: 1 / -1;">
-    <div class="chart-title">Commit Theo Ngày</div>
+    <div class="chart-title">Nhịp Commit</div>
     <div class="chart-wrap" id="wrap-per-day">
       <div class="chart-skeleton skeleton"></div>
     </div>
   </div>
   <div class="chart-card" style="grid-column: 1 / -1;">
-    <div class="chart-title">Commit Theo Người Đóng Góp</div>
+    <div class="chart-title">Commit Theo Contributor</div>
     <div class="chart-wrap" id="wrap-by-contributor">
       <div class="chart-skeleton skeleton"></div>
     </div>
@@ -105,18 +106,18 @@ async function load() {
   try {
     data = await fetchAnalytics(`/api/v1/analytics/${REPO_ID}/commits`);
   } catch(e) {
-    showError('Lỗi tải dữ liệu commit: ' + e.message);
+    showError('Không tải được commit: ' + e.message);
     return;
   }
 
   // Stats
   document.getElementById('stats-grid').innerHTML = `
     <div class="card">
-      <div class="card-title">Tổng Commit</div>
+      <div class="card-title">Commit</div>
       <div class="card-value">${data.summary.total.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Ngày Hoạt Động</div>
+      <div class="card-title">Ngày Có Hoạt Động</div>
       <div class="card-value">${data.summary.active_days.toLocaleString()}</div>
     </div>`;
 
@@ -129,7 +130,7 @@ async function load() {
       data: {
         labels: cpd.map(d => d.date),
         datasets: [{
-          label: 'Commits',
+          label: 'Commit',
           data: cpd.map(d => d.count),
           borderColor: '#58a6ff',
           backgroundColor: 'rgba(88,166,255,.1)',
@@ -146,8 +147,8 @@ async function load() {
     document.getElementById('wrap-per-day').innerHTML =
       `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></div>
-        <h3>Không có dữ liệu commit</h3>
-        <p>Đồng bộ repository để tải dữ liệu.</p>
+        <h3>Chưa phát hiện commit</h3>
+        <p>Nhịp commit sẽ xuất hiện tại đây.</p>
       </div>`;
   }
 
@@ -160,7 +161,7 @@ async function load() {
       data: {
         labels: bc.map(c => c.contributor || c.github_login || 'Unknown'),
         datasets: [{
-          label: 'Số lượng',
+          label: 'Commit',
           data: bc.map(c => c.count),
           backgroundColor: '#58a6ff',
           borderRadius: 4,
@@ -177,7 +178,7 @@ async function load() {
     document.getElementById('wrap-by-contributor').innerHTML =
       `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-        <h3>Không có dữ liệu contributor</h3>
+        <h3>Chưa có contributor nổi bật</h3>
       </div>`;
   }
 
@@ -202,8 +203,8 @@ async function load() {
     document.getElementById('commit-table').innerHTML =
       `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></div>
-        <h3>Chưa có commit nào</h3>
-        <p>Đồng bộ repository để tải commit về.</p>
+        <h3>Chưa phát hiện commit</h3>
+        <p>Các thay đổi mới sẽ được liệt kê tại đây.</p>
       </div>`;
   }
 }

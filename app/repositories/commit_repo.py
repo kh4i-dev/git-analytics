@@ -1,12 +1,25 @@
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from sqlalchemy import func, select, tuple_
+from sqlalchemy import func, or_, select, tuple_
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.models.commit import Commit
 from app.models.contributor import Contributor
 from app.repositories.base import BaseRepository
+
+
+def _branch_predicate(branch_filter: str | None):
+    if not branch_filter or branch_filter == "all":
+        return None
+    if "*" in branch_filter:
+        return Commit.branch_name.like(branch_filter.replace("*", "%"))
+    return or_(
+        Commit.branch_name == branch_filter,
+        Commit.branch_name.like(f"{branch_filter},%"),
+        Commit.branch_name.like(f"%,{branch_filter}"),
+        Commit.branch_name.like(f"%,{branch_filter},%"),
+    )
 
 
 class CommitRepository(BaseRepository[Commit]):
@@ -33,12 +46,17 @@ class CommitRepository(BaseRepository[Commit]):
         *,
         page: int = 1,
         per_page: int = 20,
+        branch_filter: str | None = None,
     ) -> Sequence[Commit]:
         offset, limit = self._pagination(page, per_page)
+        predicates = [Commit.repo_id == repo_id]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             return self.db.scalars(
                 select(Commit)
-                .where(Commit.repo_id == repo_id)
+                .where(*predicates)
                 .order_by(Commit.committed_at.desc(), Commit.id.desc())
                 .offset(offset)
                 .limit(limit)
@@ -82,14 +100,22 @@ class CommitRepository(BaseRepository[Commit]):
         self._flush()
         return count
 
-    def commits_per_day(self, repo_id: int) -> list[dict[str, Any]]:
+    def commits_per_day(
+        self,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> list[dict[str, Any]]:
+        predicates = [Commit.repo_id == repo_id]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             rows = self.db.execute(
                 select(
                     func.date(Commit.committed_at).label("date"),
                     func.count(Commit.id).label("count"),
                 )
-                .where(Commit.repo_id == repo_id)
+                .where(*predicates)
                 .group_by(func.date(Commit.committed_at))
                 .order_by(func.date(Commit.committed_at))
             ).all()
@@ -97,7 +123,15 @@ class CommitRepository(BaseRepository[Commit]):
         except SQLAlchemyError as exc:
             self._raise_database_error(exc)
 
-    def commits_by_contributor(self, repo_id: int) -> list[dict[str, Any]]:
+    def commits_by_contributor(
+        self,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> list[dict[str, Any]]:
+        predicates = [Commit.repo_id == repo_id]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             rows = self.db.execute(
                 select(
@@ -112,7 +146,7 @@ class CommitRepository(BaseRepository[Commit]):
                 )
                 .select_from(Commit)
                 .join(Contributor, Commit.contributor_id == Contributor.id, isouter=True)
-                .where(Commit.repo_id == repo_id)
+                .where(*predicates)
                 .group_by(
                     Contributor.display_name,
                     Commit.author_login,
@@ -133,16 +167,24 @@ class CommitRepository(BaseRepository[Commit]):
         except SQLAlchemyError as exc:
             self._raise_database_error(exc)
 
-    def commits_by_weekday(self, repo_id: int) -> list[dict[str, Any]]:
+    def commits_by_weekday(
+        self,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Returns commit counts grouped by day-of-week (0=Sun … 6=Sat)."""
         day_names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+        predicates = [Commit.repo_id == repo_id]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             rows = self.db.execute(
                 select(
                     func.strftime("%w", Commit.committed_at).label("weekday"),
                     func.count(Commit.id).label("count"),
                 )
-                .where(Commit.repo_id == repo_id)
+                .where(*predicates)
                 .group_by(func.strftime("%w", Commit.committed_at))
             ).all()
         except SQLAlchemyError as exc:
@@ -157,15 +199,23 @@ class CommitRepository(BaseRepository[Commit]):
             for i in range(7)
         ]
 
-    def commits_by_hour(self, repo_id: int) -> list[dict[str, Any]]:
+    def commits_by_hour(
+        self,
+        repo_id: int,
+        branch_filter: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Returns commit counts grouped by hour-of-day (0-23, UTC)."""
+        predicates = [Commit.repo_id == repo_id]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             rows = self.db.execute(
                 select(
                     func.strftime("%H", Commit.committed_at).label("hour"),
                     func.count(Commit.id).label("count"),
                 )
-                .where(Commit.repo_id == repo_id)
+                .where(*predicates)
                 .group_by(func.strftime("%H", Commit.committed_at))
             ).all()
         except SQLAlchemyError as exc:
@@ -177,13 +227,22 @@ class CommitRepository(BaseRepository[Commit]):
                 counts[int(row.hour)] = row.count
         return [{"hour": i, "count": counts[i]} for i in range(24)]
 
-    def get_recent_messages(self, repo_id: int, limit: int = 500) -> list[str]:
+    def get_recent_messages(
+        self,
+        repo_id: int,
+        limit: int = 500,
+        branch_filter: str | None = None,
+    ) -> list[str]:
         """Returns recent commit messages for keyword analysis."""
+        predicates = [Commit.repo_id == repo_id, Commit.message.is_not(None)]
+        branch_predicate = _branch_predicate(branch_filter)
+        if branch_predicate is not None:
+            predicates.append(branch_predicate)
         try:
             return list(
                 self.db.scalars(
                     select(Commit.message)
-                    .where(Commit.repo_id == repo_id, Commit.message.is_not(None))
+                    .where(*predicates)
                     .order_by(Commit.committed_at.desc())
                     .limit(limit)
                 ).all()
@@ -193,4 +252,12 @@ class CommitRepository(BaseRepository[Commit]):
 
     def _apply_without_flush(self, commit: Commit, data: Mapping[str, Any]) -> None:
         for field, value in data.items():
+            if field == "branch_name" and commit.branch_name and value:
+                names = {
+                    name.strip()
+                    for name in commit.branch_name.split(",")
+                    if name.strip()
+                }
+                names.add(str(value))
+                value = ",".join(sorted(names))
             setattr(commit, field, value)
