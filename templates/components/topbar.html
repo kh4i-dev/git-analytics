@@ -2,7 +2,7 @@
   <div class="topbar-left">
     <span class="topbar-crumb">
       {% if active_page == 'global_dashboard' %}
-        <span class="topbar-page">Dashboard</span>
+        <span class="topbar-page">Tổng Quan</span>
       {% elif active_page == 'repositories' %}
         <span class="topbar-page">Kho Lưu Trữ</span>
       {% elif active_page == 'explore' %}
@@ -43,7 +43,7 @@
       <div class="branch-selector" title="Branch filter">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
         <select id="branch-filter-select" onchange="switchBranchFilter(this.value)">
-          <option value="all">All branches</option>
+          <option value="all">Tất cả branch</option>
           {% set branch_names = [] %}
           {% for branch in repo.branches %}
             {% set _ = branch_names.append(branch.github_branch_name) %}
@@ -67,7 +67,7 @@
         {% else %}
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg>
         {% endif %}
-        {% if s == 'success' %}Thành công{% elif s == 'failed' %}Thất bại{% elif s == 'syncing' %}Đang đồng bộ{% else %}Chờ xử lý{% endif %}
+        {% if s == 'success' %}Sẵn sàng{% elif s == 'failed' %}Lỗi{% elif s == 'syncing' %}Đang cập nhật{% else %}Chờ cập nhật{% endif %}
       </span>
       <form method="post" action="/repositories/{{ repo.id }}/sync" style="margin:0" class="js-submit-form">
         <button type="submit" class="btn btn-outline btn-sm js-loading-btn">

@@ -145,35 +145,35 @@
 <section class="team-header">
   <div>
     <h1>Thành Viên</h1>
-    <p>Đánh giá hiệu suất nhóm từ dữ liệu commit, pull request và issue.</p>
+    <p>Theo dõi đóng góp, review flow và hiệu suất xử lý issue của đội ngũ.</p>
   </div>
   <a class="btn btn-outline" href="/api/v1/analytics/export/xlsx">Xuất Excel</a>
 </section>
 
 <section class="team-grid">
-  <article class="team-card"><span>Contributors</span><strong>{{ team.summary.contributors }}</strong></article>
-  <article class="team-card"><span>Total Commits</span><strong>{{ team.summary.commits }}</strong></article>
-  <article class="team-card"><span>PRs Merged</span><strong>{{ team.summary.prs_merged }}</strong></article>
-  <article class="team-card"><span>Issues Closed</span><strong>{{ team.summary.issues_closed }}</strong></article>
+  <article class="team-card"><span>Contributor</span><strong>{{ team.summary.contributors }}</strong></article>
+  <article class="team-card"><span>Commit</span><strong>{{ team.summary.commits }}</strong></article>
+  <article class="team-card"><span>PR Đã Merge</span><strong>{{ team.summary.prs_merged }}</strong></article>
+  <article class="team-card"><span>Issue Đã Xử Lý</span><strong>{{ team.summary.issues_closed }}</strong></article>
 </section>
 
 <section class="member-panel">
   <div class="member-panel-header">
     <div>
-      <h2>Member KPI</h2>
-      <p class="card-sub">Xếp hạng thành viên dựa trên commit, PR, issue và điểm hoạt động.</p>
+      <h2>KPI Thành Viên</h2>
+      <p class="card-sub">Contributor, commit, PR đã merge, issue đã xử lý và điểm hoạt động.</p>
     </div>
   </div>
   {% if team.members %}
   <table class="member-table">
     <thead>
       <tr>
-        <th>Member</th>
-        <th>Commits</th>
-        <th>PRs Merged</th>
-        <th>Issues Closed</th>
-        <th>Active Days</th>
-        <th>Score</th>
+        <th>Thành viên</th>
+        <th>Commit</th>
+        <th>PR Đã Merge</th>
+        <th>Issue Đã Xử Lý</th>
+        <th>Ngày Hoạt Động</th>
+        <th>Điểm</th>
       </tr>
     </thead>
     <tbody>
@@ -222,8 +222,8 @@
     <div class="empty-icon">
       <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     </div>
-    <h3>Chưa ghi nhận thành viên</h3>
-    <p>Bảng KPI sẽ hiển thị sau khi đồng bộ dữ liệu repository.</p>
+    <h3>Chưa có contributor</h3>
+    <p>Hoạt động của thành viên sẽ xuất hiện tại đây.</p>
   </div>
   {% endif %}
 </section>

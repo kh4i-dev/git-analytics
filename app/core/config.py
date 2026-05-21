@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     app_name: str = "Git Analytics"
     environment: str = "development"
+    app_env: str | None = None
     debug: bool = True
     log_level: str = "INFO"
 
@@ -21,6 +22,8 @@ class Settings(BaseSettings):
 
     session_cookie_name: str = "git_analytics_session"
     oauth_state_cookie_name: str = "git_analytics_oauth_state"
+    auto_sync_interval_minutes: int = 30
+    workspace_feature_enabled: bool = False
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -33,8 +36,16 @@ class Settings(BaseSettings):
         return self.database_url.startswith("sqlite")
 
     @property
+    def effective_environment(self) -> str:
+        return (self.app_env or self.environment).lower()
+
+    @property
     def is_production(self) -> bool:
-        return self.environment.lower() == "production"
+        return self.effective_environment == "production"
+
+    @property
+    def is_local_workspace(self) -> bool:
+        return self.effective_environment == "development" and self.workspace_feature_enabled
 
 
 @lru_cache

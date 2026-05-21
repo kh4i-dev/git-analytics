@@ -3,10 +3,10 @@
 
 <section class="exec-hero" aria-label="Executive overview">
   <div>
-    <p class="eyebrow">Dashboard</p>
+    <p class="eyebrow">Tổng quan</p>
     <h1>Tổng Quan</h1>
     {% include 'components/repository_context.html' %}
-    <p class="exec-subtitle">Phân tích hoạt động repository, hiệu suất nhóm và chỉ số vận hành.</p>
+    <p class="exec-subtitle">Tín hiệu hoạt động, review flow và sức khỏe đội ngũ.</p>
   </div>
   <div class="exec-hero-actions">
     <a class="live-pill" href="/api/v1/analytics/export/pdf"><i data-lucide="file-text"></i> Xuất PDF</a>
@@ -20,7 +20,7 @@
   <article class="metric-card">
     <div class="metric-icon"><i data-lucide="folder-git-2"></i></div>
     <div>
-      <p class="metric-label">Repository</p>
+      <p class="metric-label">Kho Lưu Trữ</p>
       <strong>{{ stats.summary.total_repositories }}</strong>
       <span>{{ stats.summary.active_repositories }} hoạt động &middot; {{ stats.summary.inactive_repositories }} tạm ngưng</span>
     </div>
@@ -55,7 +55,7 @@
   <article class="analytics-panel health-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Sức Khỏe Repository</p>
+        <p class="panel-kicker">Sức Khỏe Dự Án</p>
         <h2>Điểm hoạt động</h2>
       </div>
       <span class="status-badge status-{{ health.status.tone }}">{{ health.status.label }}</span>
@@ -99,8 +99,8 @@
 <section class="analytics-panel">
   <div class="panel-header">
     <div>
-        <p class="panel-kicker">Insights</p>
-      <h2>Tổng quan thông minh</h2>
+        <p class="panel-kicker">Insight</p>
+      <h2>Tín hiệu nổi bật</h2>
     </div>
     <span class="panel-stat">Phân tích</span>
   </div>
@@ -120,8 +120,8 @@
   {% else %}
   <div class="empty-state">
     <div class="empty-icon"><i data-lucide="sparkles"></i></div>
-    <h3>Chưa có insight nào</h3>
-    <p>Insight hiển thị sau khi dữ liệu được đồng bộ và phân tích.</p>
+    <h3>Chưa có insight nổi bật</h3>
+    <p>Các tín hiệu đáng chú ý sẽ xuất hiện tại đây.</p>
   </div>
   {% endif %}
 </section>
@@ -130,13 +130,13 @@
   <div class="panel-header">
     <div>
         <p class="panel-kicker">KPI</p>
-      <h2>Bảng xếp hạng</h2>
+      <h2>KPI Nổi Bật</h2>
     </div>
     <span class="panel-stat">Đánh giá</span>
   </div>
   <div class="kpi-grid">
     <article class="kpi-card">
-      <span>Top Contributor</span>
+    <span>Contributor Nổi Bật</span>
       {% if stats.kpi.top_contributor.login %}
         <a class="kpi-person-link" href="https://github.com/{{ stats.kpi.top_contributor.login }}" target="_blank" rel="noopener noreferrer">{{ stats.kpi.top_contributor.name }}</a>
       {% else %}
@@ -145,7 +145,7 @@
       <p>{{ stats.kpi.top_contributor.detail }}</p>
     </article>
     <article class="kpi-card">
-      <span>Top Issue Resolver</span>
+      <span>Hiệu Suất Xử Lý Issue</span>
       {% if stats.kpi.top_issue_resolver.login %}
         <a class="kpi-person-link" href="https://github.com/{{ stats.kpi.top_issue_resolver.login }}" target="_blank" rel="noopener noreferrer">{{ stats.kpi.top_issue_resolver.name }}</a>
       {% else %}
@@ -154,7 +154,7 @@
       <p>{{ stats.kpi.top_issue_resolver.detail }}</p>
     </article>
     <article class="kpi-card">
-      <span>Fastest Reviewer</span>
+      <span>Review Nhanh Nhất</span>
       {% if stats.kpi.fastest_reviewer.login %}
         <a class="kpi-person-link" href="https://github.com/{{ stats.kpi.fastest_reviewer.login }}" target="_blank" rel="noopener noreferrer">{{ stats.kpi.fastest_reviewer.name }}</a>
       {% else %}
@@ -163,7 +163,7 @@
       <p>{{ stats.kpi.fastest_reviewer.detail }} &middot; {{ stats.kpi.fastest_reviewer.value }}</p>
     </article>
     <article class="kpi-card">
-      <span>Most Active Repo</span>
+      <span>Repo Sôi Động Nhất</span>
       <strong>{{ stats.kpi.most_active_repo.full_name }}</strong>
       <p>{{ stats.kpi.most_active_repo.score }} điểm hoạt động</p>
     </article>
@@ -174,8 +174,8 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Biểu đồ</p>
-        <h2>Commit theo repository</h2>
+        <p class="panel-kicker">Repository</p>
+        <h2>Commit Theo Repo</h2>
       </div>
     </div>
     <div class="chart-wrap"><canvas id="repo-ranking-chart"></canvas></div>
@@ -184,8 +184,8 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Xu hướng</p>
-        <h2>30 ngày gần nhất</h2>
+        <p class="panel-kicker">Xu Hướng</p>
+        <h2>30 Ngày Gần Nhất</h2>
       </div>
     </div>
     <div class="chart-wrap"><canvas id="commit-trend-chart"></canvas></div>
@@ -196,8 +196,8 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Phân bố</p>
-        <h2>Contributor commits</h2>
+        <p class="panel-kicker">Contributor</p>
+        <h2>Phân Bố Commit</h2>
       </div>
     </div>
     <div class="chart-wrap small"><canvas id="commits-contributor-pie"></canvas></div>
@@ -206,8 +206,8 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Hiệu suất</p>
-        <h2>Issue đã xử lý</h2>
+        <p class="panel-kicker">Issue</p>
+        <h2>Hiệu Suất Xử Lý</h2>
       </div>
     </div>
     <div class="chart-wrap small"><canvas id="issues-user-bar"></canvas></div>
@@ -218,8 +218,8 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Nhóm</p>
-        <h2>Leaderboard</h2>
+        <p class="panel-kicker">Đội Ngũ</p>
+        <h2>Bảng Thành Tích</h2>
       </div>
       <span class="panel-stat">{{ team.summary.contributors }} contributor</span>
     </div>
@@ -251,7 +251,7 @@
           {% else %}
             <strong>{{ person.name }}</strong>
           {% endif %}
-          <span>{{ person.commits }} commit &middot; {{ person.prs_merged }} PR merged &middot; {{ person.issues_closed }} issue closed</span>
+          <span>{{ person.commits }} commit &middot; {{ person.prs_merged }} PR đã merge &middot; {{ person.issues_closed }} issue đã xử lý</span>
         </div>
         <span class="leader-score">{{ person.score }}</span>
       </div>
@@ -260,8 +260,8 @@
     {% else %}
     <div class="empty-state compact">
       <div class="empty-icon"><i data-lucide="users"></i></div>
-      <h3>Chưa ghi nhận contributor</h3>
-      <p>Leaderboard sẽ xuất hiện sau khi đồng bộ dữ liệu commit.</p>
+      <h3>Chưa có contributor nổi bật</h3>
+      <p>Hoạt động của đội ngũ sẽ xuất hiện tại đây.</p>
     </div>
     {% endif %}
   </article>
@@ -269,15 +269,15 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">KPI Nhóm</p>
-        <h2>So sánh hiệu suất</h2>
+        <p class="panel-kicker">KPI Đội Ngũ</p>
+        <h2>So Sánh Hiệu Suất</h2>
       </div>
     </div>
     <div class="team-kpi-grid">
       <div><span>Commit</span><strong>{{ team.summary.commits }}</strong></div>
-      <div><span>Issue Closed</span><strong>{{ team.summary.issues_closed }}</strong></div>
-      <div><span>PR Merged</span><strong>{{ team.summary.prs_merged }}</strong></div>
-      <div><span>Active Days</span><strong>{{ team.summary.active_days }}</strong></div>
+      <div><span>Issue Đã Xử Lý</span><strong>{{ team.summary.issues_closed }}</strong></div>
+      <div><span>PR Đã Merge</span><strong>{{ team.summary.prs_merged }}</strong></div>
+      <div><span>Ngày Hoạt Động</span><strong>{{ team.summary.active_days }}</strong></div>
     </div>
     <div class="chart-wrap small"><canvas id="team-activity-chart"></canvas></div>
   </article>
@@ -287,8 +287,8 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">PR Metrics</p>
-        <h2>Hiệu suất merge</h2>
+        <p class="panel-kicker">Pull Request</p>
+        <h2>Hiệu Suất Merge</h2>
       </div>
     </div>
     <div class="chart-wrap small"><canvas id="pr-metrics-chart"></canvas></div>
@@ -297,8 +297,8 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Issue Metrics</p>
-        <h2>Tình trạng xử lý</h2>
+        <p class="panel-kicker">Issue</p>
+        <h2>Tình Trạng Xử Lý</h2>
       </div>
     </div>
     <div class="chart-wrap small"><canvas id="issue-metrics-chart"></canvas></div>
@@ -309,10 +309,10 @@
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Most Active</p>
-        <h2>Repository ranking</h2>
+        <p class="panel-kicker">Sôi Động Nhất</p>
+        <h2>Xếp Hạng Repo</h2>
       </div>
-      <span class="panel-stat">Top 5</span>
+      <span class="panel-stat">5 repo</span>
     </div>
     {% if stats.most_active_repositories %}
     <div class="repo-list">
@@ -326,8 +326,8 @@
     {% else %}
     <div class="empty-state compact">
       <div class="empty-icon"><i data-lucide="folder-search"></i></div>
-      <h3>Chưa đủ dữ liệu xếp hạng</h3>
-      <p>Kết nối repository để theo dõi và so sánh mức độ hoạt động.</p>
+      <h3>Chưa có repo nổi bật</h3>
+      <p>Repo có hoạt động cao sẽ được làm nổi bật tại đây.</p>
     </div>
     {% endif %}
   </article>
@@ -360,7 +360,7 @@
     <div class="empty-state compact">
       <div class="empty-icon"><i data-lucide="rss"></i></div>
       <h3>Chưa phát hiện hoạt động</h3>
-      <p>Timeline cập nhật các sự kiện commit, PR, issue và đồng bộ dữ liệu.</p>
+      <p>Commit, PR và issue mới sẽ xuất hiện theo thời gian.</p>
     </div>
     {% endif %}
   </article>

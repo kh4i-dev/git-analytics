@@ -1,24 +1,22 @@
 import logging
 from typing import Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-
 from app.clients.github_client import GitHubClient
+from app.templates import templates
 from app.core.config import settings
 from app.core.exceptions import AppException, AuthenticationException
 from app.core.security import decrypt_token
 from app.core.session import parse_session_cookie
-from app.db.session import get_db
 from app.models.user import User
 from app.repositories import RepositoryRepository, UserRepository
 from app.services.sync_service import SyncService
+from app.utils.deps import get_db
 
-logger = logging.getLogger(__name__)
-router = APIRouter(tags=["Repositories"])
-templates = Jinja2Templates(directory="templates")
+router = APIRouter(tags=["repositories"])
 
 
 def _authenticate(request: Request, db: Session) -> User | None:
@@ -134,11 +132,57 @@ async def sync_repository(
         )
     except AppException as exc:
         return RedirectResponse(
-            f"/repositories?error=sync_failed&message={exc.message}",
+            f"/repositories?error=sync_failed&message={quote(exc.message)}",
             status_code=302,
         )
     except Exception as exc:
         return RedirectResponse(
-            f"/repositories?error=sync_failed&message={str(exc)[:200]}",
+            f"/repositories?error=sync_failed&message={quote(str(exc)[:200])}",
             status_code=302,
         )
+
+
+@router.post("/repositories/sync-all")
+async def sync_all_repositories(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    if not repos:
+        return RedirectResponse("/repositories?error=no_repositories", status_code=302)
+
+    service = SyncService(db)
+    success_count = 0
+    failed_count = 0
+    last_mode = "incremental"
+    last_error: str | None = None
+
+    for repo in repos:
+        if repo.last_sync_status == "syncing":
+            continue
+        try:
+            result = await service.sync_repository(user_id=user.id, repo_id=repo.id)
+            success_count += 1
+            last_mode = result.mode
+        except AppException as exc:
+            failed_count += 1
+            last_error = exc.message
+        except Exception as exc:
+            failed_count += 1
+            last_error = str(exc)[:200]
+
+    if success_count:
+        return RedirectResponse(
+            f"/repositories?synced_all={success_count}&failed={failed_count}&mode={last_mode}&status=success",
+            status_code=302,
+        )
+
+    message = quote(last_error or "Không thể cập nhật repository.")
+    return RedirectResponse(
+        f"/repositories?error=sync_failed&message={message}",
+        status_code=302,
+    )

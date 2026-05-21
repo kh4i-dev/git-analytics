@@ -1,0 +1,95 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Onboarding - Git Analytics{% endblock %}
+
+{% block content %}
+<div class="onboarding-shell">
+  <section class="onboarding-hero">
+    <div>
+      <span>Engineering Intelligence Setup</span>
+      <h1>Thiết lập analytics workspace</h1>
+      <p>Kết nối GitHub, chọn repo, chọn branch và bật các module phân tích cần dùng.</p>
+    </div>
+    <a class="btn btn-primary" href="/repositories">Quản lý repo</a>
+  </section>
+
+  <section class="stepper">
+    {% for label in ["Connect GitHub", "Select repositories", "Choose branches", "Enable modules", "Initial sync", "Ready"] %}
+      <div class="step {% if loop.index <= (3 if repos else 1) %}done{% endif %}">
+        <i>{{ loop.index }}</i><span>{{ label }}</span>
+      </div>
+    {% endfor %}
+  </section>
+
+  <section class="onboarding-grid">
+    <article class="setup-panel">
+      <div class="panel-title"><span>Repositories</span><strong>{{ repos | length }}</strong></div>
+      {% if repos %}
+        <div class="repo-pick-list">
+          {% for repo in repos[:8] %}
+            <label><input type="checkbox" checked> <span>{{ repo.full_name }}</span><code>{{ repo.default_branch or "main" }}</code></label>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <h3>Chưa có repository</h3>
+          <p>Kết nối GitHub để bắt đầu chọn repo phân tích.</p>
+          <form method="post" action="/repositories/import" class="js-submit-form" style="margin-top:14px">
+            <button class="btn btn-primary js-loading-btn" type="submit"><span class="spinner"></span><span class="btn-label">Kết nối GitHub</span></button>
+          </form>
+        </div>
+      {% endif %}
+    </article>
+
+    <article class="setup-panel">
+      <div class="panel-title"><span>Analytics modules</span><strong>5</strong></div>
+      <div class="module-list">
+        {% for module in ["Commits", "Pull requests", "Issues", "Contributor insights", "AI assistant"] %}
+          <label><input type="checkbox" checked> {{ module }}</label>
+        {% endfor %}
+      </div>
+      <p class="panel-note">Module config sẽ được lưu trong phase tiếp theo. Hiện tại dashboard dùng toàn bộ signals đã sync.</p>
+    </article>
+  </section>
+
+  <section class="setup-panel">
+    <div class="panel-title"><span>Initial sync</span><strong>{{ "Ready" if repos else "Waiting" }}</strong></div>
+    <div class="progress-track"><i style="width: {{ 70 if repos else 20 }}%"></i></div>
+    <p class="panel-note">{% if repos %}Workspace đã có repo. Chạy cập nhật để làm mới branch, commit, PR và issue.{% else %}Kết nối repository trước, sau đó hệ thống sẽ chuẩn bị dữ liệu ban đầu.{% endif %}</p>
+  </section>
+</div>
+
+<style>
+  .onboarding-shell { display:grid; gap:18px; max-width:1120px; }
+  .onboarding-hero, .setup-panel {
+    border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:18px;
+  }
+  .onboarding-hero { display:flex; justify-content:space-between; gap:16px; align-items:center; }
+  .onboarding-hero span, .panel-title span { color:var(--text-muted); font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+  .onboarding-hero h1 { font-size:24px; margin:4px 0; }
+  .onboarding-hero p, .panel-note { color:var(--text-muted); font-size:13px; }
+  .stepper { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:8px; }
+  .step {
+    display:flex; align-items:center; gap:7px; min-height:38px; padding:8px;
+    border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--text-muted); font-size:12px;
+  }
+  .step i { width:20px; height:20px; display:grid; place-items:center; border-radius:50%; background:var(--surface-2); font-style:normal; font-size:11px; }
+  .step.done { color:var(--text); border-color:rgba(63,185,80,.45); }
+  .step.done i { background:var(--success-bg); color:var(--success-text); }
+  .onboarding-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:14px; }
+  .panel-title { display:flex; justify-content:space-between; margin-bottom:12px; }
+  .panel-title strong { font-size:22px; }
+  .repo-pick-list, .module-list { display:grid; gap:8px; }
+  .repo-pick-list label, .module-list label {
+    display:flex; align-items:center; justify-content:space-between; gap:10px; padding:9px 10px;
+    border:1px solid var(--border-sub); border-radius:var(--radius); background:var(--surface-2); font-size:13px;
+  }
+  .repo-pick-list code { color:var(--text-muted); font-size:11px; }
+  .progress-track { height:8px; border-radius:999px; background:var(--surface-2); overflow:hidden; margin:10px 0; }
+  .progress-track i { display:block; height:100%; background:linear-gradient(90deg, #58a6ff, #3fb950); border-radius:999px; }
+  @media (max-width: 900px) {
+    .onboarding-hero, .onboarding-grid { grid-template-columns:1fr; display:grid; }
+    .stepper { grid-template-columns:repeat(2, minmax(0,1fr)); }
+  }
+</style>
+{% endblock %}

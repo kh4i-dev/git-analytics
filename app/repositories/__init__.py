@@ -4,6 +4,7 @@ from app.repositories.contributor_repo import ContributorRepository
 from app.repositories.issue_repo import IssueRepository
 from app.repositories.pull_request_repo import PullRequestRepository
 from app.repositories.repository_repo import RepositoryRepository
+from app.repositories.sync_job_repo import SyncJobRepository
 from app.repositories.user_repo import UserRepository
 
 __all__ = [
@@ -13,5 +14,6 @@ __all__ = [
     "IssueRepository",
     "PullRequestRepository",
     "RepositoryRepository",
+    "SyncJobRepository",
     "UserRepository",
 ]

@@ -1,180 +1,211 @@
-{% extends 'layouts/dashboard_base.html' %}
+{% extends base_template|default('layouts/dashboard_base.html') %}
 
-{% block title %}Tích Hợp Công Cụ AI — Git Analytics{% endblock %}
+{% block title %}AI Tools - Git Analytics{% endblock %}
 
 {% block content %}
-<div class="ai-tools-container" style="max-width: 900px; margin: 0 auto;">
-  <!-- Page Header -->
-  <div class="dh-header" style="margin-bottom: 24px;">
-    <span class="badge badge-merged" style="background: rgba(188, 140, 255, 0.1); color: var(--purple); border-color: rgba(188, 140, 255, 0.3); font-size: 11px; font-weight: 700; margin-bottom: 8px; text-transform: uppercase;">Tính Năng Premium</span>
-    <h1 style="font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px; display: flex; align-items: center; gap: 10px;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-      Công Cụ Trợ Lý AI
-    </h1>
-    <p style="font-size: 14px; color: var(--text-muted);">Tự động hóa viết commit message, review pull request và giải thích nghiệp vụ mã nguồn bằng mô hình ngôn ngữ lớn (LLM).</p>
-  </div>
-
-  <!-- Cards Grid -->
-  <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px;">
-    <!-- Model Selection Card -->
-    <div class="card model-card" style="border-color: var(--purple); position: relative; overflow: hidden;">
-      <div class="ai-glow"></div>
-      <h3 style="font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        Cấu Hình Mô Hình AI
-      </h3>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Chọn mô hình và cấu hình API Key để kích hoạt các tính năng tự động hóa bằng AI.</p>
-      
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;">
-        <div>
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;">Mô Hình Chính</label>
-          <select class="form-select" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: var(--radius); font-size: 13px;">
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro (Khuyên dùng)</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash (Tối ưu tốc độ)</option>
-            <option value="claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-            <option value="gpt-4o">GPT-4o (OpenAI)</option>
-          </select>
-        </div>
-        <div>
-          <label style="display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase;">Gemini / OpenAI API Key</label>
-          <input type="password" placeholder="••••••••••••••••••••••••••••••••" style="width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: var(--radius); font-size: 13px;" />
-        </div>
+{% if is_public %}
+<div class="ai-public">
+  <section class="ai-hero">
+    <div>
+      <span class="ai-kicker">AI Tools</span>
+      <h1>AI workspace cho engineering team</h1>
+      <p>Soạn commit message, rà soát PR diff và hỏi nhanh về kiến trúc repository khi chạy Git Analytics ở chế độ Local Workspace.</p>
+      <div class="ai-badges">
+        <span>Local Only</span>
+        <span>Beta</span>
+        <span>Requires Workspace Access</span>
+      </div>
+      <a class="btn btn-primary" href="/login">Đăng nhập để sử dụng với repository của bạn</a>
+    </div>
+    <div class="ai-preview-card">
+      <div class="panel-head">
+        <div><span>Commit</span><h2>Conventional Commit</h2></div>
+        <span class="status-pill">Preview</span>
+      </div>
+      <pre>feat(analytics): add branch-aware dashboard filters</pre>
+      <div class="preview-list">
+        <div><strong>PR Diff Reviewer</strong><span>Phát hiện rủi ro bảo mật, hiệu năng và kiến trúc.</span></div>
+        <div><strong>Repo Assistant</strong><span>Trả lời dựa trên source context trong workspace local.</span></div>
       </div>
     </div>
-
-    <!-- AI Commit Message Generator -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 16px; margin-bottom: 12px;">
-        <div>
-          <h3 style="font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>
-Trình Tạo Tin Nhắn Commit AI
-          </h3>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Phân tích file diff và tự động viết commit message tuân thủ đặc tả Conventional Commits.</p>
-        </div>
-        <label class="switch-toggle">
-          <input type="checkbox" checked>
-          <span class="switch-slider"></span>
-        </label>
-      </div>
-      
-      <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; font-family: monospace; font-size: 12px; color: var(--text-muted); margin-top: 8px;">
-        <span style="color: var(--purple)">// Prompt mẫu (Custom Prompt Template):</span><br>
-        Phân tích git diff bên dưới và viết một tin nhắn commit ngắn gọn, bắt đầu bằng tiền tố như feat:, fix:, chore:, hoặc docs: dựa trên nội dung thay đổi...
-      </div>
-    </div>
-
-    <!-- AI Pull Request Reviewer -->
-    <div class="card">
-      <div style="display: flex; justify-content: space-between; align-items: start; flex-wrap: wrap; gap: 16px; margin-bottom: 12px;">
-        <div>
-          <h3 style="font-size: 15px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px;">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-Trình Đánh Giá Pull Request AI
-          </h3>
-          <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Tự động phân tích PR code change để tìm kiếm lỗ hổng bảo mật, lỗi logic và tối ưu hóa hiệu năng.</p>
-        </div>
-        <label class="switch-toggle">
-          <input type="checkbox" checked>
-          <span class="switch-slider"></span>
-        </label>
-      </div>
-      
-      <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 12px; margin-top: 8px;">
-        <span class="badge badge-label" style="display:inline-flex;align-items:center;gap:4px;">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Quét lỗi bảo mật
-        </span>
-        <span class="badge badge-label" style="display:inline-flex;align-items:center;gap:4px;">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-          Tối ưu hiệu năng
-        </span>
-        <span class="badge badge-label" style="display:inline-flex;align-items:center;gap:4px;">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-          Phong cách code
-        </span>
-      </div>
-    </div>
-
-    <!-- AI Chat Console (Interactive Test) -->
-    <div class="card" style="border-color: var(--border-sub);">
-      <h3 style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Trợ Lý Code AI
-      </h3>
-      <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">Hỏi AI về bất kỳ nghiệp vụ hoặc cấu trúc file nào trong kho mã nguồn của bạn.</p>
-      
-      <div class="chat-sandbox" style="border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--surface-2);">
-        <!-- Messages -->
-        <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px; height: 120px; overflow-y: auto; font-size: 13px;">
-          <div style="display: flex; gap: 8px; align-items: start;">
-            <div style="background: var(--purple); color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0;">AI</div>
-            <div style="background: var(--surface); padding: 8px 12px; border-radius: var(--radius); border: 1px solid var(--border); max-width: 80%;">
-              Xin chào! Chọn một repository và hỏi tôi bất kỳ câu hỏi nào về mã nguồn của bạn.
-            </div>
-          </div>
-        </div>
-        
-        <!-- Input -->
-        <div style="display: flex; border-top: 1px solid var(--border); background: var(--surface);">
-          <input type="text" placeholder="Hỏi về cách triển khai logic..." style="flex: 1; border: none; background: transparent; padding: 12px; color: var(--text); font-size: 13px; outline: none;" />
-          <button class="btn btn-primary" style="border-radius: 0; padding-left: 20px; padding-right: 20px;">Gửi</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  </section>
 </div>
+{% else %}
+<div class="ai-workspace">
+  <section class="ai-header">
+    <div>
+      <span class="ai-kicker">AI Workspace</span>
+      <h1>Trợ lý kỹ thuật</h1>
+      <p>Viết commit message, rà soát PR diff và hỏi nhanh về kiến trúc repository.</p>
+    </div>
+    <div class="provider-strip">
+      <span class="mode-badge {{ 'enabled' if local_ai_enabled else 'disabled' }}">{{ 'Local Mode' if local_ai_enabled else 'Cloud Mode' }}</span>
+      <span>Local Only</span>
+      <span>Beta</span>
+      <span>Requires Workspace Access</span>
+    </div>
+  </section>
+
+  {% if not local_ai_enabled %}
+  <section class="workspace-lock">
+    <strong>Local Workspace chưa bật</strong>
+    <p>{{ workspace_message }}</p>
+  </section>
+  {% endif %}
+
+  <section class="ai-grid">
+    <article class="ai-panel {% if not local_ai_enabled %}is-disabled{% endif %}">
+      <div class="panel-head">
+        <div><span>Commit</span><h2>Gợi ý commit message</h2></div>
+        <button class="btn btn-primary btn-sm" onclick="generateCommit()" {% if not local_ai_enabled %}disabled{% endif %}>Tạo</button>
+      </div>
+      <textarea id="commit-diff" placeholder="Dán git diff vào đây..." {% if not local_ai_enabled %}disabled{% endif %}></textarea>
+      <pre id="commit-output" class="ai-output">{% if local_ai_enabled %}Commit message sẽ xuất hiện tại đây.{% else %}{{ workspace_message }}{% endif %}</pre>
+    </article>
+
+    <article class="ai-panel {% if not local_ai_enabled %}is-disabled{% endif %}">
+      <div class="panel-head">
+        <div><span>Review</span><h2>Rà soát PR diff</h2></div>
+        <button class="btn btn-primary btn-sm" onclick="reviewDiff()" {% if not local_ai_enabled %}disabled{% endif %}>Review</button>
+      </div>
+      <textarea id="review-diff" placeholder="Dán PR diff để rà soát rủi ro..." {% if not local_ai_enabled %}disabled{% endif %}></textarea>
+      <div id="review-output" class="review-output">{% if local_ai_enabled %}Nhận xét review sẽ xuất hiện tại đây.{% else %}{{ workspace_message }}{% endif %}</div>
+    </article>
+  </section>
+
+  <section class="ai-panel chat-panel {% if not local_ai_enabled %}is-disabled{% endif %}">
+    <div class="panel-head">
+      <div><span>Repo Assistant</span><h2>Hỏi về codebase</h2></div>
+      <button class="btn btn-primary btn-sm" onclick="askAssistant()" {% if not local_ai_enabled %}disabled{% endif %}>Gửi</button>
+    </div>
+    <div id="chat-output" class="chat-output">
+      <div class="assistant-msg">{% if local_ai_enabled %}Hỏi về auth flow, sync pipeline, architecture hoặc module xử lý GitHub.{% else %}{{ workspace_message }}{% endif %}</div>
+    </div>
+    <div class="chat-input-row">
+      <input id="assistant-question" placeholder="Ví dụ: Các module sync hoạt động thế nào?" {% if not local_ai_enabled %}disabled{% endif %}>
+    </div>
+  </section>
+</div>
+{% endif %}
 
 <style>
-  .ai-glow {
-    position: absolute;
-    top: -120px;
-    right: -120px;
-    width: 250px;
-    height: 250px;
-    background: radial-gradient(circle, rgba(188, 140, 255, 0.12) 0%, rgba(0,0,0,0) 70%);
-    pointer-events: none;
+  .ai-workspace, .ai-public { display:grid; gap:18px; max-width:1180px; }
+  .ai-header, .ai-hero {
+    display:flex; justify-content:space-between; gap:20px; align-items:flex-start;
+    padding:20px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);
   }
-  
-  /* Toggle Switch */
-  .switch-toggle {
-    position: relative;
-    display: inline-block;
-    width: 44px;
-    height: 22px;
+  .ai-hero { align-items:stretch; min-height:360px; }
+  .ai-kicker { color:var(--purple); font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+  .ai-header h1, .ai-hero h1 { font-size:24px; margin:4px 0; }
+  .ai-hero h1 { font-size:34px; max-width:520px; }
+  .ai-header p, .ai-hero p { color:var(--text-muted); line-height:1.6; max-width:610px; }
+  .ai-badges, .provider-strip { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0; }
+  .provider-strip { justify-content:flex-end; margin:0; }
+  .ai-badges span, .provider-strip span {
+    padding:5px 9px; border:1px solid var(--border); border-radius:999px; background:var(--surface-2); font-size:12px;
   }
-  .switch-toggle input {
-    opacity: 0;
-    width: 0;
-    height: 0;
+  .mode-badge.enabled { color:var(--success-text); border-color:var(--success-border); background:var(--success-bg); }
+  .mode-badge.disabled { color:var(--warn-text); border-color:var(--warn-border); background:var(--warn-bg); }
+  .workspace-lock {
+    padding:14px 16px;
+    border:1px solid var(--warn-border);
+    border-radius:var(--radius);
+    background:var(--warn-bg);
+    color:var(--warn-text);
   }
-  .switch-slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: var(--surface-3);
-    transition: .2s;
-    border-radius: 34px;
-    border: 1px solid var(--border);
+  .workspace-lock strong { display:block; color:var(--text); margin-bottom:3px; }
+  .workspace-lock p { margin:0; font-size:13px; color:var(--warn-text); }
+  .ai-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
+  .ai-panel, .ai-preview-card { padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
+  .ai-preview-card { width:min(420px, 42vw); background:linear-gradient(180deg, var(--surface-2), var(--surface)); }
+  .ai-panel.is-disabled { opacity:.72; }
+  .panel-head { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:12px; }
+  .panel-head span { color:var(--text-muted); font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+  .panel-head h2 { font-size:16px; }
+  .status-pill { border:1px solid var(--border); border-radius:999px; padding:4px 8px; color:var(--text-muted); font-size:11px; }
+  textarea, .chat-input-row input {
+    width:100%; min-height:180px; resize:vertical; border:1px solid var(--border); border-radius:var(--radius);
+    background:var(--surface-2); color:var(--text); padding:12px; font:13px "SFMono-Regular", Consolas, monospace; outline:0;
   }
-  .switch-slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 3px;
-    bottom: 3px;
-    background-color: var(--text-muted);
-    transition: .2s;
-    border-radius: 50%;
+  textarea:disabled, .chat-input-row input:disabled {
+    cursor:not-allowed;
+    color:var(--text-muted);
+    background:var(--surface);
   }
-  input:checked + .switch-slider {
-    background-color: var(--success-bg);
-    border-color: var(--success-border);
+  button:disabled { cursor:not-allowed; opacity:.55; }
+  .chat-input-row input { min-height:40px; font-family:inherit; }
+  .ai-output, .review-output, .chat-output, .ai-preview-card pre {
+    margin-top:12px; min-height:72px; border:1px solid var(--border-sub); border-radius:var(--radius);
+    background:#080c12; color:var(--text); padding:12px; font-size:13px; white-space:pre-wrap;
   }
-  input:checked + .switch-slider:before {
-    transform: translateX(22px);
-    background-color: var(--success-text);
+  .review-item { padding:10px 0; border-bottom:1px solid var(--border-sub); }
+  .review-item:last-child { border-bottom:0; }
+  .review-item strong { display:block; margin-bottom:3px; }
+  .assistant-msg { padding:10px 12px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface-2); }
+  .preview-list { display:grid; gap:10px; margin-top:14px; }
+  .preview-list div { padding:12px; border:1px solid var(--border-sub); border-radius:8px; background:rgba(255,255,255,.02); }
+  .preview-list strong { display:block; margin-bottom:5px; }
+  .preview-list span { color:var(--text-muted); font-size:13px; line-height:1.45; }
+  @media (max-width: 860px) {
+    .ai-header, .ai-hero, .ai-grid { grid-template-columns:1fr; display:grid; }
+    .provider-strip { justify-content:flex-start; }
+    .ai-preview-card { width:100%; }
   }
 </style>
+
+{% if not is_public %}
+<script>
+const LOCAL_AI_ENABLED = {{ 'true' if local_ai_enabled else 'false' }};
+const WORKSPACE_MESSAGE = {{ workspace_message|tojson }};
+
+async function postAI(path, payload) {
+  if (!LOCAL_AI_ENABLED) {
+    throw new Error(WORKSPACE_MESSAGE);
+  }
+  const res = await fetch(path, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const json = await res.json();
+  if (!res.ok || json.error) throw new Error(json.error?.message || `HTTP ${res.status}`);
+  return json.data;
+}
+
+async function generateCommit() {
+  const output = document.getElementById('commit-output');
+  output.textContent = 'Đang phân tích diff...';
+  try {
+    const data = await postAI('/api/v1/ai/commit-message', {diff: document.getElementById('commit-diff').value});
+    output.textContent = data.message;
+  } catch (err) {
+    output.textContent = 'Chưa tạo được commit message: ' + err.message;
+  }
+}
+
+async function reviewDiff() {
+  const output = document.getElementById('review-output');
+  output.textContent = 'Đang rà soát diff...';
+  try {
+    const data = await postAI('/api/v1/ai/review', {diff: document.getElementById('review-diff').value});
+    output.innerHTML = data.findings.map(item => `<div class="review-item"><strong>${item.title}</strong><span>${item.detail}</span></div>`).join('');
+  } catch (err) {
+    output.textContent = 'Chưa review được diff: ' + err.message;
+  }
+}
+
+async function askAssistant() {
+  const output = document.getElementById('chat-output');
+  const question = document.getElementById('assistant-question').value;
+  output.innerHTML += `<div class="assistant-msg" style="border-color:var(--text-link);margin-top:8px">${question}</div>`;
+  try {
+    const data = await postAI('/api/v1/ai/assistant', {question});
+    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px">${data.answer}</div>`;
+  } catch (err) {
+    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--danger-text)">Chưa có câu trả lời: ${err.message}</div>`;
+  }
+}
+</script>
+{% endif %}
 {% endblock %}

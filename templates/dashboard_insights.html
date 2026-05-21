@@ -222,11 +222,11 @@
     <!-- Hero Row -->
     <div class="insight-hero">
       
-      <!-- Coding Activity Streaks -->
+      <!-- Activity streaks -->
       <div class="card" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
         <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 8px;" class="card-title">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-          Coding Activity
+          Nhịp Code
         </div>
         
         <div style="border-right: 1px solid var(--border); padding-right: 10px;">
@@ -241,22 +241,22 @@
         </div>
         
         <div style="border-top: 1px solid var(--border); padding-top: 12px;">
-          <div class="card-sub" style="font-size:11px;">NGÀY CODE</div>
+          <div class="card-sub" style="font-size:11px;">NGÀY HOẠT ĐỘNG</div>
           <div class="card-value" style="font-size:22px" id="active-days">0</div>
           <div class="card-sub" id="avg-commits-per-day">0.0 commit/ngày</div>
         </div>
         <div style="border-top: 1px solid var(--border); padding-top: 12px;">
-          <div class="card-sub" style="font-size:11px;">PEAK TIME</div>
+          <div class="card-sub" style="font-size:11px;">KHUNG GIỜ CAO ĐIỂM</div>
           <div class="card-value" style="font-size:16px; margin-top:6px; font-weight:600;" id="peak-hour-band">-</div>
           <div class="card-sub" id="busiest-month">Tháng bận rộn nhất: -</div>
         </div>
       </div>
       
-      <!-- Repository Activity Score -->
+      <!-- Activity score -->
       <div class="score-card card">
         <div>
           <div class="score-header">
-            <span class="card-title" style="color: rgba(255,255,255,0.7); margin-bottom: 0;">Activity Score</span>
+            <span class="card-title" style="color: rgba(255,255,255,0.7); margin-bottom: 0;">Điểm Hoạt Động</span>
             <span class="score-level-badge" id="score-level">-</span>
           </div>
           <div class="score-display">
@@ -265,7 +265,7 @@
           </div>
         </div>
         <div class="score-desc" id="score-details">
-          Chưa ghi nhận hoạt động trong 30 ngày qua. Viết code để tăng điểm!
+          Chưa phát hiện hoạt động trong 30 ngày qua.
         </div>
       </div>
 
@@ -273,7 +273,7 @@
 
     <!-- Heatmap Row -->
     <div class="chart-card heatmap-card">
-      <div class="chart-title">Contribution Heatmap (365 ngày)</div>
+      <div class="chart-title">Heatmap Đóng Góp</div>
       <div class="heatmap-container" style="overflow-x: auto; padding-bottom: 8px;">
         <div style="display: flex; gap: 8px; align-items: start; min-width: 720px;">
           <div class="heatmap-weekdays" style="display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; font-size: 9px; color: var(--text-muted); line-height: 11px; padding-top: 1px;">
@@ -291,7 +291,7 @@
         </div>
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: var(--text-muted);">
-        <div id="heatmap-cell-hover-details">Di chuột qua ô để xem chi tiết</div>
+        <div id="heatmap-cell-hover-details">Di chuột để xem hoạt động theo ngày</div>
         <div style="display: flex; align-items: center; gap: 4px;">
           <span>Ít</span>
           <div style="background:#161b22; width:11px; height:11px; border-radius:2px;"></div>
@@ -309,7 +309,7 @@
       
       <!-- Commit Keyword Distribution -->
       <div class="chart-card">
-        <div class="chart-title">Conventional Commit Keywords</div>
+        <div class="chart-title">Mẫu Commit</div>
         <div class="chart-wrap">
           <canvas id="keywordChart"></canvas>
         </div>
@@ -317,7 +317,7 @@
 
       <!-- Commit Timing (Peak Hour) -->
       <div class="chart-card">
-        <div class="chart-title">Hiệu Suất Theo Giờ (UTC)</div>
+        <div class="chart-title">Nhịp Theo Giờ</div>
         <div class="chart-wrap">
           <canvas id="hourChart"></canvas>
         </div>
@@ -325,7 +325,7 @@
 
       <!-- Commits by Day of Week -->
       <div class="chart-card">
-        <div class="chart-title">Hoạt Động Theo Ngày</div>
+        <div class="chart-title">Nhịp Theo Thứ</div>
         <div class="chart-wrap">
           <canvas id="weekdayChart"></canvas>
         </div>
@@ -337,12 +337,12 @@
     <div>
       <div class="section-title" style="display:flex;align-items:center;gap:8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg>
-        Pull Request Insights
+        Pull Request
       </div>
       <div class="intel-grid">
         
         <div class="intel-card">
-          <span class="intel-card-title">Tỷ Lệ Merge</span>
+          <span class="intel-card-title">Merge Rate</span>
           <div class="intel-card-value" id="pr-success-pct">0%</div>
           <div>
             <div class="intel-card-sub" id="pr-counts">0 merged / 0 total</div>
@@ -353,13 +353,13 @@
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">Tốc Độ Merge TB</span>
+          <span class="intel-card-title">Merge Time TB</span>
           <div class="intel-card-value" id="pr-merge-speed">-</div>
           <span class="intel-card-sub" id="pr-throughput">0.0 PR / tuần</span>
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">PR Tồn Đọng</span>
+          <span class="intel-card-title">PR Đang Chờ</span>
           <div class="intel-card-value" id="pr-aging">-</div>
           <span class="intel-card-sub" id="pr-open-count">0 pull request đang mở</span>
         </div>
@@ -371,12 +371,12 @@
     <div style="margin-top: 10px;">
       <div class="section-title" style="display:flex;align-items:center;gap:8px;">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
-        Issue Insights
+        Issue
       </div>
       <div class="intel-grid">
         
         <div class="intel-card">
-          <span class="intel-card-title">Tỷ Lệ Đóng</span>
+          <span class="intel-card-title">Tỷ Lệ Xử Lý</span>
           <div class="intel-card-value" id="issue-closure-pct">0%</div>
           <div>
             <div class="intel-card-sub" id="issue-counts">0 closed / 0 total</div>
@@ -387,13 +387,13 @@
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">Close Time TB</span>
+          <span class="intel-card-title">Thời Gian Xử Lý TB</span>
           <div class="intel-card-value" id="issue-close-speed">-</div>
           <span class="intel-card-sub" id="issue-open-count">0 issue đang mở</span>
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">Bug / Feature Ratio</span>
+          <span class="intel-card-title">Bug / Cải Tiến</span>
           <div class="intel-card-value" id="issue-ratio">-</div>
           <span class="intel-card-sub" id="issue-bug-feature">0 bug / 0 feature</span>
         </div>
@@ -401,13 +401,13 @@
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">Thời gian Giải quyết Trung bình</span>
+          <span class="intel-card-title">Thời Gian Xử Lý TB</span>
           <div class="intel-card-value" id="issue-resolve-speed">-</div>
           <span class="intel-card-sub" id="issue-open-count">0 issue đang mở</span>
         </div>
 
         <div class="intel-card">
-          <span class="intel-card-title">Tỷ lệ Bug / Cải tiến</span>
+          <span class="intel-card-title">Bug / Cải Tiến</span>
           <div class="intel-card-value" id="issue-bug-ratio">0%</div>
           <span class="intel-card-sub" id="issue-bug-details">0 bug / 0 cải tiến</span>
         </div>
@@ -430,23 +430,23 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("insights-skeleton").style.display = "none";
     document.getElementById("insights-content").style.display = "flex";
 
-    // 1. Coding Activity
+    // 1. Activity
     const coding = data.coding_activity;
     document.getElementById("current-streak").textContent = coding.current_streak;
     document.getElementById("longest-streak").textContent = coding.longest_streak;
     document.getElementById("active-days").textContent = coding.active_days;
-    document.getElementById("avg-commits-per-day").textContent = `${coding.avg_commits_per_active_day} commit / ngày hoạt động`;
-    document.getElementById("peak-hour-band").textContent = coding.peak_hour_band || "Chưa có commit nào";
+    document.getElementById("avg-commits-per-day").textContent = `${coding.avg_commits_per_active_day} commit / ngày`;
+    document.getElementById("peak-hour-band").textContent = coding.peak_hour_band || "Chưa phát hiện commit";
     
-    let busyMonth = "Chưa có commit nào";
+    let busyMonth = "Chưa phát hiện commit";
     if (coding.busiest_month) {
       const parts = coding.busiest_month.split("-");
       const dateObj = new Date(parts[0], parts[1] - 1);
-      busyMonth = dateObj.toLocaleString('vi-VN', { month: 'long', year: 'numeric' });
+      busyMonth = dateObj.toLocaleString('vi-VN', { month: 'long', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' });
     }
-    document.getElementById("busiest-month").textContent = `Tháng bận rộn nhất: ${busyMonth}`;
+    document.getElementById("busiest-month").textContent = `Tháng nổi bật: ${busyMonth}`;
 
-    // 2. Activity Score
+    // 2. Score
     const score = data.activity_score;
     document.getElementById("score-num").textContent = score.score;
     
@@ -459,13 +459,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
     badge.textContent = levelMap[score.level] || score.level;
     
-    let detailsText = `Trong 30 ngày qua, nhà phát triển này đã thực hiện <strong>${score.commits_30d}</strong> commit, tạo <strong>${score.prs_30d}</strong> pull request, và mở <strong>${score.issues_30d}</strong> issue.`;
+    let detailsText = `30 ngày qua: <strong>${score.commits_30d}</strong> commit, <strong>${score.prs_30d}</strong> pull request, <strong>${score.issues_30d}</strong> issue.`;
     if (score.score >= 70) {
-      detailsText += " Tốc độ xuất sắc! Hiệu suất coding cực kỳ tích cực.";
+      detailsText += " Hoạt động đang rất tốt.";
     } else if (score.score >= 35) {
-      detailsText += " Nhịp độ làm việc cân bằng. Hoạt động ổn định tốt.";
+      detailsText += " Nhịp làm việc ổn định.";
     } else {
-      detailsText += " Giai đoạn ít hoạt động. Tốc độ hiện tại đang thấp.";
+      detailsText += " Hoạt động đang chậm lại.";
     }
     document.getElementById("score-details").innerHTML = detailsText;
 
@@ -498,20 +498,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       // Hover event
       cell.addEventListener("mouseenter", () => {
         const prettyDate = new Date(dateStr).toLocaleDateString('vi-VN', {
-          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric'
+          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh'
         });
         const commitText = count === 1 ? '1 commit' : `${count} commit`;
         hoverDetails.innerHTML = `<strong>${commitText}</strong> vào ${prettyDate}`;
       });
       
       cell.addEventListener("mouseleave", () => {
-        hoverDetails.textContent = "Di chuột qua ô để xem chi tiết";
+        hoverDetails.textContent = "Di chuột để xem hoạt động theo ngày";
       });
       
       grid.appendChild(cell);
     });
 
-    // 4. Charts - Conventional Commit Keywords (Horizontal Bar Chart)
+    // 4. Commit pattern chart
     const commitIntel = data.commit_intelligence;
     const kwLabels = Object.keys(commitIntel.keywords);
     const kwValues = Object.values(commitIntel.keywords);
@@ -522,9 +522,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     new Chart(document.getElementById("keywordChart"), {
       type: "bar",
       data: {
-        labels: showKeywords ? kwLabels : ["Không tìm thấy từ khóa"],
+        labels: showKeywords ? kwLabels : ["Chưa có mẫu commit"],
         datasets: [{
-          label: "Số lượng Commit",
+          label: "Commit",
           data: showKeywords ? kwValues : [0],
           backgroundColor: showKeywords 
             ? kwLabels.map((_, i) => `hsla(${200 + i * 20}, 75%, 60%, 0.8)`)
@@ -654,13 +654,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("pr-success-progress").style.width = `${prIntel.success_ratio_pct}%`;
     document.getElementById("pr-merge-speed").textContent = prIntel.avg_merge_time_display || "N/A";
     
-    let tpText = "Không có dữ liệu chu kỳ";
+    let tpText = "Chưa đủ chu kỳ PR";
     if (prIntel.throughput_per_week !== null) {
       tpText = `${prIntel.throughput_per_week} PR đã merge / tuần`;
     }
     document.getElementById("pr-throughput").textContent = tpText;
     
-    let ageText = "Không có PR đang mở";
+    let ageText = "Không có PR đang chờ";
     if (prIntel.avg_pr_age_days !== null) {
       ageText = `Tuổi backlog TB: ${prIntel.avg_pr_age_days} ngày`;
     }
@@ -679,7 +679,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   } catch (err) {
     console.error(err);
-    showError("Không thể tải thông tin phân tích người viết.");
+    showError("Không tải được insight.");
   }
 });
 </script>

@@ -1,24 +1,24 @@
 import logging
-from datetime import datetime, UTC
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-
+from app.clients.github_client import GitHubClient
+from app.templates import templates
 from app.core.config import settings
 from app.core.exceptions import AuthenticationException
-from app.core.session import parse_session_cookie
-from app.db.session import get_db
-from app.models.user import User
-from app.repositories import RepositoryRepository, UserRepository
-from app.services.analytics_service import AnalyticsService
 from app.core.security import decrypt_token
-from app.clients.github_client import GitHubClient
+from app.core.session import parse_session_cookie
+from app.models.user import User
+from app.repositories import RepositoryRepository, SyncJobRepository, UserRepository
+from app.services.analytics_service import AnalyticsService
+from app.services.insights_service import InsightsService
+from app.utils.deps import get_db
+from app.utils.timezone import VN_TZ, now_utc, utc_to_vn
 
+router = APIRouter(tags=["dashboard"])
 logger = logging.getLogger(__name__)
-router = APIRouter(tags=["Dashboard"])
-templates = Jinja2Templates(directory="templates")
 
 
 def _authenticate(request: Request, db: Session) -> User | None:
@@ -83,6 +83,28 @@ async def settings_page(
             "user": user,
             "repos": repos,
             "active_page": "settings",
+            "is_local_dev": settings.is_local_workspace,
+        },
+    )
+
+
+@router.get("/onboarding", response_class=HTMLResponse, response_model=None)
+async def onboarding_page(
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    return templates.TemplateResponse(
+        request=request,
+        name="onboarding.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "active_page": "onboarding",
         },
     )
 
@@ -168,7 +190,7 @@ async def sync_status_page(
                 r.duration_str = f"{seconds}s"
             elif r.last_sync_status == "syncing":
                 # currently running
-                delta = datetime.now(UTC).replace(tzinfo=None) - r.sync_started_at.replace(tzinfo=None)
+                delta = now_utc() - utc_to_vn(r.sync_started_at).astimezone(VN_TZ)
                 seconds = max(0, int(delta.total_seconds()))
                 r.duration_str = f"{seconds}s (chạy)"
     
@@ -183,6 +205,12 @@ async def sync_status_page(
         "syncing_count": syncing_count,
         "avg_duration_str": avg_duration_str,
     }
+    sync_jobs = SyncJobRepository(db).list_recent(limit=30)
+    job_summary = {
+        "queued": sum(1 for job in sync_jobs if job.status == "queued"),
+        "running": sum(1 for job in sync_jobs if job.status == "running"),
+        "failed": sum(1 for job in sync_jobs if job.status == "failed"),
+    }
     
     # Fetch GitHub API Rate Limit
     rate_limit = {"limit": 5000, "remaining": 5000, "reset_time_local": "N/A"}
@@ -194,7 +222,7 @@ async def sync_status_page(
             rate_limit["remaining"] = rl_data.get("remaining") or 5000
             if rl_data.get("reset_at"):
                 dt = datetime.fromisoformat(rl_data["reset_at"].replace("Z", "+00:00"))
-                rate_limit["reset_time_local"] = dt.strftime("%H:%M:%S")
+                rate_limit["reset_time_local"] = utc_to_vn(dt).strftime("%H:%M:%S")
     except Exception as e:
         logger.warning(f"Failed to fetch rate limit in sync_status_page: {e}")
         
@@ -207,6 +235,8 @@ async def sync_status_page(
             "repos": repos,
             "rate_limit": rate_limit,
             "sync_stats": sync_stats,
+            "sync_jobs": sync_jobs,
+            "job_summary": job_summary,
             "active_page": "sync_status",
         },
     )
@@ -218,9 +248,7 @@ async def developer_news_page(
     db: Session = Depends(get_db),
 ) -> Response:
     user = _authenticate(request, db)
-    if user is None:
-        return _login_redirect()
-    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100) if user else []
     return templates.TemplateResponse(
         request=request,
         name="developer_news.html",
@@ -229,6 +257,7 @@ async def developer_news_page(
             "user": user,
             "repos": repos,
             "active_page": "developer_news",
+            "base_template": "layouts/dashboard_base.html" if user else "layouts/public_base.html",
         },
     )
 
@@ -239,9 +268,8 @@ async def ai_tools_page(
     db: Session = Depends(get_db),
 ) -> Response:
     user = _authenticate(request, db)
-    if user is None:
-        return _login_redirect()
-    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100) if user else []
+    local_ai_enabled = bool(user and settings.is_local_workspace)
     return templates.TemplateResponse(
         request=request,
         name="ai_tools.html",
@@ -250,6 +278,10 @@ async def ai_tools_page(
             "user": user,
             "repos": repos,
             "active_page": "ai_tools",
+            "base_template": "layouts/dashboard_base.html" if user else "layouts/public_base.html",
+            "is_public": user is None,
+            "local_ai_enabled": local_ai_enabled,
+            "workspace_message": "Tính năng này chỉ khả dụng khi chạy Git Analytics ở chế độ Local Workspace.",
         },
     )
 
@@ -272,6 +304,33 @@ async def team_members_page(
             "user": user,
             "repos": repos,
             "stats": stats,
+            "active_page": "team",
+        },
+    )
+
+
+@router.get("/team/{username}", response_class=HTMLResponse, response_model=None)
+async def team_member_profile_page(
+    request: Request,
+    username: str,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+    repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
+    try:
+        profile = AnalyticsService(db).get_contributor_profile(user.id, username)
+    except Exception:
+        return RedirectResponse("/team", status_code=302)
+    return templates.TemplateResponse(
+        request=request,
+        name="team_member_profile.html",
+        context={
+            "request": request,
+            "user": user,
+            "repos": repos,
+            "profile": profile,
             "active_page": "team",
         },
     )

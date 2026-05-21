@@ -1,4 +1,4 @@
-{% extends "layouts/dashboard_base.html" %}
+{% extends base_template|default("layouts/dashboard_base.html") %}
 
 {% block title %}Khám Phá Hệ Sinh Thái Dev — Git Analytics{% endblock %}
 
@@ -442,7 +442,7 @@ function renderAI(repos) {
     grid.innerHTML = `
       <div class="empty-state" style="grid-column: 1/-1;">
         <div class="empty-icon">${iconSvg("bot")}</div>
-        <h3>Không có repository AI nào khả dụng</h3>
+        <h3>Chưa có repo AI phù hợp</h3>
       </div>
     `;
     return;
@@ -473,9 +473,9 @@ function renderHN(articles) {
     
     // Calculate readable timestamp
     const dateStr = new Date(art.time * 1000).toLocaleTimeString('vi-VN', {
-      hour: '2-digit', minute: '2-digit'
+      hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Ho_Chi_Minh'
     }) + " - " + new Date(art.time * 1000).toLocaleDateString('vi-VN', {
-      month: 'short', day: 'numeric'
+      month: 'short', day: 'numeric', timeZone: 'Asia/Ho_Chi_Minh'
     });
 
     item.innerHTML = `
@@ -500,7 +500,7 @@ function createRepoCard(repo) {
   const card = document.createElement("div");
   card.className = "repo-card";
   
-  const desc = repo.description || "Không có mô tả.";
+  const desc = repo.description || "Chưa có mô tả.";
   const langBadge = repo.language ? `<span class="repo-tag">${repo.language}</span>` : "";
   
   card.innerHTML = `

@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{% block meta_desc %}Bảng Điều Khiển Git Analytics{% endblock %}">
   <title>{% block title %}Git Analytics{% endblock %}</title>
+  <script>
+    (function () {
+      const saved = localStorage.getItem('ga_theme') || 'system';
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const resolved = saved === 'system' ? (prefersDark ? 'github-dark' : 'linear-graphite') : saved;
+      document.documentElement.dataset.theme = resolved;
+      document.documentElement.dataset.themeChoice = saved;
+    })();
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,10 +45,56 @@
       --info-border:    #1f6feb;
       --info-text:      #79c0ff;
       --purple:         #bc8cff;
+      --chart-blue:     #58a6ff;
+      --chart-green:    #3fb950;
+      --chart-purple:   #bc8cff;
+      --chart-yellow:   #e3b341;
+      --chart-red:      #f85149;
+      --shadow-soft:    0 16px 36px rgba(1, 4, 9, .24);
+      --surface-hover:  #21262d;
       --radius:         6px;
       --radius-lg:      10px;
       --sidebar-w:      240px;
       --page-max-w:     1200px;
+    }
+    html[data-theme="vercel-midnight"] {
+      --bg:#050505; --surface:#0a0a0a; --surface-2:#111111; --surface-3:#1c1c1c;
+      --border:#2a2a2a; --border-sub:#1f1f1f; --text:#ededed; --text-muted:#8f8f8f;
+      --text-link:#8ab4ff; --accent:#f5f5f5; --accent-h:#dcdcdc; --purple:#a78bfa;
+      --info-bg:#07182f; --info-border:#214c7d; --info-text:#8ab4ff;
+      --success-bg:#071f13; --success-border:#1f7a45; --success-text:#4ade80;
+      --warn-bg:#241a05; --warn-border:#8a5a05; --warn-text:#f2c94c;
+      --surface-hover:#181818; --shadow-soft:0 18px 48px rgba(0,0,0,.42);
+      --chart-blue:#8ab4ff; --chart-green:#4ade80; --chart-purple:#a78bfa; --chart-yellow:#f2c94c; --chart-red:#ff6b6b;
+    }
+    html[data-theme="linear-graphite"] {
+      --bg:#101112; --surface:#151617; --surface-2:#1b1c1e; --surface-3:#242528;
+      --border:#313236; --border-sub:#25262a; --text:#f1f2f4; --text-muted:#a0a3aa;
+      --text-link:#7aa2ff; --accent:#5e6ad2; --accent-h:#6e78df; --purple:#9c8cff;
+      --info-bg:#111b31; --info-border:#2b4d8a; --info-text:#8fb3ff;
+      --success-bg:#0f241b; --success-border:#2d8a5f; --success-text:#65d6a0;
+      --surface-hover:#202124; --shadow-soft:0 16px 36px rgba(0,0,0,.3);
+      --chart-blue:#7aa2ff; --chart-green:#65d6a0; --chart-purple:#9c8cff; --chart-yellow:#d8b55f; --chart-red:#f06f6f;
+    }
+    html[data-theme="nord-night"] {
+      --bg:#242933; --surface:#2e3440; --surface-2:#343c4a; --surface-3:#3b4252;
+      --border:#4c566a; --border-sub:#3b4252; --text:#eceff4; --text-muted:#aeb8c8;
+      --text-link:#88c0d0; --accent:#81a1c1; --accent-h:#8fbcbb; --purple:#b48ead;
+      --info-bg:#28384a; --info-border:#5e81ac; --info-text:#88c0d0;
+      --success-bg:#253a32; --success-border:#8fbcbb; --success-text:#a3d8c8;
+      --warn-bg:#3a3024; --warn-border:#d08770; --warn-text:#ebcb8b;
+      --surface-hover:#3b4252; --shadow-soft:0 18px 42px rgba(15,19,28,.28);
+      --chart-blue:#88c0d0; --chart-green:#a3be8c; --chart-purple:#b48ead; --chart-yellow:#ebcb8b; --chart-red:#bf616a;
+    }
+    html[data-theme="tokyo-night"] {
+      --bg:#16161e; --surface:#1a1b26; --surface-2:#202234; --surface-3:#292e42;
+      --border:#353b55; --border-sub:#262b3f; --text:#c0caf5; --text-muted:#8b93b5;
+      --text-link:#7aa2f7; --accent:#7aa2f7; --accent-h:#89b4ff; --purple:#bb9af7;
+      --info-bg:#18243d; --info-border:#3d59a1; --info-text:#7dcfff;
+      --success-bg:#1d332b; --success-border:#41a6b5; --success-text:#9ece6a;
+      --warn-bg:#322b1d; --warn-border:#b58945; --warn-text:#e0af68;
+      --surface-hover:#25283b; --shadow-soft:0 18px 44px rgba(4,6,18,.34);
+      --chart-blue:#7aa2f7; --chart-green:#9ece6a; --chart-purple:#bb9af7; --chart-yellow:#e0af68; --chart-red:#f7768e;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,6 +107,12 @@
       min-height: 100vh;
       display: flex;
       flex-direction: column;
+      transition: background .18s ease, color .18s ease;
+    }
+
+    .sidebar, .topbar, .card, .chart-card, .table-wrap, .empty-state,
+    select, input, textarea, .btn, .badge, pre, code {
+      transition: background-color .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
     }
 
     .shell { display: flex; flex: 1; min-height: 0; }
@@ -86,9 +147,10 @@
       white-space: nowrap;
     }
     .btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    html[data-theme="vercel-midnight"] .btn-primary { color: #050505; }
     .btn-primary:hover { background: var(--accent-h); }
     .btn-outline { background: var(--surface-2); color: var(--text); border-color: var(--border); }
-    .btn-outline:hover { background: #2d333a; }
+    .btn-outline:hover { background: var(--surface-hover); }
     .btn-sm { padding: 4px 10px; font-size: 12px; }
 
     /* spinner inside button */
@@ -113,8 +175,8 @@
       transition: border-color .15s, box-shadow .15s;
     }
     .card:hover {
-      border-color: #444d56;
-      box-shadow: 0 2px 12px rgba(0,0,0,.25);
+      border-color: var(--surface-hover);
+      box-shadow: var(--shadow-soft);
     }
     .card-title {
       font-size: 11px; font-weight: 600; text-transform: uppercase;
@@ -127,6 +189,17 @@
       letter-spacing: -0.5px;
     }
     .card-sub { font-size: 12px; color: var(--text-muted); margin-top: 6px; }
+    .timestamp-muted {
+      color: var(--text-muted);
+      font-size: 12px;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+    .timestamp-relative {
+      color: var(--text-muted);
+      font-size: 11px;
+      margin-top: 2px;
+    }
 
     /* ── Stat grid ───────────────────────────────────── */
     .stats-grid {
@@ -268,6 +341,127 @@
 <div id="error-toast"></div>
 
 <script>
+const DASHBOARD_THEMES = {
+  'github-dark': ['#58a6ff', '#3fb950', '#bc8cff', '#e3b341', '#f85149'],
+  'vercel-midnight': ['#8ab4ff', '#4ade80', '#a78bfa', '#f2c94c', '#ff6b6b'],
+  'linear-graphite': ['#7aa2ff', '#65d6a0', '#9c8cff', '#d8b55f', '#f06f6f'],
+  'nord-night': ['#88c0d0', '#a3be8c', '#b48ead', '#ebcb8b', '#bf616a'],
+  'tokyo-night': ['#7aa2f7', '#9ece6a', '#bb9af7', '#e0af68', '#f7768e']
+};
+
+function resolveDashboardTheme(theme) {
+  if (theme !== 'system') return theme;
+  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  return prefersDark ? 'github-dark' : 'linear-graphite';
+}
+
+function dashboardThemeColors() {
+  const styles = getComputedStyle(document.documentElement);
+  return [
+    styles.getPropertyValue('--chart-blue').trim(),
+    styles.getPropertyValue('--chart-green').trim(),
+    styles.getPropertyValue('--chart-purple').trim(),
+    styles.getPropertyValue('--chart-yellow').trim(),
+    styles.getPropertyValue('--chart-red').trim()
+  ];
+}
+
+function applyDashboardTheme(theme) {
+  const choice = theme || 'system';
+  const resolved = resolveDashboardTheme(choice);
+  localStorage.setItem('ga_theme', choice);
+  document.documentElement.dataset.theme = resolved;
+  document.documentElement.dataset.themeChoice = choice;
+  const styles = getComputedStyle(document.documentElement);
+  if (window.Chart) {
+    Chart.defaults.color = styles.getPropertyValue('--text-muted').trim();
+    Chart.defaults.borderColor = styles.getPropertyValue('--border-sub').trim();
+    Chart.defaults.backgroundColor = styles.getPropertyValue('--surface-2').trim();
+  }
+  window.dispatchEvent(new CustomEvent('dashboard-theme-change', { detail: { choice, resolved, colors: dashboardThemeColors() } }));
+}
+
+window.GitAnalyticsTheme = {
+  apply: applyDashboardTheme,
+  current: () => localStorage.getItem('ga_theme') || 'system',
+  colors: dashboardThemeColors
+};
+
+applyDashboardTheme(localStorage.getItem('ga_theme') || 'system');
+
+const VN_TIME_ZONE = 'Asia/Ho_Chi_Minh';
+
+function parseDashboardDate(value) {
+  if (!value) return null;
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function formatVNDateTime(value) {
+  const date = parseDashboardDate(value);
+  if (!date) return '—';
+  return date.toLocaleString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: VN_TIME_ZONE
+  });
+}
+
+function formatVNCompact(value) {
+  const date = parseDashboardDate(value);
+  if (!date) return '—';
+  const time = date.toLocaleTimeString('vi-VN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: VN_TIME_ZONE
+  });
+  const day = date.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: VN_TIME_ZONE
+  });
+  return `${time} • ${day}`;
+}
+
+function formatVNDate(value) {
+  const date = parseDashboardDate(value);
+  if (!date) return '—';
+  return date.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    timeZone: VN_TIME_ZONE
+  });
+}
+
+function relativeVNTime(value) {
+  const date = parseDashboardDate(value);
+  if (!date) return '—';
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 60_000) return 'vừa xong';
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 60) return `${minutes} phút trước`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} giờ trước`;
+  if (hours < 48) return 'hôm qua';
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} ngày trước`;
+  return formatVNDate(value);
+}
+
+window.GitAnalyticsTime = {
+  dateTime: formatVNDateTime,
+  compact: formatVNCompact,
+  date: formatVNDate,
+  relative: relativeVNTime
+};
+
 function switchRepo(repoId) {
   if (!repoId) return;
   // Map current sub-page
@@ -325,5 +519,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 {% block page_scripts %}{% endblock %}
+<script>
+  if (window.GitAnalyticsTheme) {
+    window.GitAnalyticsTheme.apply(window.GitAnalyticsTheme.current());
+  }
+</script>
 </body>
 </html>

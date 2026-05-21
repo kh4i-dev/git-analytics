@@ -10,7 +10,7 @@
   {% if imported %}
     <div class="flash-alert flash-success" role="alert">
       <span class="flash-alert-icon">✓</span>
-      <span>Đã import <strong>{{ imported }}</strong> repository từ GitHub.</span>
+      <span>Đã thêm <strong>{{ imported }}</strong> repository từ GitHub.</span>
     </div>
   {% endif %}
 
@@ -19,8 +19,19 @@
     <div class="flash-alert flash-success" role="alert">
       <span class="flash-alert-icon">✓</span>
       <span>
-        Đồng bộ hoàn tất — chế độ: <strong>{{ request.query_params.get("mode", "full") }}</strong>,
+        Cập nhật hoàn tất — chế độ: <strong>{{ request.query_params.get("mode", "full") }}</strong>,
         trạng thái: <strong>{{ request.query_params.get("status", "success") }}</strong>.
+      </span>
+    </div>
+  {% endif %}
+
+  {% set synced_all = request.query_params.get("synced_all") %}
+  {% if synced_all %}
+    <div class="flash-alert flash-success" role="alert">
+      <span class="flash-alert-icon">✓</span>
+      <span>
+        Đã cập nhật <strong>{{ synced_all }}</strong> repository{% if request.query_params.get("failed", "0") != "0" %},
+        <strong>{{ request.query_params.get("failed") }}</strong> repo cần kiểm tra lại{% endif %}.
       </span>
     </div>
   {% endif %}
@@ -35,7 +46,9 @@
         {% elif err == "import_failed" %}
           Import thất bại: {{ request.query_params.get("message", "Lỗi không xác định.") }}
         {% elif err == "sync_failed" %}
-          Đồng bộ thất bại: {{ request.query_params.get("message", "Lỗi không xác định.") }}
+          Cập nhật thất bại: {{ request.query_params.get("message", "Lỗi không xác định.") }}
+        {% elif err == "no_repositories" %}
+          Chưa có repository để cập nhật.
         {% else %}
           Có lỗi xảy ra. Vui lòng thử lại.
         {% endif %}
@@ -52,17 +65,30 @@
           <span class="count-badge">{{ repositories | length }}</span>
         {% endif %}
       </div>
-      <p class="repo-page-sub">Quản lý repository và trạng thái đồng bộ từ GitHub.</p>
+      <p class="repo-page-sub">Theo dõi repository, branch và trạng thái dữ liệu GitHub.</p>
     </div>
-    <form method="post" action="/repositories/import" class="js-submit-form" style="flex-shrink:0">
-      <button id="btn-import" type="submit" class="btn btn-primary js-loading-btn">
-        <span class="spinner" aria-hidden="true"></span>
-        <span class="btn-label">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-                Import Từ GitHub
-        </span>
-      </button>
-    </form>
+    <div class="repo-toolbar-actions">
+      {% if repositories %}
+      <form method="post" action="/repositories/sync-all" class="js-submit-form" style="flex-shrink:0">
+        <button id="btn-sync-all" type="submit" class="btn btn-outline js-loading-btn">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+            Cập Nhật Tất Cả
+          </span>
+        </button>
+      </form>
+      {% endif %}
+      <form method="post" action="/repositories/import" class="js-submit-form" style="flex-shrink:0">
+        <button id="btn-import" type="submit" class="btn btn-primary js-loading-btn">
+          <span class="spinner" aria-hidden="true"></span>
+          <span class="btn-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            Kết Nối GitHub
+          </span>
+        </button>
+      </form>
+    </div>
   </div>
 
   {% if repositories %}
@@ -73,10 +99,10 @@
           <tr>
             <th>Kho Lưu Trữ</th>
             <th>Loại</th>
-            <th>Nhánh mặc định</th>
+            <th>Nhánh phân tích</th>
             <th>Trạng thái</th>
-            <th>Đồng bộ lần cuối</th>
-            <th style="width: 100px;">Thao tác</th>
+            <th>Cập nhật lần cuối</th>
+            <th class="actions-head">Thao tác</th>
           </tr>
         </thead>
         <tbody>
@@ -105,9 +131,31 @@
               {% endif %}
             </td>
 
-            <!-- Default branch -->
+            <!-- Analysis branch -->
             <td>
-              <span class="code-branch">{{ repo.default_branch or "—" }}</span>
+              <div class="branch-cell">
+                {% if repo.branches %}
+                  <select class="branch-jump" onchange="openRepoBranch({{ repo.id }}, this.value)" aria-label="Chọn nhánh phân tích">
+                    <option value="all">Tất cả branch</option>
+                    <option value="{{ repo.default_branch or 'main' }}">Nhánh mặc định</option>
+                    <option value="selected">Branch đã chọn</option>
+                    {% for branch in repo.branches %}
+                      <option value="{{ branch.github_branch_name }}">{{ branch.github_branch_name }}</option>
+                    {% endfor %}
+                  </select>
+                  <span class="code-branch">{{ repo.default_branch or repo.branches[0].github_branch_name }}</span>
+                {% else %}
+                  <form method="post" action="/repositories/{{ repo.id }}/sync" class="branch-sync-form js-submit-form">
+                    <button type="submit" class="branch-sync-btn js-loading-btn">
+                      <span class="spinner" aria-hidden="true"></span>
+                      <span class="btn-label">Đồng bộ branch</span>
+                    </button>
+                  </form>
+                {% endif %}
+                <a class="branch-settings-link" href="/settings#repo-branches" title="Cấu hình branch">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .6 1.7 1.7 0 0 0-.4 1.1V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.6 19.4a1.7 1.7 0 0 0-1.88.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.6-1 1.7 1.7 0 0 0-1.1-.4H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.6a1.7 1.7 0 0 0-.34-1.88l-.06-.06A2 2 0 1 1 7.03 3.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-.6A1.7 1.7 0 0 0 10.4 2.9V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.88-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.38.16.7.39.96.67.27.29.43.68.43 1.08v2.5c0 .4-.16.79-.43 1.08-.26.28-.58.51-.96.67Z"/></svg>
+                </a>
+              </div>
             </td>
 
             <!-- Sync status -->
@@ -119,7 +167,7 @@
                 {% elif s == "failed" %}
                   <span class="badge badge-closed" style="background:var(--danger-bg); color:var(--danger-text); border-color:var(--danger-border);">✕ Thất Bại</span>
                 {% elif s == "syncing" %}
-                  <span class="badge badge-merged">↻ Đang đồng bộ...</span>
+                  <span class="badge badge-merged">↻ Đang cập nhật</span>
                 {% else %}
                   <span class="badge badge-label">○ Chờ</span>
                 {% endif %}
@@ -133,9 +181,10 @@
             </td>
 
             <!-- Last synced at -->
-            <td class="text-muted">
+            <td>
               {% if repo.last_synced_at %}
-                {{ repo.last_synced_at.strftime("%Y-%m-%d %H:%M") }}
+                <div class="timestamp-muted" title="{{ repo.last_synced_at | vn_full }}">{{ repo.last_synced_at | vn_compact }}</div>
+                <div class="timestamp-relative">{{ repo.last_synced_at | relative_time }}</div>
               {% else %}
                 —
               {% endif %}
@@ -153,9 +202,14 @@
                   GitHub
                 </a>
                 <form method="post" action="/repositories/{{ repo.id }}/sync" class="js-submit-form">
-                  <button id="btn-sync-{{ repo.id }}" type="submit" class="btn btn-outline btn-sm js-loading-btn">
+                  <button
+                    id="btn-sync-{{ repo.id }}"
+                    type="submit"
+                    class="btn btn-outline btn-sm js-loading-btn"
+                    {% if repo.last_sync_status == "syncing" %}disabled{% endif %}
+                  >
                     <span class="spinner" aria-hidden="true"></span>
-                    <span class="btn-label">↻ Đồng Bộ</span>
+                    <span class="btn-label">{% if repo.last_sync_status == "syncing" %}Đang chạy{% else %}↻ Cập Nhật{% endif %}</span>
                   </button>
                 </form>
               </div>
@@ -172,14 +226,14 @@
       <div class="empty-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
       </div>
-      <h3>Chưa có repository nào</h3>
+      <h3>Chưa có repository</h3>
       <p>Kết nối repository GitHub để theo dõi commit, pull request và issue.</p>
       <form method="post" action="/repositories/import" class="js-submit-form" style="margin-top: 20px;">
         <button id="btn-import-empty" type="submit" class="btn btn-primary js-loading-btn">
           <span class="spinner" aria-hidden="true"></span>
           <span class="btn-label">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
-            Import Từ GitHub
+            Kết Nối GitHub
           </span>
         </button>
       </form>
@@ -188,9 +242,49 @@
 </div>
 
 <style>
+  .page-body {
+    max-width: none;
+    width: 100%;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
   .repo-container {
-    max-width: 1200px;
+    max-width: none;
+    width: 100%;
     margin: 0 auto;
+  }
+  .repo-container .table-wrap {
+    overflow-x: auto;
+  }
+  .repo-container table {
+    min-width: 1320px;
+  }
+  .repo-container th:nth-child(1),
+  .repo-container td:nth-child(1) {
+    width: 230px;
+  }
+  .repo-container th:nth-child(2),
+  .repo-container td:nth-child(2) {
+    width: 120px;
+  }
+  .repo-container th:nth-child(3),
+  .repo-container td:nth-child(3) {
+    width: 280px;
+  }
+  .repo-container th:nth-child(4),
+  .repo-container td:nth-child(4) {
+    width: 230px;
+  }
+  .repo-container th:nth-child(5),
+  .repo-container td:nth-child(5) {
+    width: 170px;
+  }
+  .repo-container th:nth-child(6),
+  .repo-container td:nth-child(6) {
+    min-width: 300px;
+  }
+  .actions-head {
+    text-align: right;
   }
 
   .flash-alert {
@@ -221,6 +315,13 @@
     justify-content: space-between;
     margin-bottom: 24px;
     gap: 16px;
+  }
+  .repo-toolbar-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
   }
   
   .repo-toolbar-left {
@@ -263,14 +364,20 @@
   .repo-name-group {
     display: flex;
     align-items: center;
+    min-width: 0;
     font-size: 14px;
   }
   .repo-owner-label {
     color: var(--text-muted);
+    flex: 0 0 auto;
   }
   .repo-name-label {
     color: var(--text);
     font-weight: 600;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .code-branch {
@@ -286,6 +393,7 @@
   .status-cell {
     display: flex;
     flex-direction: column;
+    align-items: flex-start;
     gap: 4px;
   }
 
@@ -301,7 +409,70 @@
   .repo-actions-list {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 8px;
+    white-space: nowrap;
+  }
+  .repo-actions-list form {
+    margin: 0;
+  }
+
+  .branch-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .branch-jump {
+    width: 128px;
+    height: 28px;
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 11px;
+    outline: 0;
+    transition: border-color .14s ease, background .14s ease;
+  }
+  .branch-jump:hover,
+  .branch-jump:focus {
+    border-color: var(--text-link);
+    background: var(--surface-3);
+  }
+  .branch-settings-link,
+  .branch-sync-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    transition: color .14s ease, border-color .14s ease, background .14s ease;
+  }
+  .branch-settings-link {
+    width: 28px;
+  }
+  .branch-settings-link:hover,
+  .branch-sync-btn:hover {
+    color: var(--text);
+    border-color: var(--text-link);
+    background: var(--surface-3);
+  }
+  .branch-sync-form {
+    margin: 0;
+  }
+  .branch-sync-btn {
+    gap: 6px;
+    padding: 0 10px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 11px;
+    white-space: nowrap;
   }
 
   .text-muted {
@@ -319,18 +490,46 @@
     color: var(--text-muted);
     border: 1px solid var(--border);
   }
+  .repo-container .btn:disabled {
+    cursor: not-allowed;
+    opacity: .56;
+  }
+  @media (max-width: 760px) {
+    .repo-toolbar {
+      align-items: stretch;
+      flex-direction: column;
+    }
+    .repo-toolbar-actions {
+      justify-content: stretch;
+    }
+    .repo-toolbar-actions form,
+    .repo-toolbar-actions button {
+      width: 100%;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block page_scripts %}
 <script>
+  function openRepoBranch(repoId, branch) {
+    if (!branch) return;
+    const value = branch === 'selected' ? 'all' : branch;
+    const url = new URL(`/dashboard/${repoId}`, window.location.origin);
+    url.searchParams.set('branch', value);
+    window.location.href = url.toString();
+  }
+
   // Disable button + show spinner on form submit
   document.querySelectorAll('.js-submit-form').forEach(function (form) {
     form.addEventListener('submit', function () {
       var btn = form.querySelector('.js-loading-btn');
-      if (!btn) return;
+      if (!btn || btn.disabled) return;
       btn.classList.add('loading');
       btn.disabled = true;
+      var label = btn.querySelector('.btn-label');
+      if (label && btn.id === 'btn-sync-all') label.textContent = 'Đang cập nhật tất cả...';
+      else if (label) label.textContent = 'Đang cập nhật...';
     });
   });
 </script>

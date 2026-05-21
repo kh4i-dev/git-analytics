@@ -55,17 +55,22 @@ def _test_client(db: Session) -> TestClient:
 
 # ── Auth Checks ──────────────────────────────────────────────────────────────
 
-def test_explore_page_requires_login(db_session: Session) -> None:
+def test_explore_page_is_public(db_session: Session) -> None:
     client = _test_client(db_session)
     response = client.get("/explore", follow_redirects=False)
-    assert response.status_code == 302
-    assert response.headers["location"] == "/login"
+    assert response.status_code == 200
+    assert "Git Analytics" in response.text
 
 
-def test_api_explore_trending_requires_login(db_session: Session) -> None:
+@patch("app.services.explore_service.ExploreService.get_explore_data", new_callable=AsyncMock)
+def test_api_explore_trending_is_public(
+    mock_explore: AsyncMock,
+    db_session: Session,
+) -> None:
+    mock_explore.return_value = {"trending_repos": [], "hn_news": [], "ai_tools": []}
     client = _test_client(db_session)
     response = client.get("/api/v1/explore/trending")
-    assert response.status_code == 401
+    assert response.status_code == 200
 
 
 # ── Mocked Explore Flow ───────────────────────────────────────────────────────
@@ -123,9 +128,7 @@ def test_explore_api_contract(
         }
     ]
 
-    user, cookie = _make_user(db_session)
     client = _test_client(db_session)
-    client.cookies.set(global_settings.session_cookie_name, cookie)
 
     # Reset ExploreService cache entries to force fresh mocked calls
     from app.services.explore_service import _cache
@@ -133,11 +136,11 @@ def test_explore_api_contract(
     _cache["hn_news"] = (None, 0.0)
     _cache["ai_tools"] = (None, 0.0)
 
-    # 1. Check HTML template renders correctly with sidebar info
+    # 1. Check HTML template renders correctly for public access
     response_html = client.get("/explore")
     assert response_html.status_code == 200
-    assert "explore ecosystem" in response_html.text.lower()
-    assert "trending github" in response_html.text.lower()
+    assert "Git Analytics" in response_html.text
+    assert "Xu h" in response_html.text
 
     # 2. Check JSON data response structure matches exact client models
     response_json = client.get("/api/v1/explore/trending?language=python&days=7")

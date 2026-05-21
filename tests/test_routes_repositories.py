@@ -286,6 +286,61 @@ def test_sync_repository_route_shows_error_on_failure(
     assert "error=sync_failed" in response.headers["location"]
 
 
+def test_sync_all_repositories_route_calls_sync_service_for_each_repo(
+    db_session: Session,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    user, session_cookie = create_logged_in_user(db_session)
+    repo_repo = RepositoryRepository(db_session)
+    repo_ids = []
+    for idx in range(2):
+        repo = repo_repo.create(
+            {
+                "user_id": user.id,
+                "github_repo_id": 200 + idx,
+                "owner": "octo",
+                "name": f"repo-{idx}",
+                "full_name": f"octo/repo-{idx}",
+                "html_url": f"https://github.com/octo/repo-{idx}",
+            }
+        )
+        repo_ids.append(repo.id)
+    db_session.commit()
+
+    called: list[int] = []
+
+    async def fake_sync_repo(self, *, user_id: int, repo_id: int) -> SyncResult:
+        called.append(repo_id)
+        return SyncResult(
+            repository_id=repo_id,
+            mode="incremental",
+            status="success",
+            synced={"commits": 1, "pull_requests": 0, "issues": 0, "contributors": 0},
+            started_at=datetime(2026, 5, 21, 12, 0, tzinfo=UTC),
+            completed_at=datetime(2026, 5, 21, 12, 1, tzinfo=UTC),
+        )
+
+    monkeypatch.setattr(
+        "app.routes.repositories.SyncService.sync_repository",
+        fake_sync_repo,
+    )
+
+    app = create_app()
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    client.cookies.set("git_analytics_session", session_cookie)
+
+    response = client.post("/repositories/sync-all", follow_redirects=False)
+
+    assert response.status_code == 302
+    assert "synced_all=2" in response.headers["location"]
+    assert sorted(called) == sorted(repo_ids)
+
+
 def test_repositories_page_shows_imported_repos(
     db_session: Session,
 ) -> None:
@@ -318,7 +373,7 @@ def test_repositories_page_shows_imported_repos(
 
     assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text[:500]}"
     assert "octo/repo-alpha" in response.text
-    assert "Import from GitHub" in response.text
+    assert "Kết Nối GitHub" in response.text
     assert "Sync" in response.text
 
 

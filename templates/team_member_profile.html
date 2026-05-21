@@ -1,0 +1,175 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}{{ profile.profile.username }} - Engineering Profile{% endblock %}
+
+{% block extra_head %}
+<style>
+  .profile-shell { display: grid; gap: 18px; max-width: 1180px; }
+  .profile-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+  .profile-main { display: flex; align-items: center; gap: 14px; min-width: 0; }
+  .profile-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    display: grid; place-items: center; flex: 0 0 auto;
+    border: 1px solid var(--border); background: var(--surface-2);
+    color: var(--text); font-weight: 800; overflow: hidden;
+  }
+  .profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-title { min-width: 0; }
+  .profile-title h1 { font-size: 24px; line-height: 1.1; margin-bottom: 5px; }
+  .profile-title a { color: var(--text-link); text-decoration: none; font-family: "SFMono-Regular", Consolas, monospace; font-size: 13px; }
+  .profile-score { text-align: right; }
+  .profile-score strong { display: block; font-size: 38px; line-height: 1; }
+  .profile-score span { color: var(--text-muted); font-size: 12px; }
+  .lang-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+  .lang-pill {
+    padding: 3px 8px; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--surface-2); color: var(--text-muted); font-size: 11px;
+  }
+  .profile-grid { display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .profile-card {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); padding: 14px;
+  }
+  .profile-card span { color: var(--text-muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .profile-card strong { display:block; margin-top:7px; font-size:24px; }
+  .analytics-grid { display:grid; grid-template-columns: 1.4fr .9fr; gap: 14px; }
+  .bar-chart { display:flex; align-items:end; gap:4px; height:160px; padding-top:10px; }
+  .bar-chart i { flex:1; min-width:4px; border-radius:3px 3px 0 0; background: #58a6ff; opacity:.82; }
+  .week-bars { display:grid; gap:8px; }
+  .week-row { display:grid; grid-template-columns: 72px 1fr 36px; gap:8px; align-items:center; font-size:12px; color:var(--text-muted); }
+  .week-row i { height:7px; border-radius:999px; background:#bc8cff; display:block; }
+  .repo-list { display:grid; gap:8px; }
+  .repo-row { display:flex; justify-content:space-between; gap:12px; padding:9px 0; border-bottom:1px solid var(--border-sub); color:var(--text); text-decoration:none; }
+  .repo-row:last-child { border-bottom:0; }
+  .repo-row small { color:var(--text-muted); }
+  .insight-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; }
+  .insight-card { border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); padding:14px; }
+  .insight-card strong { display:block; margin-bottom:5px; }
+  .insight-card p { color:var(--text-muted); font-size:13px; }
+  .leaderboard-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .leader-row { display:flex; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--border-sub); font-size:13px; }
+  .leader-row:last-child { border-bottom:0; }
+  @media (max-width: 900px) {
+    .profile-hero, .analytics-grid, .leaderboard-grid { grid-template-columns: 1fr; }
+    .profile-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .profile-score { text-align: left; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-shell">
+  <section class="profile-hero">
+    <div class="profile-main">
+      <div class="profile-avatar">
+        {% if profile.profile.avatar_url %}
+          <img src="{{ profile.profile.avatar_url }}" alt="{{ profile.profile.username }}">
+        {% else %}
+          {{ profile.profile.username[0].upper() }}
+        {% endif %}
+      </div>
+      <div class="profile-title">
+        <h1>{{ profile.profile.display_name or profile.profile.username }}</h1>
+        <a href="{{ profile.profile.github_url }}" target="_blank" rel="noopener">@{{ profile.profile.username }}</a>
+        <div class="lang-row">
+          {% for language in profile.profile.primary_languages %}
+            <span class="lang-pill">{{ language.name }}</span>
+          {% else %}
+            <span class="lang-pill">Language signal pending</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="profile-score">
+      <strong>{{ profile.profile.score }}</strong>
+      <span>Contribution score</span>
+    </div>
+  </section>
+
+  <section class="profile-grid">
+    <article class="profile-card"><span>Streak</span><strong>{{ profile.profile.current_streak }}</strong></article>
+    <article class="profile-card"><span>Commit 30 ngày</span><strong>{{ profile.summary.commits_30d }}</strong></article>
+    <article class="profile-card"><span>PR đã merge</span><strong>{{ profile.summary.prs_merged }}</strong></article>
+    <article class="profile-card"><span>Issue đã xử lý</span><strong>{{ profile.summary.issues_resolved }}</strong></article>
+  </section>
+
+  <section class="analytics-grid">
+    <article class="profile-card">
+      <span>Contribution graph</span>
+      {% set max_day = profile.charts.contribution_trend | map(attribute='count') | max if profile.charts.contribution_trend else 0 %}
+      <div class="bar-chart">
+        {% for day in profile.charts.contribution_trend %}
+          <i title="{{ day.date }} · {{ day.count }} commit" style="height: {{ 8 + (day.count / (max_day or 1) * 140) }}px"></i>
+        {% endfor %}
+      </div>
+    </article>
+    <article class="profile-card">
+      <span>Commits / week</span>
+      {% set max_week = profile.charts.commits_per_week | map(attribute='count') | max if profile.charts.commits_per_week else 0 %}
+      <div class="week-bars">
+        {% for week in profile.charts.commits_per_week %}
+          <div class="week-row"><span>{{ week.week }}</span><i style="width: {{ (week.count / (max_week or 1) * 100) }}%"></i><strong>{{ week.count }}</strong></div>
+        {% else %}
+          <p class="card-sub">Chưa đủ lịch sử theo tuần.</p>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section class="analytics-grid">
+    <article class="profile-card">
+      <span>Top repositories</span>
+      <div class="repo-list">
+        {% for repo in profile.charts.top_repositories %}
+          <div class="repo-row"><div>{{ repo.full_name }}<br><small>{{ repo.language or "Mixed" }}</small></div><strong>{{ repo.commits }}</strong></div>
+        {% else %}
+          <p class="card-sub">Chưa có repo nổi bật.</p>
+        {% endfor %}
+      </div>
+    </article>
+    <article class="profile-card">
+      <span>Active hours</span>
+      {% set max_hour = profile.charts.active_hours | map(attribute='count') | max if profile.charts.active_hours else 0 %}
+      <div class="bar-chart">
+        {% for hour in profile.charts.active_hours %}
+          <i title="{{ hour.hour }}:00 · {{ hour.count }} commit" style="height: {{ 6 + (hour.count / (max_hour or 1) * 130) }}px; background:#3fb950"></i>
+        {% endfor %}
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <div class="section-title">AI-style insights</div>
+    <div class="insight-grid">
+      {% for insight in profile.insights %}
+        <article class="insight-card">
+          <strong>{{ insight.title }}</strong>
+          <p>{{ insight.detail }}</p>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="leaderboard-grid">
+    {% for key, title in [("top_contributor", "Top contributor"), ("most_active_week", "Most active this week"), ("issue_resolver", "Issue resolver")] %}
+      <article class="profile-card">
+        <span>{{ title }}</span>
+        {% for row in profile.leaderboards[key] %}
+          <div class="leader-row"><a href="/team/{{ row.login }}" style="color:var(--text-link);text-decoration:none">@{{ row.login }}</a><strong>{{ row.count }}</strong></div>
+        {% else %}
+          <p class="card-sub">Chưa có tín hiệu.</p>
+        {% endfor %}
+      </article>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

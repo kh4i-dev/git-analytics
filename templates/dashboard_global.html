@@ -529,14 +529,14 @@ function shortRepoName(name) {
 function emptyChart(canvasId, message) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return;
-  canvas.parentElement.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="bar-chart-3"></i></div><h3>Trống</h3><p>${message}</p></div>`;
+  canvas.parentElement.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="bar-chart-3"></i></div><h3>Chưa có tín hiệu</h3><p>${message}</p></div>`;
 }
 
 function renderHeatmap() {
   const target = document.getElementById('commit-heatmap');
   const days = dashboardData.heatmap.days || [];
   if (!days.some(day => day.count > 0)) {
-    target.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="calendar-days"></i></div><h3>Chưa ghi nhận hoạt động</h3><p>Heatmap hiển thị sau khi có dữ liệu commit trong 365 ngày qua.</p></div>`;
+    target.innerHTML = `<div class="empty-state compact"><div class="empty-icon"><i data-lucide="calendar-days"></i></div><h3>Chưa phát hiện commit</h3><p>Heatmap sẽ phản ánh nhịp commit trong 365 ngày.</p></div>`;
     return;
   }
   target.innerHTML = `<div class="heatmap-grid">${days.map(day => `<span class="heatmap-day level-${day.level}" title="${day.label}" aria-label="${day.label}"></span>`).join('')}</div>`;
@@ -545,7 +545,7 @@ function renderHeatmap() {
 function renderLineChart() {
   const rows = dashboardData.charts.global_commits_per_day || [];
   if (!rows.length) {
-    emptyChart('commit-trend-chart', 'Chưa ghi nhận commit trong 30 ngày qua.');
+    emptyChart('commit-trend-chart', 'Chưa phát hiện commit trong 30 ngày qua.');
     return;
   }
   new Chart(document.getElementById('commit-trend-chart'), {
@@ -577,7 +577,7 @@ function renderLineChart() {
 function renderRepoRanking() {
   const rows = dashboardData.most_active_repositories || [];
   if (!rows.length) {
-    emptyChart('repo-ranking-chart', 'Chưa đủ dữ liệu để xếp hạng repository.');
+    emptyChart('repo-ranking-chart', 'Chưa có repo nổi bật để so sánh.');
     return;
   }
   new Chart(document.getElementById('repo-ranking-chart'), {
@@ -606,7 +606,7 @@ function renderRepoRanking() {
 function renderTeamChart() {
   const rows = (dashboardData.team.leaderboard || []).slice(0, 6);
   if (!rows.length) {
-    emptyChart('team-activity-chart', 'Chưa ghi nhận hoạt động nhóm.');
+    emptyChart('team-activity-chart', 'Chưa phát hiện hoạt động đội ngũ.');
     return;
   }
   new Chart(document.getElementById('team-activity-chart'), {
@@ -615,8 +615,8 @@ function renderTeamChart() {
       labels: rows.map(row => row.login || row.name),
       datasets: [
         { label: 'Commits', data: rows.map(row => row.commits), backgroundColor: '#58a6ff', borderRadius: 4 },
-        { label: 'PR Merged', data: rows.map(row => row.prs_merged), backgroundColor: '#bc8cff', borderRadius: 4 },
-        { label: 'Issues Closed', data: rows.map(row => row.issues_closed), backgroundColor: '#3fb950', borderRadius: 4 }
+        { label: 'PR đã merge', data: rows.map(row => row.prs_merged), backgroundColor: '#bc8cff', borderRadius: 4 },
+        { label: 'Issue đã xử lý', data: rows.map(row => row.issues_closed), backgroundColor: '#3fb950', borderRadius: 4 }
       ]
     },
     options: {
@@ -634,7 +634,7 @@ function renderTeamChart() {
 function renderKpiCharts() {
   const contributorRows = dashboardData.kpi_charts.commits_by_contributor || [];
   if (!contributorRows.length || !contributorRows.some(row => row.value > 0)) {
-    emptyChart('commits-contributor-pie', 'Chưa có dữ liệu phân bố contributor.');
+    emptyChart('commits-contributor-pie', 'Chưa có contributor nổi bật.');
   } else {
     new Chart(document.getElementById('commits-contributor-pie'), {
       type: 'pie',
@@ -652,7 +652,7 @@ function renderKpiCharts() {
 
   const issueRows = dashboardData.kpi_charts.issues_resolved_by_user || [];
   if (!issueRows.length || !issueRows.some(row => row.value > 0)) {
-    emptyChart('issues-user-bar', 'Chưa phát hiện issue đã xử lý.');
+    emptyChart('issues-user-bar', 'Chưa phát hiện hoạt động xử lý issue.');
   } else {
     new Chart(document.getElementById('issues-user-bar'), {
       type: 'bar',
@@ -681,12 +681,12 @@ function renderFlowCharts() {
   const prData = dashboardData.health.raw || {};
   const hasPrData = dashboardData.summary.total_prs > 0;
   if (!hasPrData) {
-    emptyChart('pr-metrics-chart', 'Chưa có dữ liệu pull request.');
+    emptyChart('pr-metrics-chart', 'Chưa có pull request để phân tích.');
   } else {
     new Chart(document.getElementById('pr-metrics-chart'), {
       type: 'doughnut',
       data: {
-        labels: ['Merge Speed', 'Remaining Risk'],
+        labels: ['Tốc độ merge', 'Rủi ro còn lại'],
         datasets: [{
           data: [dashboardData.health.metrics.pr_merge_speed, 100 - dashboardData.health.metrics.pr_merge_speed],
           backgroundColor: ['#58a6ff', '#30363d'],
@@ -699,12 +699,12 @@ function renderFlowCharts() {
 
   const hasIssueData = dashboardData.summary.total_issues > 0;
   if (!hasIssueData) {
-    emptyChart('issue-metrics-chart', 'Chưa có dữ liệu issue.');
+    emptyChart('issue-metrics-chart', 'Chưa có issue để phân tích.');
   } else {
     new Chart(document.getElementById('issue-metrics-chart'), {
       type: 'pie',
       data: {
-        labels: ['Closed', 'Open', 'Stale'],
+        labels: ['Đã xử lý', 'Đang mở', 'Tồn đọng'],
         datasets: [{
           data: [prData.closed_issues || 0, prData.open_issues || 0, prData.stale_issues || 0],
           backgroundColor: ['#3fb950', '#e3b341', '#f85149'],
@@ -720,12 +720,7 @@ function formatTimelineTimes() {
   document.querySelectorAll('[data-ts]').forEach((el) => {
     const value = el.getAttribute('data-ts');
     if (!value) return;
-    el.textContent = new Date(value).toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    el.textContent = window.GitAnalyticsTime ? window.GitAnalyticsTime.compact(value) : value;
   });
 }
 

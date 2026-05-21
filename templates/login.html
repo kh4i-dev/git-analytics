@@ -3,49 +3,575 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Đăng Nhập - Git Analytics</title>
+    <title>Đăng nhập - Git Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --bg: #0d1117;
+        --surface: rgba(22, 27, 34, 0.86);
+        --surface-2: rgba(31, 36, 48, 0.88);
+        --surface-3: #242b38;
+        --border: rgba(139, 148, 158, 0.22);
+        --border-soft: rgba(139, 148, 158, 0.12);
+        --text: #e6edf3;
+        --muted: #9ba7bd;
+        --soft: #c7d2ea;
+        --accent: #79c0ff;
+        --accent-2: #9b8cff;
+        --success: #7ee787;
+        --warn: #ffd38a;
+        --radius: 12px;
+      }
+      * { box-sizing: border-box; }
+      html { color-scheme: dark; }
       body {
         margin: 0;
         min-height: 100vh;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at 22% 8%, rgba(88, 166, 255, 0.18), transparent 30%),
+          radial-gradient(circle at 85% 20%, rgba(185, 167, 255, 0.12), transparent 28%),
+          linear-gradient(180deg, #0d1117 0%, #0b0f15 100%);
+        color: var(--text);
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: .22;
+        background-image:
+          linear-gradient(rgba(139, 148, 158, .13) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(139, 148, 158, .13) 1px, transparent 1px);
+        background-size: 42px 42px;
+        mask-image: linear-gradient(to bottom, black, transparent 76%);
+      }
+      .page {
+        position: relative;
+        z-index: 1;
+        width: min(1180px, calc(100vw - 48px));
+        margin: 0 auto;
+        padding: 54px 0 70px;
+      }
+      .auth-shell {
+        min-height: calc(100vh - 120px);
+        display: grid;
+        grid-template-columns: minmax(0, .95fr) minmax(520px, 1.05fr);
+        gap: clamp(34px, 5vw, 78px);
+        align-items: center;
+      }
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 11px;
+        color: var(--text);
+        text-decoration: none;
+        font-weight: 800;
+        margin-bottom: 42px;
+      }
+      .logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 11px;
         display: grid;
         place-items: center;
-        font-family: Arial, sans-serif;
-        background: #f6f8fa;
-        color: #24292f;
+        background: linear-gradient(135deg, #6aa5ff, #9b8cff);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.18), 0 16px 40px rgba(88,166,255,.16);
       }
-
-      main {
-        width: min(420px, calc(100vw - 32px));
-        padding: 32px;
-        background: #ffffff;
-        border: 1px solid #d0d7de;
-        border-radius: 8px;
-      }
-
-      h1 {
-        margin: 0 0 24px;
-        font-size: 24px;
-      }
-
-      a {
-        display: inline-block;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 12px 16px;
-        border-radius: 6px;
-        background: #24292f;
-        color: #ffffff;
-        text-align: center;
-        text-decoration: none;
+      .logo svg { width: 20px; height: 20px; }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 9px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        color: var(--soft);
+        background: rgba(31, 36, 48, .64);
+        font-size: 12px;
         font-weight: 700;
+      }
+      h1 {
+        margin: 18px 0 12px;
+        font-size: clamp(38px, 5vw, 62px);
+        line-height: .98;
+        letter-spacing: 0;
+      }
+      .subtitle {
+        margin: 0;
+        max-width: 560px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.68;
+      }
+      .auth-card {
+        width: min(430px, 100%);
+        margin-top: 30px;
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: linear-gradient(180deg, rgba(22,27,34,.92), rgba(18,23,31,.86));
+        box-shadow: 0 24px 80px rgba(0,0,0,.34);
+      }
+      .auth-card h2 { margin: 0 0 6px; font-size: 16px; }
+      .auth-card p { margin: 0 0 16px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .github-btn {
+        width: 100%;
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        border: 1px solid #f0f6fc;
+        border-radius: 9px;
+        background: #f0f6fc;
+        color: #0d1117;
+        text-decoration: none;
+        font-weight: 800;
+        font-size: 14px;
+        transition: transform .16s ease, background .16s ease, opacity .16s ease;
+      }
+      .github-btn:hover { transform: translateY(-1px); background: #ffffff; }
+      .github-btn.is-loading { opacity: .72; pointer-events: none; }
+      .feature-list {
+        display: grid;
+        gap: 9px;
+        margin: 22px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+      .feature-list li {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        color: var(--soft);
+        font-size: 13px;
+      }
+      .feature-list svg { width: 15px; height: 15px; margin-top: 2px; color: var(--success); flex: 0 0 auto; }
+      .security-note {
+        margin-top: 18px;
+        padding: 12px;
+        border: 1px solid var(--border-soft);
+        border-radius: 10px;
+        background: rgba(121, 192, 255, .06);
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+      .footer-note { margin-top: 18px; color: var(--muted); font-size: 12px; }
+      .preview {
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        background: rgba(13, 17, 23, .62);
+        box-shadow: 0 30px 100px rgba(0,0,0,.42);
+        overflow: hidden;
+      }
+      .preview-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 42px;
+        padding: 0 14px;
+        border-bottom: 1px solid var(--border-soft);
+        background: rgba(22, 27, 34, .78);
+      }
+      .dot { width: 9px; height: 9px; border-radius: 999px; background: #3b4252; }
+      .dot:nth-child(1) { background: #ff7b72; }
+      .dot:nth-child(2) { background: #d29922; }
+      .dot:nth-child(3) { background: #3fb950; }
+      .preview-body { display: grid; gap: 16px; padding: 18px; }
+      .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .mini-card {
+        min-height: 92px;
+        padding: 13px;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgba(31,36,48,.82), rgba(18,23,31,.72));
+      }
+      .mini-label { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+      .mini-value { margin-top: 10px; font-size: 25px; font-weight: 800; }
+      .mini-trend { margin-top: 6px; color: var(--success); font-size: 12px; font-weight: 700; }
+      .mock-panel {
+        padding: 15px;
+        border: 1px solid var(--border-soft);
+        border-radius: 12px;
+        background: rgba(10, 14, 20, .64);
+      }
+      .panel-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 12px;
+        color: var(--soft);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .heatmap { display: grid; grid-template-columns: repeat(24, 1fr); gap: 4px; }
+      .heatmap span { aspect-ratio: 1; border-radius: 4px; background: rgba(139, 148, 158, .12); }
+      .heatmap span:nth-child(5n) { background: rgba(63, 185, 80, .28); }
+      .heatmap span:nth-child(13n) { background: rgba(63, 185, 80, .48); }
+      .repo-health { display: grid; gap: 10px; }
+      .repo-line {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 14px;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-soft);
+        color: var(--soft);
+        font-size: 13px;
+      }
+      .repo-line:last-child { border-bottom: 0; }
+      .status {
+        border: 1px solid rgba(63,185,80,.34);
+        color: var(--success);
+        background: rgba(63,185,80,.1);
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .ecosystem {
+        margin-top: 18px;
+        padding-top: 22px;
+      }
+      .section-heading {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+      }
+      .section-heading h2 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+      .section-heading p {
+        margin: 6px 0 0;
+        max-width: 620px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .section-badge {
+        padding: 6px 10px;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: rgba(31, 36, 48, .64);
+        color: var(--soft);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .ecosystem-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .ecosystem-card {
+        min-height: 330px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: linear-gradient(180deg, rgba(22,27,34,.88), rgba(12,16,23,.82));
+        box-shadow: 0 18px 55px rgba(0,0,0,.18);
+      }
+      .ecosystem-card h3 {
+        margin: 0 0 14px;
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+      .repo-item, .news-item, .tool-item {
+        display: block;
+        color: inherit;
+        text-decoration: none;
+        padding: 12px 0;
+        border-top: 1px solid var(--border-soft);
+        transition: background .16s ease, border-color .16s ease, transform .16s ease;
+      }
+      .repo-item:hover, .news-item:hover, .tool-item:hover {
+        margin-inline: -8px;
+        padding-inline: 8px;
+        border-radius: 10px;
+        background: rgba(139, 148, 158, .07);
+        transform: translateY(-1px);
+      }
+      .repo-main, .tool-main, .news-main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .repo-name, .news-title, .tool-name {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 800;
+      }
+      .repo-item:hover .repo-name,
+      .news-item:hover .news-title,
+      .tool-item:hover .tool-name {
+        color: var(--accent);
+      }
+      .open-arrow {
+        color: var(--muted);
+        font-size: 12px;
+        opacity: 0;
+        transform: translateX(-4px);
+        transition: opacity .16s ease, transform .16s ease, color .16s ease;
+      }
+      .repo-item:hover .open-arrow,
+      .news-item:hover .open-arrow,
+      .tool-item:hover .open-arrow {
+        opacity: 1;
+        transform: translateX(0);
+        color: var(--accent);
+      }
+      .repo-desc, .tool-desc {
+        margin: 7px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .repo-meta, .news-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+      .lang-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+      .star {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--warn);
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .time {
+        color: var(--muted);
+        font-size: 11px;
+        white-space: nowrap;
+      }
+      .tool-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .tool-icon {
+        width: 30px;
+        height: 30px;
+        border: 1px solid var(--border);
+        border-radius: 9px;
+        display: grid;
+        place-items: center;
+        background: rgba(121, 192, 255, .08);
+        color: var(--accent);
+        font-weight: 800;
+        font-size: 12px;
+      }
+      .category {
+        padding: 3px 7px;
+        border: 1px solid var(--border-soft);
+        border-radius: 999px;
+        color: var(--soft);
+        background: rgba(255,255,255,.03);
+        font-size: 10px;
+        font-weight: 800;
+      }
+      .platform-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 14px;
+      }
+      .metric-card {
+        padding: 15px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: rgba(22, 27, 34, .72);
+        position: relative;
+        overflow: hidden;
+      }
+      .metric-card::after {
+        content: "";
+        position: absolute;
+        inset: auto 12px 0;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(121,192,255,.45), transparent);
+        animation: pulse-line 2.8s ease-in-out infinite;
+      }
+      @keyframes pulse-line {
+        0%, 100% { opacity: .24; transform: scaleX(.55); }
+        50% { opacity: .8; transform: scaleX(1); }
+      }
+      .metric-value { font-size: 24px; font-weight: 800; }
+      .metric-label { margin-top: 5px; color: var(--muted); font-size: 12px; }
+      @media (max-width: 960px) {
+        .page { width: min(560px, calc(100vw - 36px)); padding-top: 42px; }
+        .auth-shell { min-height: auto; grid-template-columns: 1fr; }
+        .preview { display: none; }
+        .brand { margin-bottom: 26px; }
+        .ecosystem-grid, .platform-metrics { grid-template-columns: 1fr; }
+        .section-heading { align-items: flex-start; flex-direction: column; }
+      }
+      @media (max-width: 560px) {
+        .kpi-grid { grid-template-columns: 1fr; }
+        h1 { font-size: 40px; }
       }
     </style>
   </head>
   <body>
-    <main>
-      <h1>Git Analytics</h1>
-      <a href="{{ login_url }}">Đăng Nhập với GitHub</a>
+    <main class="page">
+      <section class="auth-shell">
+        <section>
+          <a class="brand" href="/explore">
+            <span class="logo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="m4.93 4.93 2.12 2.12"/><path d="m16.95 16.95 2.12 2.12"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="m4.93 19.07 2.12-2.12"/><path d="m16.95 7.05 2.12-2.12"/></svg>
+            </span>
+            <span>Git Analytics</span>
+          </a>
+          <span class="eyebrow">Engineering Intelligence SaaS</span>
+          <h1>Git Analytics</h1>
+          <p class="subtitle">Nền tảng phân tích repository, commit, pull request, issue và hiệu suất nhóm phát triển.</p>
+
+          <section class="auth-card" aria-label="Đăng nhập">
+            <h2>Kết nối workspace của bạn</h2>
+            <p>Đăng nhập bằng GitHub để đồng bộ repository và mở dashboard phân tích cho team.</p>
+            <a id="github-login-btn" class="github-btn" href="{{ login_url }}">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.67 0 8.2c0 3.62 2.29 6.69 5.47 7.78.4.08.55-.18.55-.39 0-.19-.01-.82-.01-1.49-2.01.38-2.53-.5-2.69-.96-.09-.24-.48-.96-.82-1.15-.28-.16-.68-.55-.01-.56.63-.01 1.08.59 1.23.84.72 1.24 1.87.89 2.33.68.07-.53.28-.89.51-1.09-1.78-.21-3.64-.91-3.64-4.04 0-.89.31-1.62.82-2.19-.08-.21-.36-1.04.08-2.16 0 0 .67-.22 2.2.84A7.43 7.43 0 0 1 8 3.72c.68 0 1.36.09 2 .27 1.53-1.06 2.2-.84 2.2-.84.44 1.12.16 1.95.08 2.16.51.57.82 1.3.82 2.19 0 3.14-1.87 3.83-3.65 4.04.29.26.54.76.54 1.54 0 1.11-.01 2.01-.01 2.28 0 .21.15.47.55.39A8.14 8.14 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z"/></svg>
+              <span>Đăng nhập với GitHub</span>
+            </a>
+            <ul class="feature-list">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"/></svg>Phân tích commit và contributor</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"/></svg>Theo dõi Pull Request và Issue</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"/></svg>Dashboard KPI nhóm</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"/></svg>Heatmap hoạt động lập trình</li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m20 6-11 11-5-5"/></svg>Xu hướng GitHub và tin tức Developer</li>
+            </ul>
+            <div class="security-note">Dữ liệu GitHub được đồng bộ qua OAuth. Access token được mã hóa và chỉ dùng để gọi GitHub API.</div>
+            <div class="footer-note">Built for developer analytics</div>
+          </section>
+        </section>
+
+        <aside class="preview" aria-label="Dashboard preview">
+          <div class="preview-top"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+          <div class="preview-body">
+            <div class="kpi-grid">
+              <div class="mini-card"><div class="mini-label">Commit</div><div class="mini-value">1.2k</div><div class="mini-trend">+18%</div></div>
+              <div class="mini-card"><div class="mini-label">PR đã merge</div><div class="mini-value">86</div><div class="mini-trend">ổn định</div></div>
+              <div class="mini-card"><div class="mini-label">Sức khỏe repo</div><div class="mini-value">92</div><div class="mini-trend">khỏe</div></div>
+            </div>
+            <div class="mock-panel">
+              <div class="panel-row"><span>Heatmap hoạt động</span><span>7 ngày</span></div>
+              <div class="heatmap" aria-hidden="true">
+                {% for _ in range(168) %}<span></span>{% endfor %}
+              </div>
+            </div>
+            <div class="mock-panel repo-health">
+              <div class="panel-row"><span>Sức khỏe repository</span><span>Live</span></div>
+              <div class="repo-line"><span>api-platform</span><span class="status">Ổn định</span></div>
+              <div class="repo-line"><span>web-dashboard</span><span class="status">Ổn định</span></div>
+              <div class="repo-line"><span>sync-engine</span><span class="status">Review</span></div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="ecosystem" aria-label="Developer Ecosystem">
+        <div class="section-heading">
+          <div>
+            <h2>Developer Ecosystem</h2>
+            <p>Theo dõi repository nổi bật, tin tức kỹ thuật và các AI developer tools đang định hình workflow của engineering team.</p>
+          </div>
+          <span class="section-badge">Public signal layer</span>
+        </div>
+
+        <div class="ecosystem-grid">
+          <article class="ecosystem-card">
+            <h3>GitHub Trending</h3>
+            <a class="repo-item" href="https://github.com/vercel/ai" target="_blank" rel="noopener noreferrer">
+              <div class="repo-main"><span class="repo-name">vercel/ai</span><span class="star">★ 15.8k <span class="open-arrow">↗</span></span></div>
+              <p class="repo-desc">SDK cho AI applications, agent workflows và streaming UI.</p>
+              <div class="repo-meta"><span class="lang-dot"></span><span>TypeScript</span></div>
+            </a>
+            <a class="repo-item" href="https://github.com/langchain-ai/langchain" target="_blank" rel="noopener noreferrer">
+              <div class="repo-main"><span class="repo-name">langchain-ai/langchain</span><span class="star">★ 108k <span class="open-arrow">↗</span></span></div>
+              <p class="repo-desc">Framework xây dựng LLM apps, retrieval và agent orchestration.</p>
+              <div class="repo-meta"><span class="lang-dot" style="background:#3572A5"></span><span>Python</span></div>
+            </a>
+            <a class="repo-item" href="https://github.com/anthropics/claude-code" target="_blank" rel="noopener noreferrer">
+              <div class="repo-main"><span class="repo-name">anthropics/claude-code</span><span class="star">★ 23.4k <span class="open-arrow">↗</span></span></div>
+              <p class="repo-desc">Coding assistant workflow chạy sát với terminal và repository context.</p>
+              <div class="repo-meta"><span class="lang-dot" style="background:#f1e05a"></span><span>JavaScript</span></div>
+            </a>
+          </article>
+
+          <article class="ecosystem-card">
+            <h3>Developer News</h3>
+            <a class="news-item" href="https://news.ycombinator.com/" target="_blank" rel="noopener noreferrer">
+              <div class="news-main"><span class="news-title">GPT-5 coding benchmark <span class="open-arrow">↗</span></span><span class="time">12 phút trước</span></div>
+              <div class="news-meta"><span>AI coding</span><span>Hacker News</span></div>
+            </a>
+            <a class="news-item" href="https://github.blog/changelog/label/actions/" target="_blank" rel="noopener noreferrer">
+              <div class="news-main"><span class="news-title">GitHub Actions updates <span class="open-arrow">↗</span></span><span class="time">2 giờ trước</span></div>
+              <div class="news-meta"><span>CI/CD</span><span>GitHub Engineering</span></div>
+            </a>
+            <a class="news-item" href="https://github.blog/ai-and-ml/" target="_blank" rel="noopener noreferrer">
+              <div class="news-main"><span class="news-title">New AI coding workflows <span class="open-arrow">↗</span></span><span class="time">hôm qua</span></div>
+              <div class="news-meta"><span>Developer tooling</span><span>Engineering blogs</span></div>
+            </a>
+          </article>
+
+          <article class="ecosystem-card">
+            <h3>AI Developer Tools</h3>
+            <a class="tool-item" href="https://www.cursor.com/" target="_blank" rel="noopener noreferrer">
+              <div class="tool-main"><div class="tool-left"><span class="tool-icon">C</span><span class="tool-name">Cursor</span></div><span class="category">IDE ↗</span></div>
+              <p class="tool-desc">AI-native editor cho code navigation, refactor và agent tasks.</p>
+            </a>
+            <a class="tool-item" href="https://www.anthropic.com/claude-code" target="_blank" rel="noopener noreferrer">
+              <div class="tool-main"><div class="tool-left"><span class="tool-icon">CC</span><span class="tool-name">Claude Code</span></div><span class="category">Agent ↗</span></div>
+              <p class="tool-desc">Terminal coding agent với repository context và command workflow.</p>
+            </a>
+            <a class="tool-item" href="https://opencode.ai/" target="_blank" rel="noopener noreferrer">
+              <div class="tool-main"><div class="tool-left"><span class="tool-icon">OC</span><span class="tool-name">OpenCode</span></div><span class="category">CLI ↗</span></div>
+              <p class="tool-desc">Open-source agent interface cho local development loops.</p>
+            </a>
+            <a class="tool-item" href="https://www.continue.dev/" target="_blank" rel="noopener noreferrer">
+              <div class="tool-main"><div class="tool-left"><span class="tool-icon">CT</span><span class="tool-name">Continue</span></div><span class="category">IDE ↗</span></div>
+              <p class="tool-desc">AI code assistant tích hợp VS Code và JetBrains.</p>
+            </a>
+            <a class="tool-item" href="https://aider.chat/" target="_blank" rel="noopener noreferrer">
+              <div class="tool-main"><div class="tool-left"><span class="tool-icon">A</span><span class="tool-name">Aider</span></div><span class="category">Pairing ↗</span></div>
+              <p class="tool-desc">Pair programming qua terminal, tối ưu cho git-based workflow.</p>
+            </a>
+          </article>
+        </div>
+
+        <div class="platform-metrics" aria-label="Live platform metrics">
+          <div class="metric-card"><div class="metric-value">128</div><div class="metric-label">repositories analyzed</div></div>
+          <div class="metric-card"><div class="metric-value">42.6k</div><div class="metric-label">commits synced</div></div>
+          <div class="metric-card"><div class="metric-value">312</div><div class="metric-label">contributors tracked</div></div>
+          <div class="metric-card"><div class="metric-value">84</div><div class="metric-label">active repositories</div></div>
+        </div>
+      </section>
     </main>
+    <script>
+      const button = document.getElementById('github-login-btn');
+      button.addEventListener('click', () => {
+        button.classList.add('is-loading');
+        button.querySelector('span').textContent = 'Đang chuyển hướng...';
+      });
+    </script>
   </body>
 </html>

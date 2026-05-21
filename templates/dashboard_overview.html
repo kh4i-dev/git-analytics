@@ -73,19 +73,19 @@
 <!-- Charts -->
 <div class="charts-grid">
   <div class="chart-card" style="grid-column: 1 / -1;">
-    <div class="chart-title">Xu Hướng Commit</div>
+    <div class="chart-title">Nhịp Commit</div>
     <div class="chart-wrap" id="wrap-commits-timeline">
       <div class="chart-skeleton skeleton"></div>
     </div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Tình Trạng Pull Request</div>
+    <div class="chart-title">Trạng Thái Review</div>
     <div class="chart-wrap-sm" id="wrap-pr-status">
       <div class="chart-skeleton skeleton" style="height:160px"></div>
     </div>
   </div>
   <div class="chart-card">
-    <div class="chart-title">Tình Trạng Issue</div>
+    <div class="chart-title">Trạng Thái Issue</div>
     <div class="chart-wrap-sm" id="wrap-issue-status">
       <div class="chart-skeleton skeleton" style="height:160px"></div>
     </div>
@@ -96,21 +96,21 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
   <!-- Recent commits -->
   <div>
-    <div class="section-title">Commit Mới Nhất <span id="badge-commits" class="section-count">…</span></div>
+    <div class="section-title">Commit Gần Đây <span id="badge-commits" class="section-count">…</span></div>
     <div class="table-wrap" id="recent-commits">
       <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
     </div>
   </div>
   <!-- Recent PRs -->
   <div>
-    <div class="section-title">Pull Request Mới Nhất <span id="badge-prs" class="section-count">…</span></div>
+    <div class="section-title">Pull Request Gần Đây <span id="badge-prs" class="section-count">…</span></div>
     <div class="table-wrap" id="recent-prs">
       <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
     </div>
   </div>
   <!-- Recent Issues -->
   <div>
-    <div class="section-title">Issue Mới Nhất <span id="badge-issues" class="section-count">…</span></div>
+    <div class="section-title">Issue Gần Đây <span id="badge-issues" class="section-count">…</span></div>
     <div class="table-wrap" id="recent-issues">
       <div style="padding:24px;text-align:center"><div class="skeleton" style="height:14px;width:60%;margin:auto"></div></div>
     </div>
@@ -137,8 +137,10 @@ function mkCard(title, value, sub) {
 }
 
 function fmtDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric' });
+  return window.GitAnalyticsTime ? window.GitAnalyticsTime.compact(iso) : '—';
+}
+function fmtRelative(iso) {
+  return window.GitAnalyticsTime ? window.GitAnalyticsTime.relative(iso) : fmtDate(iso);
 }
 
 function stateBadge(item) {
@@ -152,18 +154,18 @@ async function loadOverview() {
   try {
     data = await fetchAnalytics(`/api/v1/analytics/${REPO_ID}/overview`);
   } catch(e) {
-    showError('Lỗi tải tổng quan: ' + e.message);
+    showError('Không tải được tổng quan: ' + e.message);
     return;
   }
   const s = data.summary;
 
   // Stat cards
   document.getElementById('stats-grid').innerHTML =
-    mkCard('Tổng Commit', s.total_commits.toLocaleString(), `${s.active_days} ngày hoạt động`) +
+    mkCard('Commit', s.total_commits.toLocaleString(), `${s.active_days} ngày có hoạt động`) +
     mkCard('Pull Request', s.total_prs.toLocaleString(), `${s.merged_prs} merged · ${s.open_prs} open`) +
-    mkCard('Issue Mở', s.open_issues.toLocaleString(), `${s.closed_issues} closed`) +
-    mkCard('Contributors', s.total_contributors.toLocaleString(), '') +
-    mkCard('Đồng Bộ', data.repository.last_synced_at ? fmtDate(data.repository.last_synced_at) : '—', data.repository.last_sync_status);
+    mkCard('Issue Đang Mở', s.open_issues.toLocaleString(), `${s.closed_issues} đã xử lý`) +
+    mkCard('Contributor', s.total_contributors.toLocaleString(), '') +
+    mkCard('Cập Nhật Gần Nhất', data.repository.last_synced_at ? fmtDate(data.repository.last_synced_at) : '—', data.repository.last_sync_status);
 
   // Commits timeline
   const cpd = data.charts.commits_per_day;
@@ -171,8 +173,8 @@ async function loadOverview() {
     ? '<canvas id="chart-commits"></canvas>'
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg></div>
-        <h3>Chưa ghi nhận commit</h3>
-        <p>Kết nối repository để theo dõi lịch sử commit.</p>
+        <h3>Chưa phát hiện commit</h3>
+        <p>Nhịp commit sẽ xuất hiện tại đây.</p>
       </div>`;
   if (cpd.length) {
     new Chart(document.getElementById('chart-commits'), {
@@ -200,7 +202,7 @@ async function loadOverview() {
   new Chart(document.getElementById('chart-pr'), {
     type: 'doughnut',
     data: {
-      labels: ['Merged', 'Open', 'Closed'],
+      labels: ['Đã merge', 'Đang mở', 'Đã đóng'],
       datasets: [{ data: [prs.merged, prs.open, prs.closed],
         backgroundColor: ['#58a6ff','#3fb950','#8b949e'], borderWidth: 0 }]
     },
@@ -215,7 +217,7 @@ async function loadOverview() {
   new Chart(document.getElementById('chart-issue'), {
     type: 'doughnut',
     data: {
-      labels: ['Open', 'Closed'],
+      labels: ['Đang mở', 'Đã xử lý'],
       datasets: [{ data: [iss.open, iss.closed],
         backgroundColor: ['#e3b341','#3fb950'], borderWidth: 0 }]
     },
@@ -232,12 +234,12 @@ async function loadOverview() {
         <td>
           <a class="item-sha" href="${c.html_url}" target="_blank" rel="noopener">${c.sha}</a>
           <div class="item-msg">${escHtml(c.message.split('\n')[0].slice(0,72))}</div>
-          <div class="item-meta">${escHtml(c.author_login || c.author_name)} · ${fmtDate(c.committed_at)}</div>
+          <div class="item-meta">${escHtml(c.author_login || c.author_name)} · ${fmtRelative(c.committed_at)}</div>
         </td></tr>`).join('')}</tbody></table>`
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><line x1="3" x2="9" y1="12" y2="12"/><line x1="15" x2="21" y1="12" y2="12"/></svg></div>
-        <h3>Chưa có commit nào</h3>
-        <p>Dữ liệu commit sẽ hiển thị sau khi đồng bộ.</p>
+        <h3>Chưa phát hiện commit</h3>
+        <p>Các thay đổi mới sẽ được liệt kê tại đây.</p>
       </div>`;
 
   // Recent PRs
@@ -248,11 +250,11 @@ async function loadOverview() {
         <td>
           <div>${stateBadge(p)} <span class="item-num">#${p.number}</span></div>
           <div class="item-title"><a href="${p.html_url}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">${escHtml(p.title)}</a></div>
-          <div class="item-meta">${escHtml(p.author_login)} · ${fmtDate(p.created_at)}</div>
+          <div class="item-meta">${escHtml(p.author_login)} · ${fmtRelative(p.created_at)}</div>
         </td></tr>`).join('')}</tbody></table>`
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" x2="6" y1="9" y2="21"/></svg></div>
-        <h3>Chưa có pull request nào</h3>
+        <h3>Chưa có pull request</h3>
       </div>`;
 
   // Recent Issues
@@ -263,11 +265,11 @@ async function loadOverview() {
         <td>
           <div><span class="badge ${i.state === 'open' ? 'badge-open' : 'badge-closed'}">${i.state === 'open' ? 'đang mở' : 'đã đóng'}</span> <span class="item-num">#${i.number}</span></div>
           <div class="item-title"><a href="${i.html_url}" target="_blank" rel="noopener" style="color:var(--text);text-decoration:none">${escHtml(i.title)}</a></div>
-          <div class="item-meta">${escHtml(i.author_login)} · ${fmtDate(i.created_at)}</div>
+          <div class="item-meta">${escHtml(i.author_login)} · ${fmtRelative(i.created_at)}</div>
         </td></tr>`).join('')}</tbody></table>`
     : `<div class="empty-state">
         <div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg></div>
-        <h3>Chưa có issue nào</h3>
+        <h3>Chưa có issue</h3>
       </div>`;
 }
 

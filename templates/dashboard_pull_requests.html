@@ -99,8 +99,7 @@ function escHtml(str) {
   return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 function fmtDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('vi-VN', { month: 'short', day: 'numeric', year: 'numeric' });
+  return window.GitAnalyticsTime ? window.GitAnalyticsTime.compact(iso) : '—';
 }
 function stateBadge(p) {
   if (p.is_merged) return '<span class="badge badge-merged">đã merge</span>';
@@ -124,11 +123,11 @@ async function load() {
       <div class="card-value">${s.total.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Merged</div>
+      <div class="card-title">Đã Merge</div>
       <div class="card-value" style="color:var(--info-text)">${s.merged.toLocaleString()}</div>
     </div>
     <div class="card">
-      <div class="card-title">Open</div>
+      <div class="card-title">Đang Mở</div>
       <div class="card-value" style="color:var(--success-text)">${s.open.toLocaleString()}</div>
     </div>
     <div class="card">
@@ -142,7 +141,7 @@ async function load() {
   new Chart(document.getElementById('chart-pr-status'), {
     type: 'doughnut',
     data: {
-      labels: ['Merged','Open','Closed'],
+      labels: ['Đã merge','Đang mở','Đã đóng'],
         datasets: [{
           data: [s.merged, s.open, s.closed],
         backgroundColor: ['#58a6ff','#3fb950','#8b949e'],
@@ -160,7 +159,7 @@ async function load() {
   new Chart(document.getElementById('chart-merge-rate'), {
     type: 'bar',
     data: {
-      labels: ['Merged','Open','Closed'],
+      labels: ['Đã merge','Đang mở','Đã đóng'],
         datasets: [{
           label: 'Pull Request',
         data: [s.merged, s.open, s.closed],

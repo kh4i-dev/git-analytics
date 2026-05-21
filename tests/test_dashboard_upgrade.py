@@ -84,7 +84,7 @@ def test_global_dashboard_page_loads(db_session: Session) -> None:
     
     response = client.get("/dashboard")
     assert response.status_code == 200
-    assert "Global Dashboard" in response.text
+    assert "Tổng Quan" in response.text
     assert "octo/super-project" in response.text
     assert "octo" in response.text  # Username in sidebar
     assert "Đăng Xuất" in response.text
@@ -101,11 +101,11 @@ def test_placeholder_pages(db_session: Session) -> None:
     client.cookies.set("git_analytics_session", session_cookie)
     
     placeholders = [
-        ("/settings", "System Settings"),
-        ("/account", "Account Settings"),
-        ("/sync-status", "Sync Status Logs"),
-        ("/developer-news", "Developer News"),
-        ("/ai-tools", "AI Tools Integration"),
+        ("/settings", "Cài Đặt"),
+        ("/account", "Tài Khoản"),
+        ("/sync-status", "Trạng thái đồng bộ"),
+        ("/developer-news", "Tin"),
+        ("/ai-tools", "AI Workspace"),
     ]
     
     for route, expected_title in placeholders:

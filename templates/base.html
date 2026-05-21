@@ -373,7 +373,7 @@
       <div class="sidebar-section-label">Kho Lưu Trữ</div>
       <select id="repo-switcher" class="repo-select" onchange="switchRepo(this.value)">
         {% if not repo %}
-          <option value="" selected disabled>Chọn Repository</option>
+          <option value="" selected disabled>Chọn repo</option>
         {% endif %}
         {% for r in repos %}
         <option value="{{ r.id }}" {% if repo and r.id == repo.id %}selected{% endif %}>
@@ -451,7 +451,7 @@
           {% set s = repo.last_sync_status %}
           <span class="sync-badge {{ s }}">
             {% if s == 'success' %}✓{% elif s == 'failed' %}✕{% elif s == 'syncing' %}↻{% else %}○{% endif %}
-            {% if s == "success" %}Thành Công{% elif s == "failed" %}Thất Bại{% elif s == "syncing" %}Đang đồng bộ{% else %}Chờ{% endif %}
+            {% if s == "success" %}Sẵn sàng{% elif s == "failed" %}Lỗi{% elif s == "syncing" %}Đang cập nhật{% else %}Chờ{% endif %}
           </span>
           <form method="post" action="/repositories/{{ repo.id }}/sync" style="margin:0">
             <button type="submit" class="btn btn-outline btn-sm">↻ Đồng Bộ</button>

@@ -4,6 +4,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import RepositoryNotFoundException
+from app.utils.timezone import isoformat_vn as _vn_iso
 from app.repositories import (
     CommitRepository,
     IssueRepository,
@@ -60,7 +61,7 @@ class InsightsService:
             "repository": {
                 "id": repo.id,
                 "full_name": repo.full_name,
-                "last_synced_at": repo.last_synced_at.isoformat() if repo.last_synced_at else None,
+                "last_synced_at": _vn_iso(repo.last_synced_at),
             },
             "branch_filter": branch_filter or "all",
             "activity_score": score,

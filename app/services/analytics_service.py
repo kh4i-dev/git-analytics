@@ -6,6 +6,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AuthorizationException, RepositoryNotFoundException
+from app.utils.timezone import isoformat_vn as _vn_iso
 from app.models.repository import Repository
 from app.models.branch import Branch
 from app.models.commit import Commit
@@ -95,7 +96,7 @@ class AnalyticsService:
             {
                 "id": r.id,
                 "full_name": r.full_name,
-                "last_synced_at": r.last_synced_at.isoformat() if r.last_synced_at else None,
+                "last_synced_at": _vn_iso(r.last_synced_at),
                 "last_sync_status": r.last_sync_status,
             }
             for r in sync_activity_repos
@@ -397,12 +398,12 @@ class AnalyticsService:
                 "inactive_days": inactive_days if inactive_days != 999 else None,
             },
             "breakdown": [
-                {"label": "Commit frequency", "value": commit_frequency_score},
-                {"label": "Issue resolution", "value": issue_score},
-                {"label": "PR merge speed", "value": pr_speed_score},
-                {"label": "Contributor activity", "value": contributor_score},
-                {"label": "Stale issue control", "value": stale_score},
-                {"label": "Recent activity", "value": inactive_score},
+                {"label": "Nhịp commit", "value": commit_frequency_score},
+                {"label": "Xử lý issue", "value": issue_score},
+                {"label": "Tốc độ merge PR", "value": pr_speed_score},
+                {"label": "Hoạt động contributor", "value": contributor_score},
+                {"label": "Issue tồn đọng", "value": stale_score},
+                {"label": "Hoạt động gần đây", "value": inactive_score},
             ],
         }
 
@@ -419,7 +420,7 @@ class AnalyticsService:
                     "date": current.isoformat(),
                     "count": count,
                     "level": _heatmap_level(count, max_count),
-                    "label": f"{count} commits on {current.strftime('%b %d')}",
+                    "label": f"{count} commit vào {current.strftime('%d/%m')}",
                 }
             )
         return {
@@ -458,26 +459,26 @@ class AnalyticsService:
             best_hour = max(hour_counts.items(), key=lambda item: item[1])
             insights.append(
                 {
-                    "title": "Most productive coding day",
+                    "title": "Ngày coding hiệu quả nhất",
                     "value": _weekday_name(best_day[0]),
-                    "detail": f"{best_day[1]} commits landed on {_weekday_name(best_day[0])}.",
+                    "detail": f"{best_day[1]} commit tập trung vào {_weekday_name(best_day[0])}.",
                     "tone": "positive",
                     "icon": "calendar",
                 }
             )
             insights.append(
                 {
-                    "title": "Peak coding hours",
+                    "title": "Khung giờ hoạt động cao",
                     "value": _hour_bucket(best_hour[0]),
-                    "detail": f"Activity is strongest around {_hour_bucket(best_hour[0])}.",
+                    "detail": f"Hoạt động nổi bật quanh {_hour_bucket(best_hour[0])}.",
                     "tone": "info",
                     "icon": "clock",
                 }
             )
             insights.append(
                 {
-                    "title": "Commit consistency",
-                    "value": f"{len({c.committed_at.date() for c in commits_7})}/7 days",
+                    "title": "Độ đều commit",
+                    "value": f"{len({c.committed_at.date() for c in commits_7})}/7 ngày",
                     "detail": _activity_delta_sentence(delta),
                     "tone": "positive" if delta >= 0 else "warning",
                     "icon": "activity",
@@ -492,9 +493,9 @@ class AnalyticsService:
             ) / len(merged_prs)
             insights.append(
                 {
-                    "title": "PR merge performance",
+                    "title": "Hiệu suất merge PR",
                     "value": f"{round(avg_hours, 1)}h",
-                    "detail": "Average merge time is fast." if avg_hours <= 48 else "Review cycle is slowing down.",
+                    "detail": "Thời gian merge đang tốt." if avg_hours <= 48 else "Vòng review đang chậm lại.",
                     "tone": "positive" if avg_hours <= 48 else "warning",
                     "icon": "git-pull-request",
                 }
@@ -508,9 +509,9 @@ class AnalyticsService:
         if issues:
             insights.append(
                 {
-                    "title": "Issue resolution trend",
-                    "value": f"{len(closed_issues_recent)} closed",
-                    "detail": f"{len(open_issues)} issues remain open across synced repositories.",
+                    "title": "Xu hướng xử lý issue",
+                    "value": f"{len(closed_issues_recent)} đã xử lý",
+                    "detail": f"Còn {len(open_issues)} issue đang mở trong các repository đã sync.",
                     "tone": "positive" if len(closed_issues_recent) >= len(open_issues) else "info",
                     "icon": "circle-check",
                 }
@@ -518,7 +519,7 @@ class AnalyticsService:
 
         insights.append(
             {
-                "title": "Productivity trend",
+                "title": "Xu hướng năng suất",
                 "value": f"{delta:+.0f}%",
                 "detail": _activity_delta_sentence(delta),
                 "tone": "positive" if delta >= 0 else "warning",
@@ -527,7 +528,7 @@ class AnalyticsService:
         )
         insights.append(
             {
-                "title": "Repository health",
+                "title": "Sức khỏe repository",
                 "value": health["status"]["label"],
                 "detail": health["recommendation"],
                 "tone": health["status"]["tone"],
@@ -725,9 +726,9 @@ class AnalyticsService:
                 events.append(
                     {
                         "type": "sync",
-                        "label": "Sync completed" if repo.last_sync_status == "success" else "Sync updated",
+                        "label": "Đồng bộ hoàn tất" if repo.last_sync_status == "success" else "Đã cập nhật đồng bộ",
                         "repo": repo.full_name,
-                        "timestamp": _ensure_aware(repo.last_synced_at).isoformat(),
+                        "timestamp": _vn_iso(repo.last_synced_at),
                         "badge": repo.last_sync_status,
                     }
                 )
@@ -735,9 +736,9 @@ class AnalyticsService:
                 events.append(
                     {
                         "type": "repository",
-                        "label": "Repository imported",
+                        "label": "Đã import repository",
                         "repo": repo.full_name,
-                        "timestamp": _ensure_aware(repo.created_at).isoformat(),
+                        "timestamp": _vn_iso(repo.created_at),
                         "badge": "imported",
                     }
                 )
@@ -746,10 +747,10 @@ class AnalyticsService:
             events.append(
                 {
                     "type": "commit",
-                    "label": "New commit detected",
+                    "label": "Commit mới",
                     "repo": repo_names.get(commit.repo_id, "Repository"),
                     "detail": (commit.message or "").splitlines()[0][:90],
-                    "timestamp": _ensure_aware(commit.committed_at).isoformat(),
+                    "timestamp": _vn_iso(commit.committed_at),
                     "badge": "commit",
                 }
             )
@@ -758,10 +759,10 @@ class AnalyticsService:
                 events.append(
                     {
                         "type": "pull_request",
-                        "label": "PR merged",
+                        "label": "PR đã merge",
                         "repo": repo_names.get(pr.repo_id, "Repository"),
                         "detail": f"#{pr.number} {pr.title[:80]}",
-                        "timestamp": _ensure_aware(pr.merged_at).isoformat(),
+                        "timestamp": _vn_iso(pr.merged_at),
                         "badge": "merged",
                     }
                 )
@@ -770,10 +771,10 @@ class AnalyticsService:
                 events.append(
                     {
                         "type": "issue",
-                        "label": "Issue closed",
+                        "label": "Issue đã xử lý",
                         "repo": repo_names.get(issue.repo_id, "Repository"),
                         "detail": f"#{issue.number} {issue.title[:80]}",
-                        "timestamp": _ensure_aware(issue.closed_at).isoformat(),
+                        "timestamp": _vn_iso(issue.closed_at),
                         "badge": "closed",
                     }
                 )
@@ -803,7 +804,7 @@ class AnalyticsService:
         return {
             "selected": "all",
             "options": [
-                {"label": "All branches", "value": "all"},
+                {"label": "Tất cả branch", "value": "all"},
                 *[
                     {
                         "label": name,
@@ -852,7 +853,7 @@ class AnalyticsService:
                 "full_name": repo.full_name,
                 "html_url": repo.html_url,
                 "default_branch": repo.default_branch,
-                "last_synced_at": repo.last_synced_at.isoformat() if repo.last_synced_at else None,
+                "last_synced_at": _vn_iso(repo.last_synced_at),
                 "last_sync_status": repo.last_sync_status,
             },
             "branch_filter": {
@@ -1035,6 +1036,231 @@ class AnalyticsService:
             "top_contributors": by_commits[:20],
         }
 
+    def get_contributor_profile(self, user_id: int, username: str) -> dict[str, Any]:
+        normalized = username.strip()
+        if not normalized:
+            raise RepositoryNotFoundException("Contributor not found.")
+
+        repos = self.repo_repo.list_by_user(user_id, page=1, per_page=100)
+        repo_ids = [repo.id for repo in repos]
+        if not repo_ids:
+            raise RepositoryNotFoundException("Contributor not found.")
+
+        commits = self.db.scalars(
+            select(Commit)
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                Commit.author_login == normalized,
+            )
+            .order_by(Commit.committed_at.desc())
+        ).all()
+        prs = self.db.scalars(
+            select(PullRequest)
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                PullRequest.author_login == normalized,
+            )
+            .order_by(PullRequest.created_at.desc())
+        ).all()
+        issues = self.db.scalars(
+            select(Issue)
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                Issue.author_login == normalized,
+            )
+            .order_by(Issue.created_at.desc())
+        ).all()
+
+        if not commits and not prs and not issues:
+            raise RepositoryNotFoundException("Contributor not found.")
+
+        repo_names = {repo.id: repo.full_name for repo in repos}
+        repo_languages = {repo.id: repo.language for repo in repos if repo.language}
+        avatar_url = next((c.author_avatar_url for c in commits if c.author_avatar_url), None)
+        display_name = next((c.author_name for c in commits if c.author_name), normalized)
+
+        now = datetime.now(UTC)
+        since_30 = now - timedelta(days=30)
+        since_7 = now - timedelta(days=7)
+        commits_30 = [c for c in commits if _ensure_aware(c.committed_at) >= since_30]
+        commits_7 = [c for c in commits if _ensure_aware(c.committed_at) >= since_7]
+        active_days = sorted({_ensure_aware(c.committed_at).date() for c in commits})
+        current_streak, longest_streak = _date_streaks(active_days, now.date())
+
+        commits_by_day: dict[str, int] = defaultdict(int)
+        commits_by_week: dict[str, int] = defaultdict(int)
+        hour_counts = {hour: 0 for hour in range(24)}
+        weekday_hour: dict[str, list[int]] = {
+            name: [0] * 24 for name in ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        }
+        repo_counts: dict[int, int] = defaultdict(int)
+        language_counts: dict[str, int] = defaultdict(int)
+
+        for commit in commits:
+            committed_at = _ensure_aware(commit.committed_at)
+            day_key = committed_at.date().isoformat()
+            week_key = f"{committed_at.isocalendar().year}-W{committed_at.isocalendar().week:02d}"
+            commits_by_day[day_key] += 1
+            commits_by_week[week_key] += 1
+            hour_counts[committed_at.hour] += 1
+            weekday_hour[_weekday_name(committed_at.weekday())[:3]][committed_at.hour] += 1
+            repo_counts[commit.repo_id] += 1
+            language = repo_languages.get(commit.repo_id)
+            if language:
+                language_counts[language] += 1
+
+        merged_prs = [pr for pr in prs if pr.is_merged]
+        resolved_issues = [issue for issue in issues if issue.state == "closed" or issue.closed_at]
+        participation = len(repo_counts)
+        score = min(
+            100,
+            len(commits_30) * 2
+            + len(merged_prs) * 5
+            + len(resolved_issues) * 4
+            + current_streak * 3
+            + participation * 4,
+        )
+        peak_hour = max(hour_counts.items(), key=lambda item: item[1])[0] if commits else None
+
+        top_repositories = [
+            {
+                "id": repo_id,
+                "full_name": repo_names.get(repo_id, "Repository"),
+                "commits": count,
+                "language": repo_languages.get(repo_id),
+            }
+            for repo_id, count in sorted(repo_counts.items(), key=lambda item: item[1], reverse=True)[:8]
+        ]
+        weeks = [
+            {"week": week, "count": commits_by_week[week]}
+            for week in sorted(commits_by_week)[-12:]
+        ]
+        trend = [
+            {
+                "date": (now.date() - timedelta(days=offset)).isoformat(),
+                "count": commits_by_day.get((now.date() - timedelta(days=offset)).isoformat(), 0),
+            }
+            for offset in range(29, -1, -1)
+        ]
+
+        leaderboards = self._build_contributor_leaderboards(user_id)
+
+        return {
+            "profile": {
+                "username": normalized,
+                "display_name": display_name,
+                "avatar_url": avatar_url,
+                "github_url": f"https://github.com/{normalized}",
+                "score": score,
+                "current_streak": current_streak,
+                "longest_streak": longest_streak,
+                "primary_languages": [
+                    {"name": language, "count": count}
+                    for language, count in sorted(
+                        language_counts.items(),
+                        key=lambda item: item[1],
+                        reverse=True,
+                    )[:4]
+                ],
+            },
+            "summary": {
+                "commits": len(commits),
+                "commits_7d": len(commits_7),
+                "commits_30d": len(commits_30),
+                "prs_merged": len(merged_prs),
+                "issues_resolved": len(resolved_issues),
+                "active_days": len(active_days),
+                "repositories": participation,
+                "peak_hour": peak_hour,
+            },
+            "charts": {
+                "contribution_trend": trend,
+                "commits_per_week": weeks,
+                "active_hours": [{"hour": hour, "count": count} for hour, count in hour_counts.items()],
+                "hour_heatmap": [
+                    {"day": day, "hours": counts}
+                    for day, counts in weekday_hour.items()
+                ],
+                "top_repositories": top_repositories,
+            },
+            "insights": _contributor_insights(
+                commits=commits,
+                commits_30=len(commits_30),
+                current_streak=current_streak,
+                participation=participation,
+                peak_hour=peak_hour,
+            ),
+            "leaderboards": leaderboards,
+        }
+
+    def _build_contributor_leaderboards(self, user_id: int) -> dict[str, list[dict[str, Any]]]:
+        since_7 = datetime.now(UTC) - timedelta(days=7)
+        top_contributors = self.db.execute(
+            select(
+                Commit.author_login.label("login"),
+                Commit.author_name.label("name"),
+                Commit.author_avatar_url.label("avatar_url"),
+                func.count(Commit.id).label("count"),
+            )
+            .join(Repository)
+            .where(Repository.user_id == user_id, Commit.author_login.is_not(None))
+            .group_by(Commit.author_login, Commit.author_name, Commit.author_avatar_url)
+            .order_by(func.count(Commit.id).desc())
+            .limit(5)
+        ).all()
+        active_week = self.db.execute(
+            select(
+                Commit.author_login.label("login"),
+                Commit.author_name.label("name"),
+                Commit.author_avatar_url.label("avatar_url"),
+                func.count(Commit.id).label("count"),
+            )
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                Commit.author_login.is_not(None),
+                Commit.committed_at >= since_7,
+            )
+            .group_by(Commit.author_login, Commit.author_name, Commit.author_avatar_url)
+            .order_by(func.count(Commit.id).desc())
+            .limit(5)
+        ).all()
+        issue_resolvers = self.db.execute(
+            select(
+                Issue.author_login.label("login"),
+                func.count(Issue.id).label("count"),
+            )
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                Issue.author_login.is_not(None),
+                Issue.state == "closed",
+            )
+            .group_by(Issue.author_login)
+            .order_by(func.count(Issue.id).desc())
+            .limit(5)
+        ).all()
+
+        def rows(items: list[Any]) -> list[dict[str, Any]]:
+            return [
+                {
+                    "login": row.login,
+                    "name": getattr(row, "name", None) or row.login,
+                    "avatar_url": getattr(row, "avatar_url", None),
+                    "count": row.count,
+                }
+                for row in items
+            ]
+
+        return {
+            "top_contributor": rows(top_contributors),
+            "most_active_week": rows(active_week),
+            "issue_resolver": rows(issue_resolvers),
+        }
+
 
 # ── Formatters ────────────────────────────────────────────────────────────────
 
@@ -1058,12 +1284,12 @@ def _percent_delta(current: int, previous: int) -> float:
 
 def _health_status(score: int) -> dict[str, str]:
     if score >= 85:
-        return {"label": "Excellent", "tone": "positive"}
+        return {"label": "Rất tốt", "tone": "positive"}
     if score >= 70:
-        return {"label": "Healthy", "tone": "positive"}
+        return {"label": "Ổn định", "tone": "positive"}
     if score >= 45:
-        return {"label": "Warning", "tone": "warning"}
-    return {"label": "Critical", "tone": "critical"}
+        return {"label": "Cần chú ý", "tone": "warning"}
+    return {"label": "Rủi ro cao", "tone": "critical"}
 
 
 def _health_recommendation(
@@ -1075,24 +1301,24 @@ def _health_recommendation(
     commits_7: int,
 ) -> str:
     if commits_7 == 0:
-        return "No commits landed this week. Schedule a sync or review repository ownership."
+        return "Tuần này chưa ghi nhận commit mới. Nên kiểm tra lịch sync hoặc quyền sở hữu repository."
     if inactive_days >= 14:
-        return f"Repository activity has been inactive for {inactive_days} days."
+        return f"Repository chưa có hoạt động trong {inactive_days} ngày."
     if stale_ratio >= 40:
-        return "High stale issue ratio. Prioritize issue triage and close outdated work."
+        return "Tỷ lệ issue tồn đọng cao. Nên ưu tiên triage và đóng các issue đã cũ."
     if avg_merge_hours is not None and avg_merge_hours >= 72:
-        return "PR merge speed is slow. Reduce review queue age and merge smaller changes."
+        return "Tốc độ merge PR đang chậm. Nên giảm backlog review và chia PR nhỏ hơn."
     if score >= 85:
-        return "Repository signals are strong across activity, review speed, and issue flow."
-    return "Activity is stable. Keep commit cadence and issue closure balanced."
+        return "Tín hiệu repository đang tốt ở activity, review speed và issue flow."
+    return "Hoạt động ổn định. Giữ nhịp commit và xử lý issue cân bằng."
 
 
 def _activity_delta_sentence(delta: float) -> str:
     if delta > 0:
-        return f"Repository activity increased {abs(delta):.0f}% this week."
+        return f"Hoạt động repository tăng {abs(delta):.0f}% trong tuần này."
     if delta < 0:
-        return f"Repository activity dropped {abs(delta):.0f}% this week."
-    return "Repository activity is unchanged this week."
+        return f"Hoạt động repository giảm {abs(delta):.0f}% trong tuần này."
+    return "Hoạt động repository ổn định trong tuần này."
 
 
 def _heatmap_level(count: int, max_count: int) -> int:
@@ -1109,12 +1335,93 @@ def _heatmap_level(count: int, max_count: int) -> int:
 
 
 def _weekday_name(day_index: int) -> str:
-    return ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][day_index]
+    return ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"][day_index]
 
 
 def _hour_bucket(hour: int) -> str:
     end = (hour + 1) % 24
     return f"{hour:02d}:00-{end:02d}:00"
+
+
+def _date_streaks(active_days: list[date], today: date) -> tuple[int, int]:
+    if not active_days:
+        return 0, 0
+    active = set(active_days)
+    cursor = today if today in active else today - timedelta(days=1)
+    current = 0
+    while cursor in active:
+        current += 1
+        cursor -= timedelta(days=1)
+
+    longest = run = 1
+    for index in range(1, len(active_days)):
+        if (active_days[index] - active_days[index - 1]).days == 1:
+            run += 1
+            longest = max(longest, run)
+        else:
+            run = 1
+    return current, longest
+
+
+def _contributor_insights(
+    *,
+    commits: list[Commit],
+    commits_30: int,
+    current_streak: int,
+    participation: int,
+    peak_hour: int | None,
+) -> list[dict[str, str]]:
+    insights: list[dict[str, str]] = []
+    if peak_hour is not None:
+        if peak_hour >= 22 or peak_hour < 5:
+            insights.append(
+                {
+                    "title": "Late-night coding pattern",
+                    "detail": "Hoạt động mạnh vào khung giờ khuya.",
+                    "tone": "info",
+                }
+            )
+        elif 9 <= peak_hour <= 17:
+            insights.append(
+                {
+                    "title": "Business-hour rhythm",
+                    "detail": "Nhịp commit tập trung trong giờ làm việc.",
+                    "tone": "positive",
+                }
+            )
+    if participation >= 3:
+        insights.append(
+            {
+                "title": "High repository participation",
+                "detail": f"Đóng góp trên {participation} repository.",
+                "tone": "positive",
+            }
+        )
+    if current_streak >= 3:
+        insights.append(
+            {
+                "title": "Consistent contribution streak",
+                "detail": f"Duy trì chuỗi {current_streak} ngày hoạt động.",
+                "tone": "positive",
+            }
+        )
+    if commits_30 == 0 and commits:
+        insights.append(
+            {
+                "title": "Activity cooled down",
+                "detail": "Chưa phát hiện commit mới trong 30 ngày qua.",
+                "tone": "warning",
+            }
+        )
+    if not insights:
+        insights.append(
+            {
+                "title": "Baseline profile ready",
+                "detail": "Cần thêm hoạt động để phát hiện xu hướng rõ hơn.",
+                "tone": "info",
+            }
+        )
+    return insights[:4]
 
 
 def _empty_health_score() -> dict[str, Any]:
@@ -1144,12 +1451,12 @@ def _empty_health_score() -> dict[str, Any]:
             "inactive_days": None,
         },
         "breakdown": [
-            {"label": "Commit frequency", "value": 0},
-            {"label": "Issue resolution", "value": 0},
-            {"label": "PR merge speed", "value": 0},
-            {"label": "Contributor activity", "value": 0},
-            {"label": "Stale issue control", "value": 0},
-            {"label": "Recent activity", "value": 0},
+            {"label": "Nhịp commit", "value": 0},
+            {"label": "Xử lý issue", "value": 0},
+            {"label": "Tốc độ merge PR", "value": 0},
+            {"label": "Hoạt động contributor", "value": 0},
+            {"label": "Issue tồn đọng", "value": 0},
+            {"label": "Hoạt động gần đây", "value": 0},
         ],
     }
 
@@ -1162,7 +1469,7 @@ def _empty_heatmap(today: date) -> dict[str, Any]:
                 "date": (start + timedelta(days=offset)).isoformat(),
                 "count": 0,
                 "level": 0,
-                "label": f"0 commits on {(start + timedelta(days=offset)).strftime('%b %d')}",
+                "label": f"0 commit vào {(start + timedelta(days=offset)).strftime('%d/%m')}",
             }
             for offset in range(365)
         ],
@@ -1189,11 +1496,11 @@ def _empty_team_dashboard() -> dict[str, Any]:
 
 
 def _empty_kpi_rankings() -> dict[str, Any]:
-    empty_person = {"name": "N/A", "login": None, "value": 0, "detail": "No activity synced yet"}
+    empty_person = {"name": "N/A", "login": None, "value": 0, "detail": "Chưa ghi nhận hoạt động"}
     return {
         "top_contributor": empty_person,
         "top_issue_resolver": empty_person,
-        "fastest_reviewer": {"name": "N/A", "login": None, "value": "N/A", "detail": "No merged pull requests yet"},
+        "fastest_reviewer": {"name": "N/A", "login": None, "value": "N/A", "detail": "Chưa có pull request được merge"},
         "most_active_repo": {"full_name": "N/A", "score": 0, "commits": 0, "issues_closed": 0, "prs_merged": 0},
     }
 
@@ -1208,11 +1515,11 @@ def _empty_kpi_charts() -> dict[str, Any]:
 
 def _kpi_person(row: dict[str, Any] | None, metric: str) -> dict[str, Any]:
     if not row:
-        return {"name": "N/A", "login": None, "value": 0, "detail": "No activity synced yet"}
+        return {"name": "N/A", "login": None, "value": 0, "detail": "Chưa ghi nhận hoạt động"}
     labels = {
-        "commits": "commits",
-        "issues_closed": "issues resolved",
-        "prs_merged": "PR merged",
+        "commits": "commit",
+        "issues_closed": "issue đã xử lý",
+        "prs_merged": "PR đã merge",
     }
     return {
         "name": row.get("login") or row.get("name") or "Unknown",
@@ -1231,7 +1538,7 @@ def _fmt_commit(c) -> dict[str, Any]:
         "author_name": c.author_name,
         "author_login": c.author_login,
         "author_avatar_url": c.author_avatar_url,
-        "committed_at": c.committed_at.isoformat() if c.committed_at else None,
+        "committed_at": _vn_iso(c.committed_at),
         "html_url": c.html_url,
         "branch_name": c.branch_name,
     }
@@ -1245,9 +1552,9 @@ def _fmt_pr(p) -> dict[str, Any]:
         "is_merged": p.is_merged,
         "author_login": p.author_login,
         "author_avatar_url": p.author_avatar_url,
-        "created_at": p.created_at.isoformat() if p.created_at else None,
-        "merged_at": p.merged_at.isoformat() if p.merged_at else None,
-        "closed_at": p.closed_at.isoformat() if p.closed_at else None,
+        "created_at": _vn_iso(p.created_at),
+        "merged_at": _vn_iso(p.merged_at),
+        "closed_at": _vn_iso(p.closed_at),
         "html_url": p.html_url,
         "base_branch": p.base_branch,
         "head_branch": p.head_branch,
@@ -1261,7 +1568,7 @@ def _fmt_issue(i) -> dict[str, Any]:
         "state": i.state,
         "author_login": i.author_login,
         "labels": i.labels or [],
-        "created_at": i.created_at.isoformat() if i.created_at else None,
-        "closed_at": i.closed_at.isoformat() if i.closed_at else None,
+        "created_at": _vn_iso(i.created_at),
+        "closed_at": _vn_iso(i.closed_at),
         "html_url": i.html_url,
     }

@@ -172,7 +172,7 @@ def test_login_page_and_github_login_route_set_state_cookie(
 
     login_page = client.get("/login")
     assert login_page.status_code == 200
-    assert "Login with GitHub" in login_page.text
+    assert "Đăng nhập với GitHub" in login_page.text
 
     response = client.get("/auth/github/login", follow_redirects=False)
     location = response.headers["location"]
@@ -321,6 +321,6 @@ def test_repositories_page_shows_logged_in_user(db_session: Session) -> None:
     response = client.get("/repositories")
 
     assert response.status_code == 200
-    assert "Repositories" in response.text
+    assert "Kho Lưu Trữ" in response.text
     assert "octo" in response.text
     assert "Đăng Xuất" in response.text
