@@ -13,145 +13,116 @@
   <!-- Settings Sections -->
   <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px;">
 
-    <!-- ── AI Settings ──────────────────────────────────────── -->
+    <!-- AI Settings -->
     <div class="card ai-settings-card" id="ai-settings">
-      <div class="settings-section-head" style="margin-bottom: 20px;">
+      <div class="settings-section-head ai-settings-head">
         <div>
           <h3>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purple)"><path d="M12 2a8 8 0 0 1 8 8 4 4 0 0 1-4 4H4a4 4 0 0 1-4-4 8 8 0 0 1 8-8z"/><path d="M9 22h6"/><path d="M12 19v3"/></svg>
             AI Settings
           </h3>
-          <p>Cấu hình nguồn AI, provider và API key cho Git Analytics AI Tools.</p>
+          <p>Configure how Git Analytics powers commit messages, PR review, and the repo assistant.</p>
         </div>
-        <div class="ai-badge-row">
-          <span class="ai-mode-badge" id="ai-badge-local">Local Workspace</span>
-          <span class="ai-mode-badge ai-badge-byok" id="ai-badge-byok" style="display:none;">BYOK Supported</span>
-          <span class="ai-mode-badge ai-badge-cloud" id="ai-badge-cloud" style="display:none;">Cloud AI Preview</span>
-        </div>
+        <span class="ai-mode-badge" id="ai-active-mode-label">Local Workspace</span>
       </div>
 
-      <!-- AI Mode -->
-      <div class="ai-block">
-        <div class="ai-block-label">AI Mode</div>
-        <div class="ai-mode-grid" id="ai-mode-grid">
-
-          <label class="ai-mode-card" id="mode-local">
-            <input type="radio" name="ai_mode" value="local" onchange="onModeChange('local')">
-            <div class="ai-mode-card-body">
-              <span class="ai-mode-icon" style="color:#58a6ff;background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.22);">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
-              </span>
-              <div>
-                <div class="ai-mode-name">Local Workspace</div>
-                <div class="ai-mode-desc">Chạy offline với source code context. Không cần API key.</div>
-              </div>
-              <span class="ai-mode-check">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>
-              </span>
+      <div class="ai-mode-grid" id="ai-mode-grid" aria-label="AI mode selection">
+        <label class="ai-mode-card" id="mode-local">
+          <input type="radio" name="ai_mode" value="local" onchange="onModeChange('local')">
+          <div class="ai-mode-card-body">
+            <span class="ai-mode-icon" style="color:#58a6ff;background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.22);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+            </span>
+            <div>
+              <div class="ai-mode-name">Local Workspace</div>
+              <div class="ai-mode-desc">Use local repository context, git diff, and Grapuco graph context when available. No provider API key required.</div>
             </div>
-          </label>
-
-          <label class="ai-mode-card" id="mode-byok">
-            <input type="radio" name="ai_mode" value="byok" onchange="onModeChange('byok')">
-            <div class="ai-mode-card-body">
-              <span class="ai-mode-icon" style="color:#a371f7;background:rgba(163,113,247,.1);border-color:rgba(163,113,247,.22);">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
-              </span>
-              <div>
-                <div class="ai-mode-name">Use my API key <span style="font-size:10px;padding:1px 6px;border-radius:999px;background:rgba(163,113,247,.15);color:#a371f7;font-weight:800;letter-spacing:.04em;">BYOK</span></div>
-                <div class="ai-mode-desc">Dùng API key của bạn với OpenAI, Gemini hoặc Claude.</div>
-              </div>
-              <span class="ai-mode-check">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>
-              </span>
-            </div>
-          </label>
-
-          <label class="ai-mode-card" id="mode-cloud">
-            <input type="radio" name="ai_mode" value="cloud" onchange="onModeChange('cloud')">
-            <div class="ai-mode-card-body">
-              <span class="ai-mode-icon" style="color:#3fb950;background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.22);">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
-              </span>
-              <div>
-                <div class="ai-mode-name">Git Analytics Cloud AI <span style="font-size:10px;padding:1px 6px;border-radius:999px;background:rgba(63,185,80,.12);color:#3fb950;font-weight:800;letter-spacing:.04em;">Preview</span></div>
-                <div class="ai-mode-desc">Dùng hạ tầng AI của Git Analytics. Không cần cấu hình.</div>
-              </div>
-              <span class="ai-mode-check">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>
-              </span>
-            </div>
-          </label>
-
-        </div>
-      </div>
-
-      <!-- Provider (shown only for BYOK) -->
-      <div class="ai-block" id="ai-provider-block" style="display:none;">
-        <div class="ai-block-label">Provider</div>
-        <div class="ai-provider-row">
-          <label class="ai-provider-chip active" data-provider="local_fallback">
-            <input type="radio" name="ai_provider" value="local_fallback" onchange="onProviderChange('local_fallback')" checked>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
-            Local fallback
-          </label>
-          <label class="ai-provider-chip" data-provider="openai">
-            <input type="radio" name="ai_provider" value="openai" onchange="onProviderChange('openai')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-            OpenAI
-          </label>
-          <label class="ai-provider-chip" data-provider="gemini">
-            <input type="radio" name="ai_provider" value="gemini" onchange="onProviderChange('gemini')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Gemini
-          </label>
-          <label class="ai-provider-chip" data-provider="claude">
-            <input type="radio" name="ai_provider" value="claude" onchange="onProviderChange('claude')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
-            Claude
-          </label>
-        </div>
-      </div>
-
-      <!-- API Key (shown for BYOK, hidden for local/cloud) -->
-      <div class="ai-block" id="ai-key-block" style="display:none;">
-        <div class="ai-block-label" id="ai-key-label">API Key</div>
-        <div class="ai-key-row">
-          <input type="password" id="ai-api-key-input" class="ai-key-input" placeholder="sk-..." autocomplete="off" oninput="saveAiSetting('api_key', this.value)">
-          <button type="button" class="ai-key-toggle" onclick="toggleKeyVisibility()" title="Hiện/ẩn key">
-            <svg id="eye-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-        </div>
-        <div class="ai-key-hint" id="ai-key-hint">Key được lưu cục bộ trong trình duyệt, không gửi lên server.</div>
-      </div>
-
-      <!-- Cloud limits (shown for cloud mode) -->
-      <div class="ai-block" id="ai-cloud-block" style="display:none;">
-        <div class="ai-block-label">Cloud limits preview</div>
-        <div class="ai-tier-grid">
-          <div class="ai-tier-card ai-tier-free">
-            <div class="ai-tier-name">Free Plan</div>
-            <div class="ai-tier-limit">20 AI requests/day</div>
-            <ul class="ai-tier-list">
-              <li>Commit message suggest</li>
-              <li>PR diff review</li>
-              <li>Repo assistant</li>
-            </ul>
+            <span class="ai-mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg></span>
           </div>
-          <div class="ai-tier-card ai-tier-pro">
-            <div class="ai-tier-badge">PRO</div>
-            <div class="ai-tier-name">Pro</div>
-            <div class="ai-tier-limit">Unlimited</div>
-            <ul class="ai-tier-list">
-              <li>Multi-repo context</li>
-              <li>Deep PR review</li>
-              <li>Team insights AI</li>
-              <li>Priority inference</li>
-            </ul>
+        </label>
+
+        <label class="ai-mode-card" id="mode-byok">
+          <input type="radio" name="ai_mode" value="byok" onchange="onModeChange('byok')">
+          <div class="ai-mode-card-body">
+            <span class="ai-mode-icon" style="color:#a371f7;background:rgba(163,113,247,.1);border-color:rgba(163,113,247,.22);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+            </span>
+            <div>
+              <div class="ai-mode-name">Use my API key <span class="ai-inline-badge">BYOK</span></div>
+              <div class="ai-mode-desc">Use your own OpenAI, Gemini, or Claude API key for commit messages, PR review, and repo assistant.</div>
+            </div>
+            <span class="ai-mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg></span>
+          </div>
+        </label>
+
+        <label class="ai-mode-card ai-mode-card-disabled" id="mode-cloud">
+          <input type="radio" name="ai_mode" value="cloud" onchange="onModeChange('cloud')" aria-describedby="cloud-preview-note">
+          <div class="ai-mode-card-body">
+            <span class="ai-mode-icon" style="color:#3fb950;background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.22);">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            </span>
+            <div>
+              <div class="ai-mode-name">Git Analytics Cloud AI <span class="ai-inline-badge ai-preview-badge">Preview</span></div>
+              <div class="ai-mode-desc">Managed AI mode for hosted workflows. Preview only while billing and hosted inference are not production-ready.</div>
+            </div>
+            <span class="ai-mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg></span>
+          </div>
+        </label>
+      </div>
+
+      <div class="ai-callout ai-callout-local" id="ai-local-info">
+        <strong>Local Workspace mode</strong>
+        <span>Local mode works best with Grapuco MCP/indexed repo context. No cloud provider request is made unless a provider is selected.</span>
+      </div>
+
+      <div class="ai-callout ai-callout-cloud" id="ai-cloud-info" hidden>
+        <strong id="cloud-preview-note">Cloud AI is preview-only</strong>
+        <span>Hosted billing and managed inference are not production-ready in this build. Keep this mode for preview workflows only.</span>
+      </div>
+
+      <div class="ai-byok-panel" id="ai-byok-panel" hidden>
+        <div class="ai-provider-footer ai-provider-footer-single">
+          <label>
+            Default provider
+            <select id="ai-provider-select" class="branch-select" onchange="onProviderChange(this.value)">
+              <option value="openai">OpenAI</option>
+              <option value="gemini">Gemini</option>
+              <option value="claude">Claude</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="ai-key-grid ai-key-grid-compact">
+          <div class="ai-key-card" data-provider-card="openai">
+            <div class="ai-key-card-head"><div><strong>OpenAI</strong><span>Used for GPT-backed commit, PR, and assistant workflows.</span></div><span class="provider-pill">GPT</span></div>
+            <div class="secret-input-row"><input id="openai-api-key" type="password" class="secret-input" placeholder="Paste new OpenAI key" autocomplete="off" data-provider-key="openai"></div>
+            <small class="saved-key-state" data-key-status="openai">No saved key in this browser.</small>
+          </div>
+          <div class="ai-key-card" data-provider-card="gemini">
+            <div class="ai-key-card-head"><div><strong>Gemini</strong><span>Alternative provider for code analysis workflows.</span></div><span class="provider-pill">Gemini</span></div>
+            <div class="secret-input-row"><input id="gemini-api-key" type="password" class="secret-input" placeholder="Paste new Gemini key" autocomplete="off" data-provider-key="gemini"></div>
+            <small class="saved-key-state" data-key-status="gemini">No saved key in this browser.</small>
+          </div>
+          <div class="ai-key-card" data-provider-card="claude">
+            <div class="ai-key-card-head"><div><strong>Claude</strong><span>Claude API for deeper PR review and repo assistant runs.</span></div><span class="provider-pill">Claude</span></div>
+            <div class="secret-input-row"><input id="claude-api-key" type="password" class="secret-input" placeholder="Paste new Claude key" autocomplete="off" data-provider-key="claude"></div>
+            <small class="saved-key-state" data-key-status="claude">No saved key in this browser.</small>
           </div>
         </div>
+
+        <div class="ai-callout ai-callout-warning">
+          <strong>Key safety</strong>
+          <span>Do not paste production keys in shared environments. This build stores BYOK settings in browser localStorage because no server-side settings flow exists yet.</span>
+        </div>
       </div>
 
+      <div class="ai-settings-footer">
+        <p class="settings-note" id="ai-settings-status" role="status">No changes saved in this session.</p>
+        <div class="ai-key-actions">
+          <button type="button" class="btn btn-outline btn-sm" id="delete-ai-config-btn" onclick="deleteAIConfiguration()">Delete saved keys</button>
+          <button type="button" class="btn btn-primary btn-sm" id="save-ai-config-btn" onclick="saveAIConfiguration()">Save configuration</button>
+        </div>
+      </div>
     </div>
 
     <!-- Theme & UI Settings -->
@@ -205,120 +176,6 @@
           <small>Đồng bộ giao diện hệ thống.</small>
         </button>
       </div>
-    </div>
-
-    <!-- AI Settings -->
-    <div class="card" id="ai-provider-keys">
-      <div class="settings-section-head">
-        <div>
-          <h3>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
-            AI Settings
-          </h3>
-          <p>Chọn cách chạy AI cho commit, PR review và repo assistant.</p>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-          <span class="badge badge-label">Local Workspace</span>
-          <span class="badge badge-label">BYOK Supported</span>
-          <span class="badge badge-label">Cloud AI Preview</span>
-        </div>
-      </div>
-
-      <div class="ai-mode-grid">
-        <label class="ai-mode-card">
-          <input type="radio" name="ai-mode" value="local" checked>
-          <span>
-            <strong>Local Workspace</strong>
-            <small>Dùng local git diff/source context. Không gọi provider cloud nếu chưa cấu hình.</small>
-          </span>
-        </label>
-        <label class="ai-mode-card">
-          <input type="radio" name="ai-mode" value="byok">
-          <span>
-            <strong>Use my API key</strong>
-            <small>BYOK: user tự dùng key OpenAI, Gemini hoặc Claude.</small>
-          </span>
-        </label>
-        <label class="ai-mode-card">
-          <input type="radio" name="ai-mode" value="cloud">
-          <span>
-            <strong>Git Analytics Cloud AI</strong>
-            <small>Preview mode. Kiến trúc SaaS-ready, chưa bật production billing.</small>
-          </span>
-        </label>
-      </div>
-
-      <div class="ai-cloud-limits">
-        <div>
-          <strong>Free Plan</strong>
-          <span>20 AI requests/day</span>
-        </div>
-        <div>
-          <strong>Pro</strong>
-          <span>Unlimited · Multi-repo context · Deep PR review</span>
-        </div>
-      </div>
-
-      <div class="ai-key-grid">
-        <div class="ai-key-card">
-          <div class="ai-key-card-head">
-            <div>
-              <strong>OpenAI</strong>
-              <span>Commit message, PR review và repo assistant.</span>
-            </div>
-            <span class="provider-pill">GPT</span>
-          </div>
-          <div class="secret-input-row">
-            <input id="openai-api-key" type="password" class="secret-input" placeholder="sk-..." autocomplete="off">
-            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSecret('openai-api-key')">Hiện</button>
-          </div>
-        </div>
-
-        <div class="ai-key-card">
-          <div class="ai-key-card-head">
-            <div>
-              <strong>Gemini</strong>
-              <span>Provider thay thế cho workflow phân tích code.</span>
-            </div>
-            <span class="provider-pill">Gemini</span>
-          </div>
-          <div class="secret-input-row">
-            <input id="gemini-api-key" type="password" class="secret-input" placeholder="AIza..." autocomplete="off">
-            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSecret('gemini-api-key')">Hiện</button>
-          </div>
-        </div>
-
-        <div class="ai-key-card">
-          <div class="ai-key-card-head">
-            <div>
-              <strong>Claude</strong>
-              <span>Dùng Claude API cho review sâu và repo assistant.</span>
-            </div>
-            <span class="provider-pill">Claude</span>
-          </div>
-          <div class="secret-input-row">
-            <input id="claude-api-key" type="password" class="secret-input" placeholder="sk-ant-..." autocomplete="off">
-            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSecret('claude-api-key')">Hiện</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="ai-provider-footer">
-        <label>
-          Provider mặc định
-          <select id="ai-provider-select" class="branch-select">
-            <option value="local">Local fallback</option>
-            <option value="openai">OpenAI</option>
-            <option value="gemini">Gemini</option>
-            <option value="claude">Claude</option>
-          </select>
-        </label>
-        <div class="ai-key-actions">
-          <button type="button" class="btn btn-outline btn-sm" onclick="clearAIKeys()">Xóa key</button>
-          <button type="button" class="btn btn-primary btn-sm" onclick="saveAIKeys()">Lưu cấu hình</button>
-        </div>
-      </div>
-      <p class="settings-note">Production không đọc file local hoặc chạy shell command. AI local chỉ bật khi <code>APP_ENV=development</code> và <code>WORKSPACE_FEATURE_ENABLED=true</code>.</p>
     </div>
 
     <!-- Sync Strategy Settings -->
@@ -1003,6 +860,102 @@
   }
   .ai-mode-card.selected .ai-mode-check { display: grid; }
 
+  .ai-settings-head {
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .ai-inline-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(163,113,247,.15);
+    color: #a371f7;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    vertical-align: middle;
+  }
+  .ai-preview-badge {
+    background: rgba(63,185,80,.12);
+    color: #3fb950;
+  }
+  .ai-mode-card-disabled {
+    opacity: .9;
+  }
+  .ai-callout {
+    display: grid;
+    gap: 4px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+  }
+  .ai-callout[hidden],
+  .ai-byok-panel[hidden] {
+    display: none !important;
+  }
+  .ai-callout strong {
+    color: var(--text);
+    font-size: 13px;
+  }
+  .ai-callout span {
+    color: var(--text-muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .ai-callout-local {
+    border-color: rgba(88,166,255,.24);
+    background: rgba(88,166,255,.07);
+  }
+  .ai-callout-cloud {
+    border-color: rgba(63,185,80,.24);
+    background: rgba(63,185,80,.07);
+  }
+  .ai-callout-warning {
+    border-color: rgba(210,153,34,.32);
+    background: rgba(210,153,34,.08);
+  }
+  .ai-byok-panel {
+    display: grid;
+    gap: 14px;
+    margin-top: 14px;
+  }
+  .ai-provider-footer-single,
+  .ai-key-grid-compact {
+    margin-top: 0;
+  }
+  .saved-key-state {
+    display: block;
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+  .ai-settings-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-sub);
+  }
+  .ai-settings-footer .settings-note {
+    margin: 0;
+  }
+  #ai-settings-status[data-tone="success"] {
+    color: var(--success-text);
+  }
+  #ai-settings-status[data-tone="error"] {
+    color: var(--danger-text);
+  }
+  .ai-key-actions button:disabled {
+    cursor: not-allowed;
+    opacity: .62;
+  }
+
   /* Badge row */
   .ai-badge-row { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
   .ai-mode-badge {
@@ -1133,8 +1086,12 @@
   .ai-tier-pro .ai-tier-list li { color: var(--text); }
 
   @media (max-width: 640px) {
-    .ai-mode-grid, .ai-tier-grid { grid-template-columns: 1fr; }
+    .ai-mode-grid, .ai-tier-grid, .ai-key-grid { grid-template-columns: 1fr; }
     .ai-provider-row { flex-direction: column; }
+    .ai-settings-footer {
+      align-items: stretch;
+      flex-direction: column;
+    }
   }
 
   /* ── Permission badge & env dot ─────────────────────────── */
@@ -1296,84 +1253,154 @@
 const IS_LOCAL_DEV = {{ 'true' if is_local_dev else 'false' }};
 const PERM_KEY = 'ga_permissions';
 const AI_SETTINGS_KEY = 'ga_ai_settings';
+// Dev-only browser storage fallback until a server-side settings flow exists.
+// Saved keys stay masked in the UI and are never written back into inputs.
 
 /* ── AI Settings ─────────────────────────────────────────── */
-const AI_PROVIDER_LABELS = {
-  local_fallback: 'Local fallback',
-  openai: 'OpenAI API Key',
-  gemini: 'Gemini API Key',
-  claude: 'Claude API Key',
-};
+const AI_MODE_VALUES = new Set(['local', 'byok', 'cloud']);
+const AI_PROVIDER_VALUES = new Set(['openai', 'gemini', 'claude']);
+const AI_MODE_LABELS = { local: 'Local Workspace', byok: 'BYOK API Keys', cloud: 'Cloud AI Preview' };
+let aiDraftSettings = { mode: 'local', provider: 'openai' };
+
+function readAiSettings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || '{}');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function writeAiSettings(settings) {
+  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
+}
+
+function validateAiMode(mode) {
+  return AI_MODE_VALUES.has(mode) ? mode : 'local';
+}
+
+function validateAiProvider(provider) {
+  return AI_PROVIDER_VALUES.has(provider) ? provider : 'openai';
+}
+
+function setAiStatus(message, tone = 'muted') {
+  const status = document.getElementById('ai-settings-status');
+  if (!status) return;
+  status.textContent = message;
+  status.dataset.tone = tone;
+}
+
+function setAiSaving(isSaving) {
+  const saveButton = document.getElementById('save-ai-config-btn');
+  const deleteButton = document.getElementById('delete-ai-config-btn');
+  if (saveButton) {
+    saveButton.disabled = isSaving;
+    saveButton.textContent = isSaving ? 'Saving...' : 'Save configuration';
+  }
+  if (deleteButton) deleteButton.disabled = isSaving;
+}
 
 function onModeChange(mode) {
-  saveAiSetting('mode', mode);
-  document.querySelectorAll('.ai-mode-card').forEach(c => c.classList.remove('selected'));
-  const card = document.getElementById('mode-' + mode);
-  if (card) card.classList.add('selected');
-  document.getElementById('ai-provider-block').style.display = mode === 'byok' ? '' : 'none';
-  document.getElementById('ai-key-block').style.display = mode === 'byok' ? '' : 'none';
-  document.getElementById('ai-cloud-block').style.display = mode === 'cloud' ? '' : 'none';
-  document.getElementById('ai-badge-local').style.display = mode === 'local' ? '' : 'none';
-  document.getElementById('ai-badge-byok').style.display = mode === 'byok' ? '' : 'none';
-  document.getElementById('ai-badge-cloud').style.display = mode === 'cloud' ? '' : 'none';
+  const nextMode = validateAiMode(mode);
+  document.querySelectorAll('input[name="ai_mode"]').forEach(input => {
+    input.checked = input.value === nextMode;
+  });
+  document.querySelectorAll('.ai-mode-card').forEach(card => card.classList.remove('selected'));
+  const selectedCard = document.getElementById('mode-' + nextMode);
+  if (selectedCard) selectedCard.classList.add('selected');
+  const byokPanel = document.getElementById('ai-byok-panel');
+  const localInfo = document.getElementById('ai-local-info');
+  const cloudInfo = document.getElementById('ai-cloud-info');
+  if (byokPanel) byokPanel.hidden = nextMode !== 'byok';
+  if (localInfo) localInfo.hidden = nextMode !== 'local';
+  if (cloudInfo) cloudInfo.hidden = nextMode !== 'cloud';
+  const modeLabel = document.getElementById('ai-active-mode-label');
+  if (modeLabel) modeLabel.textContent = AI_MODE_LABELS[nextMode] || AI_MODE_LABELS.local;
+  aiDraftSettings = Object.assign({}, aiDraftSettings, { mode: nextMode });
+  setAiStatus('Configuration changed. Save to keep this browser configuration.', 'muted');
 }
 
 function onProviderChange(provider) {
-  saveAiSetting('provider', provider);
-  document.querySelectorAll('.ai-provider-chip').forEach(c => c.classList.remove('active'));
-  const chip = document.querySelector(`.ai-provider-chip[data-provider="${provider}"]`);
-  if (chip) chip.classList.add('active');
-  const labelEl = document.getElementById('ai-key-label');
-  if (labelEl) labelEl.textContent = AI_PROVIDER_LABELS[provider] || 'API Key';
-  const inputEl = document.getElementById('ai-api-key-input');
-  if (inputEl) {
-    if (provider === 'local_fallback') {
-      document.getElementById('ai-key-block').style.display = 'none';
-    } else {
-      document.getElementById('ai-key-block').style.display = '';
-      inputEl.placeholder = provider === 'openai' ? 'sk-...' : provider === 'gemini' ? 'AIza...' : 'sk-ant-...';
-    }
-  }
+  const nextProvider = validateAiProvider(provider);
+  const select = document.getElementById('ai-provider-select');
+  if (select) select.value = nextProvider;
+  aiDraftSettings = Object.assign({}, aiDraftSettings, { provider: nextProvider });
+  setAiStatus('Provider changed. Save to keep this browser configuration.', 'muted');
 }
 
-function saveAiSetting(key, value) {
-  try {
-    const stored = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || '{}');
-    stored[key] = value;
-    localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(stored));
-  } catch (_) {}
+function updateSavedKeyStatus(settings) {
+  AI_PROVIDER_VALUES.forEach(provider => {
+    const status = document.querySelector('[data-key-status="' + provider + '"]');
+    if (!status) return;
+    status.textContent = settings.keys && settings.keys[provider] ? 'Saved key: ********' : 'No saved key in this browser.';
+  });
 }
 
-function toggleKeyVisibility() {
-  const input = document.getElementById('ai-api-key-input');
-  const icon = document.getElementById('eye-icon');
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" x2="23" y1="1" y2="23"/>';
-  } else {
+function clearKeyInputs() {
+  document.querySelectorAll('[data-provider-key]').forEach(input => {
+    input.value = '';
     input.type = 'password';
-    icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
-  }
+  });
 }
 
 function loadAiSettings() {
+  const stored = readAiSettings();
+  const mode = validateAiMode(stored.mode || 'local');
+  const provider = validateAiProvider(stored.provider || 'openai');
+  const providerSelect = document.getElementById('ai-provider-select');
+  if (providerSelect) providerSelect.value = provider;
+  aiDraftSettings = { mode, provider };
+  onModeChange(mode);
+  onProviderChange(provider);
+  updateSavedKeyStatus(stored);
+  clearKeyInputs();
+  setAiStatus('Loaded saved browser configuration. Saved keys remain masked.', 'muted');
+}
+
+function saveAIConfiguration() {
+  setAiSaving(true);
   try {
-    const stored = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || '{}');
-    const mode = stored.mode || 'local';
-    const provider = stored.provider || 'local_fallback';
-    // Apply mode
-    const modeRadio = document.querySelector(`input[name="ai_mode"][value="${mode}"]`);
-    if (modeRadio) modeRadio.checked = true;
-    onModeChange(mode);
-    // Apply provider
-    const provRadio = document.querySelector(`input[name="ai_provider"][value="${provider}"]`);
-    if (provRadio) provRadio.checked = true;
-    onProviderChange(provider);
-    // Restore key
-    const keyInput = document.getElementById('ai-api-key-input');
-    if (keyInput && stored.api_key) keyInput.value = stored.api_key;
-  } catch (_) {}
+    const modeInput = document.querySelector('input[name="ai_mode"]:checked');
+    const providerSelect = document.getElementById('ai-provider-select');
+    const mode = validateAiMode(modeInput ? modeInput.value : 'local');
+    const provider = validateAiProvider(providerSelect ? providerSelect.value : 'openai');
+    const stored = readAiSettings();
+    const keys = Object.assign({}, stored.keys || {});
+    if (mode === 'byok') {
+      document.querySelectorAll('[data-provider-key]').forEach(input => {
+        const keyProvider = validateAiProvider(input.dataset.providerKey || 'openai');
+        const value = input.value.trim();
+        if (value) keys[keyProvider] = value;
+      });
+    }
+    const payload = { mode, provider, keys, updated_at: new Date().toISOString() };
+    writeAiSettings(payload);
+    updateSavedKeyStatus(payload);
+    clearKeyInputs();
+    setAiStatus('AI configuration saved. Keys are masked and are not rendered back into inputs.', 'success');
+    if (window.showToast) window.showToast('AI configuration saved.');
+  } catch (_) {
+    setAiStatus('Could not save AI configuration. Check browser storage permissions.', 'error');
+  } finally {
+    setAiSaving(false);
+  }
+}
+
+function deleteAIConfiguration() {
+  setAiSaving(true);
+  try {
+    localStorage.removeItem(AI_SETTINGS_KEY);
+    clearKeyInputs();
+    updateSavedKeyStatus({});
+    onModeChange('local');
+    onProviderChange('openai');
+    setAiStatus('Saved AI keys deleted from this browser.', 'success');
+    if (window.showToast) window.showToast('Saved AI keys deleted.');
+  } catch (_) {
+    setAiStatus('Could not delete saved AI settings.', 'error');
+  } finally {
+    setAiSaving(false);
+  }
 }
 
 function loadPermissions() {
@@ -1405,67 +1432,9 @@ function savePermission(key, value) {
   } catch (_) {}
 }
 
-function loadAIKeys() {
-  try {
-    const stored = JSON.parse(localStorage.getItem(AI_KEY) || '{}');
-    const openai = document.getElementById('openai-api-key');
-    const gemini = document.getElementById('gemini-api-key');
-    const claude = document.getElementById('claude-api-key');
-    const provider = document.getElementById('ai-provider-select');
-    const mode = document.querySelector(`input[name="ai-mode"][value="${stored.mode || 'local'}"]`);
-    if (openai && stored.openai_api_key) openai.value = stored.openai_api_key;
-    if (gemini && stored.gemini_api_key) gemini.value = stored.gemini_api_key;
-    if (claude && stored.claude_api_key) claude.value = stored.claude_api_key;
-    if (provider && stored.provider) provider.value = stored.provider;
-    if (mode) mode.checked = true;
-  } catch (_) {}
-}
-
-function saveAIKeys() {
-  const openai = document.getElementById('openai-api-key');
-  const gemini = document.getElementById('gemini-api-key');
-  const claude = document.getElementById('claude-api-key');
-  const provider = document.getElementById('ai-provider-select');
-  const mode = document.querySelector('input[name="ai-mode"]:checked');
-  const payload = {
-    mode: mode ? mode.value : 'local',
-    provider: provider ? provider.value : 'local',
-    openai_api_key: openai ? openai.value.trim() : '',
-    gemini_api_key: gemini ? gemini.value.trim() : '',
-    claude_api_key: claude ? claude.value.trim() : '',
-  };
-  localStorage.setItem(AI_KEY, JSON.stringify(payload));
-  if (window.showToast) {
-    window.showToast('Đã lưu cấu hình AI provider.');
-  }
-}
-
-function clearAIKeys() {
-  localStorage.removeItem(AI_KEY);
-  const openai = document.getElementById('openai-api-key');
-  const gemini = document.getElementById('gemini-api-key');
-  const claude = document.getElementById('claude-api-key');
-  const provider = document.getElementById('ai-provider-select');
-  const localMode = document.querySelector('input[name="ai-mode"][value="local"]');
-  if (openai) openai.value = '';
-  if (gemini) gemini.value = '';
-  if (claude) claude.value = '';
-  if (provider) provider.value = 'local';
-  if (localMode) localMode.checked = true;
-  if (window.showToast) {
-    window.showToast('Đã xóa key khỏi trình duyệt.');
-  }
-}
-
-function toggleSecret(id) {
-  const input = document.getElementById(id);
-  if (!input) return;
-  input.type = input.type === 'password' ? 'text' : 'password';
-}
 
 function toggleAutoSync(val) {
   localStorage.setItem('settings_auto_sync', val ? 'true' : 'false');
-  console.log('Auto sync updated:', val);
 }
 
 function selectDashboardTheme(theme) {
@@ -1500,7 +1469,6 @@ document.addEventListener('DOMContentLoaded', () => {
   markActiveTheme(localStorage.getItem('ga_theme') || 'system');
   loadPermissions();
   loadAiSettings();
-  loadAIKeys();
 });
 
 function toggleSelectedBranches(select) {
