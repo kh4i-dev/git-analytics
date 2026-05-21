@@ -7,37 +7,318 @@
   <!-- Page Header -->
   <div class="dh-header" style="margin-bottom: 24px;">
     <h1 style="font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px;">Cài Đặt Hệ Thống</h1>
-    <p style="font-size: 14px; color: var(--text-muted);">Tùy chỉnh hành vi đồng bộ hóa dữ liệu, giao diện người dùng và xem thông số môi trường.</p>
+    <p style="font-size: 14px; color: var(--text-muted);">Cấu hình sync, branch scope và trải nghiệm làm việc.</p>
   </div>
 
   <!-- Settings Sections -->
   <div style="display: flex; flex-direction: column; gap: 24px; margin-bottom: 32px;">
-    <!-- Theme & UI Settings -->
-    <div class="card">
-      <h3 style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 10 10 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-        Giao Diện & Chủ Đề
-      </h3>
-      <div style="display: flex; flex-direction: column; gap: 16px;">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div style="font-weight: 500; color: var(--text);">Chế độ Dark Mode (SaaS Premium)</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Sử dụng bảng màu tối tối ưu hóa cho màn hình OLED/kỹ sư phần mềm.</div>
-          </div>
-          <div class="setting-toggle">
-            <span class="badge badge-open">Kích hoạt</span>
-          </div>
+
+    <!-- ── AI Settings ──────────────────────────────────────── -->
+    <div class="card ai-settings-card" id="ai-settings">
+      <div class="settings-section-head" style="margin-bottom: 20px;">
+        <div>
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purple)"><path d="M12 2a8 8 0 0 1 8 8 4 4 0 0 1-4 4H4a4 4 0 0 1-4-4 8 8 0 0 1 8-8z"/><path d="M9 22h6"/><path d="M12 19v3"/></svg>
+            AI Settings
+          </h3>
+          <p>Cấu hình nguồn AI, provider và API key cho Git Analytics AI Tools.</p>
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-sub); padding-top: 16px;">
-          <div>
-            <div style="font-weight: 500; color: var(--text);">Mật độ hiển thị thông tin (Dashboard Density)</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Tự động co giãn bố cục để tối đa hóa lượng dữ liệu biểu đồ hiển thị.</div>
+        <div class="ai-badge-row">
+          <span class="ai-mode-badge" id="ai-badge-local">Local Workspace</span>
+          <span class="ai-mode-badge ai-badge-byok" id="ai-badge-byok" style="display:none;">BYOK Supported</span>
+          <span class="ai-mode-badge ai-badge-cloud" id="ai-badge-cloud" style="display:none;">Cloud AI Preview</span>
+        </div>
+      </div>
+
+      <!-- AI Mode -->
+      <div class="ai-block">
+        <div class="ai-block-label">AI Mode</div>
+        <div class="ai-mode-grid" id="ai-mode-grid">
+
+          <label class="ai-mode-card" id="mode-local">
+            <input type="radio" name="ai_mode" value="local" onchange="onModeChange('local')">
+            <div class="ai-mode-card-body">
+              <span class="ai-mode-icon" style="color:#58a6ff;background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.22);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+              </span>
+              <div>
+                <div class="ai-mode-name">Local Workspace</div>
+                <div class="ai-mode-desc">Chạy offline với source code context. Không cần API key.</div>
+              </div>
+              <span class="ai-mode-check">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>
+              </span>
+            </div>
+          </label>
+
+          <label class="ai-mode-card" id="mode-byok">
+            <input type="radio" name="ai_mode" value="byok" onchange="onModeChange('byok')">
+            <div class="ai-mode-card-body">
+              <span class="ai-mode-icon" style="color:#a371f7;background:rgba(163,113,247,.1);border-color:rgba(163,113,247,.22);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+              </span>
+              <div>
+                <div class="ai-mode-name">Use my API key <span style="font-size:10px;padding:1px 6px;border-radius:999px;background:rgba(163,113,247,.15);color:#a371f7;font-weight:800;letter-spacing:.04em;">BYOK</span></div>
+                <div class="ai-mode-desc">Dùng API key của bạn với OpenAI, Gemini hoặc Claude.</div>
+              </div>
+              <span class="ai-mode-check">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>
+              </span>
+            </div>
+          </label>
+
+          <label class="ai-mode-card" id="mode-cloud">
+            <input type="radio" name="ai_mode" value="cloud" onchange="onModeChange('cloud')">
+            <div class="ai-mode-card-body">
+              <span class="ai-mode-icon" style="color:#3fb950;background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.22);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+              </span>
+              <div>
+                <div class="ai-mode-name">Git Analytics Cloud AI <span style="font-size:10px;padding:1px 6px;border-radius:999px;background:rgba(63,185,80,.12);color:#3fb950;font-weight:800;letter-spacing:.04em;">Preview</span></div>
+                <div class="ai-mode-desc">Dùng hạ tầng AI của Git Analytics. Không cần cấu hình.</div>
+              </div>
+              <span class="ai-mode-check">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg>
+              </span>
+            </div>
+          </label>
+
+        </div>
+      </div>
+
+      <!-- Provider (shown only for BYOK) -->
+      <div class="ai-block" id="ai-provider-block" style="display:none;">
+        <div class="ai-block-label">Provider</div>
+        <div class="ai-provider-row">
+          <label class="ai-provider-chip active" data-provider="local_fallback">
+            <input type="radio" name="ai_provider" value="local_fallback" onchange="onProviderChange('local_fallback')" checked>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+            Local fallback
+          </label>
+          <label class="ai-provider-chip" data-provider="openai">
+            <input type="radio" name="ai_provider" value="openai" onchange="onProviderChange('openai')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            OpenAI
+          </label>
+          <label class="ai-provider-chip" data-provider="gemini">
+            <input type="radio" name="ai_provider" value="gemini" onchange="onProviderChange('gemini')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Gemini
+          </label>
+          <label class="ai-provider-chip" data-provider="claude">
+            <input type="radio" name="ai_provider" value="claude" onchange="onProviderChange('claude')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></svg>
+            Claude
+          </label>
+        </div>
+      </div>
+
+      <!-- API Key (shown for BYOK, hidden for local/cloud) -->
+      <div class="ai-block" id="ai-key-block" style="display:none;">
+        <div class="ai-block-label" id="ai-key-label">API Key</div>
+        <div class="ai-key-row">
+          <input type="password" id="ai-api-key-input" class="ai-key-input" placeholder="sk-..." autocomplete="off" oninput="saveAiSetting('api_key', this.value)">
+          <button type="button" class="ai-key-toggle" onclick="toggleKeyVisibility()" title="Hiện/ẩn key">
+            <svg id="eye-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="ai-key-hint" id="ai-key-hint">Key được lưu cục bộ trong trình duyệt, không gửi lên server.</div>
+      </div>
+
+      <!-- Cloud limits (shown for cloud mode) -->
+      <div class="ai-block" id="ai-cloud-block" style="display:none;">
+        <div class="ai-block-label">Cloud limits preview</div>
+        <div class="ai-tier-grid">
+          <div class="ai-tier-card ai-tier-free">
+            <div class="ai-tier-name">Free Plan</div>
+            <div class="ai-tier-limit">20 AI requests/day</div>
+            <ul class="ai-tier-list">
+              <li>Commit message suggest</li>
+              <li>PR diff review</li>
+              <li>Repo assistant</li>
+            </ul>
           </div>
-          <div class="setting-toggle">
-            <span class="badge badge-open">Cao (High)</span>
+          <div class="ai-tier-card ai-tier-pro">
+            <div class="ai-tier-badge">PRO</div>
+            <div class="ai-tier-name">Pro</div>
+            <div class="ai-tier-limit">Unlimited</div>
+            <ul class="ai-tier-list">
+              <li>Multi-repo context</li>
+              <li>Deep PR review</li>
+              <li>Team insights AI</li>
+              <li>Priority inference</li>
+            </ul>
           </div>
         </div>
       </div>
+
+    </div>
+
+    <!-- Theme & UI Settings -->
+    <div class="card">
+      <div class="settings-section-head">
+        <div>
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 10 10 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+            Theme Dashboard
+          </h3>
+          <p>Bảng màu giao diện cho không gian làm việc tối ưu cho lập trình viên.</p>
+        </div>
+        <span class="badge badge-label" id="active-theme-label">Theme hiện tại</span>
+      </div>
+
+      <div class="theme-grid" id="theme-grid">
+        <button type="button" class="theme-card" data-theme-option="github-dark" onclick="selectDashboardTheme('github-dark')">
+          <span class="theme-active">Theme hiện tại</span>
+          <span class="theme-preview github-dark-preview"><i></i><i></i><i></i></span>
+          <strong>GitHub Dark</strong>
+          <small>Neutral, ít bão hòa, quen thuộc với workflow GitHub.</small>
+        </button>
+        <button type="button" class="theme-card" data-theme-option="vercel-midnight" onclick="selectDashboardTheme('vercel-midnight')">
+          <span class="theme-active">Theme hiện tại</span>
+          <span class="theme-preview vercel-midnight-preview"><i></i><i></i><i></i></span>
+          <strong>Vercel Midnight</strong>
+          <small>Nền đen sâu, tương phản rõ, cảm giác SaaS cao cấp.</small>
+        </button>
+        <button type="button" class="theme-card" data-theme-option="linear-graphite" onclick="selectDashboardTheme('linear-graphite')">
+          <span class="theme-active">Theme hiện tại</span>
+          <span class="theme-preview linear-graphite-preview"><i></i><i></i><i></i></span>
+          <strong>Linear Graphite</strong>
+          <small>Graphite sạch, khoảng cách thoáng, tập trung vào dữ liệu.</small>
+        </button>
+        <button type="button" class="theme-card" data-theme-option="nord-night" onclick="selectDashboardTheme('nord-night')">
+          <span class="theme-active">Theme hiện tại</span>
+          <span class="theme-preview nord-night-preview"><i></i><i></i><i></i></span>
+          <strong>Nord Night</strong>
+          <small>Blue-gray dịu mắt cho phiên làm việc dài.</small>
+        </button>
+        <button type="button" class="theme-card" data-theme-option="tokyo-night" onclick="selectDashboardTheme('tokyo-night')">
+          <span class="theme-active">Theme hiện tại</span>
+          <span class="theme-preview tokyo-night-preview"><i></i><i></i><i></i></span>
+          <strong>Tokyo Night</strong>
+          <small>Developer aesthetic với accent tinh tế.</small>
+        </button>
+        <button type="button" class="theme-card" data-theme-option="system" onclick="selectDashboardTheme('system')">
+          <span class="theme-active">Theme hiện tại</span>
+          <span class="theme-preview system-preview"><i></i><i></i><i></i></span>
+          <strong>System Default</strong>
+          <small>Đồng bộ giao diện hệ thống.</small>
+        </button>
+      </div>
+    </div>
+
+    <!-- AI Settings -->
+    <div class="card" id="ai-provider-keys">
+      <div class="settings-section-head">
+        <div>
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+            AI Settings
+          </h3>
+          <p>Chọn cách chạy AI cho commit, PR review và repo assistant.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+          <span class="badge badge-label">Local Workspace</span>
+          <span class="badge badge-label">BYOK Supported</span>
+          <span class="badge badge-label">Cloud AI Preview</span>
+        </div>
+      </div>
+
+      <div class="ai-mode-grid">
+        <label class="ai-mode-card">
+          <input type="radio" name="ai-mode" value="local" checked>
+          <span>
+            <strong>Local Workspace</strong>
+            <small>Dùng local git diff/source context. Không gọi provider cloud nếu chưa cấu hình.</small>
+          </span>
+        </label>
+        <label class="ai-mode-card">
+          <input type="radio" name="ai-mode" value="byok">
+          <span>
+            <strong>Use my API key</strong>
+            <small>BYOK: user tự dùng key OpenAI, Gemini hoặc Claude.</small>
+          </span>
+        </label>
+        <label class="ai-mode-card">
+          <input type="radio" name="ai-mode" value="cloud">
+          <span>
+            <strong>Git Analytics Cloud AI</strong>
+            <small>Preview mode. Kiến trúc SaaS-ready, chưa bật production billing.</small>
+          </span>
+        </label>
+      </div>
+
+      <div class="ai-cloud-limits">
+        <div>
+          <strong>Free Plan</strong>
+          <span>20 AI requests/day</span>
+        </div>
+        <div>
+          <strong>Pro</strong>
+          <span>Unlimited · Multi-repo context · Deep PR review</span>
+        </div>
+      </div>
+
+      <div class="ai-key-grid">
+        <div class="ai-key-card">
+          <div class="ai-key-card-head">
+            <div>
+              <strong>OpenAI</strong>
+              <span>Commit message, PR review và repo assistant.</span>
+            </div>
+            <span class="provider-pill">GPT</span>
+          </div>
+          <div class="secret-input-row">
+            <input id="openai-api-key" type="password" class="secret-input" placeholder="sk-..." autocomplete="off">
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSecret('openai-api-key')">Hiện</button>
+          </div>
+        </div>
+
+        <div class="ai-key-card">
+          <div class="ai-key-card-head">
+            <div>
+              <strong>Gemini</strong>
+              <span>Provider thay thế cho workflow phân tích code.</span>
+            </div>
+            <span class="provider-pill">Gemini</span>
+          </div>
+          <div class="secret-input-row">
+            <input id="gemini-api-key" type="password" class="secret-input" placeholder="AIza..." autocomplete="off">
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSecret('gemini-api-key')">Hiện</button>
+          </div>
+        </div>
+
+        <div class="ai-key-card">
+          <div class="ai-key-card-head">
+            <div>
+              <strong>Claude</strong>
+              <span>Dùng Claude API cho review sâu và repo assistant.</span>
+            </div>
+            <span class="provider-pill">Claude</span>
+          </div>
+          <div class="secret-input-row">
+            <input id="claude-api-key" type="password" class="secret-input" placeholder="sk-ant-..." autocomplete="off">
+            <button type="button" class="btn btn-outline btn-sm" onclick="toggleSecret('claude-api-key')">Hiện</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-provider-footer">
+        <label>
+          Provider mặc định
+          <select id="ai-provider-select" class="branch-select">
+            <option value="local">Local fallback</option>
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Gemini</option>
+            <option value="claude">Claude</option>
+          </select>
+        </label>
+        <div class="ai-key-actions">
+          <button type="button" class="btn btn-outline btn-sm" onclick="clearAIKeys()">Xóa key</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveAIKeys()">Lưu cấu hình</button>
+        </div>
+      </div>
+      <p class="settings-note">Production không đọc file local hoặc chạy shell command. AI local chỉ bật khi <code>APP_ENV=development</code> và <code>WORKSPACE_FEATURE_ENABLED=true</code>.</p>
     </div>
 
     <!-- Sync Strategy Settings -->
@@ -50,8 +331,8 @@
         <!-- Auto sync -->
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <div>
-            <div style="font-weight: 500; color: var(--text);">Tự động chạy Sync nền</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Kích hoạt tiến trình quét ngầm định kỳ hàng giờ để lấy commits/PRs mới nhất.</div>
+            <div style="font-weight: 500; color: var(--text);">Sync nền</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Tự làm mới hoạt động GitHub theo lịch.</div>
           </div>
           <div>
             <label class="switch-toggle">
@@ -64,8 +345,8 @@
         <!-- Mode -->
         <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-sub); padding-top: 16px;">
           <div>
-            <div style="font-weight: 500; color: var(--text);">Chế độ nạp dữ liệu</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Incremental chỉ nạp dữ liệu từ sau mốc thời gian sync gần nhất để tiết kiệm Rate Limit.</div>
+            <div style="font-weight: 500; color: var(--text);">Chiến lược sync</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Chỉ lấy phần mới để giảm tải GitHub API.</div>
           </div>
           <div>
             <select id="sync-mode-select" class="form-select" style="background: var(--surface-2); border: 1px solid var(--border); color: var(--text); padding: 4px 8px; border-radius: var(--radius); font-size: 13px;">
@@ -78,10 +359,10 @@
     </div>
 
     <!-- Repository Branch Settings -->
-    <div class="card">
+    <div class="card" id="repo-branches">
       <h3 style="font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="6" x2="6" y1="3" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
-        Branch Analytics
+        Phạm Vi Branch
       </h3>
       <div style="display:flex; flex-direction:column; gap:14px;">
         {% for repo_item in repos %}
@@ -91,9 +372,9 @@
             <div class="branch-settings-meta">Default: <code>{{ repo_item.default_branch or "main" }}</code></div>
           </div>
           <select name="branch_sync_mode" class="branch-select" onchange="toggleSelectedBranches(this)">
-            <option value="default_only" {% if repo_item.branch_sync_mode == "default_only" %}selected{% endif %}>Sync default branch only</option>
-            <option value="selected" {% if repo_item.branch_sync_mode == "selected" %}selected{% endif %}>Sync selected branches</option>
-            <option value="all" {% if repo_item.branch_sync_mode == "all" %}selected{% endif %}>Sync all branches</option>
+            <option value="default_only" {% if repo_item.branch_sync_mode == "default_only" %}selected{% endif %}>Chỉ nhánh mặc định</option>
+            <option value="selected" {% if repo_item.branch_sync_mode == "selected" %}selected{% endif %}>Branch được chọn</option>
+            <option value="all" {% if repo_item.branch_sync_mode == "all" %}selected{% endif %}>Tất cả branch</option>
           </select>
           <input
             name="selected_branches"
@@ -106,8 +387,8 @@
         </form>
         {% else %}
         <div class="empty-state">
-          <h3>No repositories imported</h3>
-          <p>Import repositories before configuring branch sync.</p>
+          <h3>Chưa có repository</h3>
+        <p>Kết nối repository để cấu hình branch scope.</p>
         </div>
         {% endfor %}
       </div>
@@ -139,10 +420,399 @@
         </div>
       </div>
     </div>
+
+    <!-- Local Dev Permissions -->
+    <div class="card" id="local-dev-permissions">
+      <div class="settings-section-head" style="margin-bottom: 20px;">
+        <div>
+          <h3>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted)"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Local Dev Permissions
+          </h3>
+          <p>Kiểm soát quyền truy cập hệ thống. Chỉ bật khi cần thiết cho local workflow.</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+          <span class="perm-env-dot {% if is_local_dev %}dot-dev{% else %}dot-prod{% endif %}"></span>
+          <span class="badge badge-label {% if is_local_dev %}perm-badge-dev{% else %}perm-badge-prod{% endif %}">
+            {% if is_local_dev %}Local Workspace — Active{% else %}Local Workspace — Off{% endif %}
+          </span>
+        </div>
+      </div>
+
+      {% if not is_local_dev %}
+      <div class="perm-lock-banner">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Local Workspace đang tắt. Đặt <code>APP_ENV=development</code> và <code>WORKSPACE_FEATURE_ENABLED=true</code>, sau đó khởi động lại server.</span>
+      </div>
+      {% endif %}
+
+      <div class="perm-grid">
+
+        <div class="perm-card {% if not is_local_dev %}perm-card-locked{% endif %}" data-perm="terminal">
+          <div class="perm-card-accent" style="background: linear-gradient(135deg, #58a6ff, #388bfd);"></div>
+          <div class="perm-card-body">
+            <div class="perm-card-top">
+              <span class="perm-card-icon" style="color:#58a6ff; background:rgba(88,166,255,.1); border-color:rgba(88,166,255,.22);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
+              </span>
+              <label class="switch-toggle {% if not is_local_dev %}perm-locked{% endif %}">
+                <input type="checkbox" id="perm-terminal" onchange="savePermission('terminal', this.checked)" {% if not is_local_dev %}disabled{% endif %}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="perm-card-name">Terminal access</div>
+            <div class="perm-card-desc">Tương tác với terminal shell bên trong workspace.</div>
+            <span class="perm-risk risk-low">Risk: Low</span>
+          </div>
+          {% if not is_local_dev %}<div class="perm-lock-overlay"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>{% endif %}
+        </div>
+
+        <div class="perm-card {% if not is_local_dev %}perm-card-locked{% endif %}" data-perm="execute_command">
+          <div class="perm-card-accent" style="background: linear-gradient(135deg, #d2a8ff, #a371f7);"></div>
+          <div class="perm-card-body">
+            <div class="perm-card-top">
+              <span class="perm-card-icon" style="color:#a371f7; background:rgba(163,113,247,.1); border-color:rgba(163,113,247,.22);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/><path d="m15 6 6 6-6 6" opacity=".35"/></svg>
+              </span>
+              <label class="switch-toggle {% if not is_local_dev %}perm-locked{% endif %}">
+                <input type="checkbox" id="perm-execute-command" onchange="savePermission('execute_command', this.checked)" {% if not is_local_dev %}disabled{% endif %}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="perm-card-name">Execute command</div>
+            <div class="perm-card-desc">Chạy lệnh shell tùy ý từ pipeline nội bộ.</div>
+            <span class="perm-risk risk-medium">Risk: Medium</span>
+          </div>
+          {% if not is_local_dev %}<div class="perm-lock-overlay"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>{% endif %}
+        </div>
+
+        <div class="perm-card {% if not is_local_dev %}perm-card-locked{% endif %}" data-perm="git_push">
+          <div class="perm-card-accent" style="background: linear-gradient(135deg, #7ee787, #3fb950);"></div>
+          <div class="perm-card-body">
+            <div class="perm-card-top">
+              <span class="perm-card-icon" style="color:#3fb950; background:rgba(63,185,80,.1); border-color:rgba(63,185,80,.22);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+              </span>
+              <label class="switch-toggle {% if not is_local_dev %}perm-locked{% endif %}">
+                <input type="checkbox" id="perm-git-push" onchange="savePermission('git_push', this.checked)" {% if not is_local_dev %}disabled{% endif %}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="perm-card-name">Git push</div>
+            <div class="perm-card-desc">Push lên remote repo từ công cụ nội bộ.</div>
+            <span class="perm-risk risk-medium">Risk: Medium</span>
+          </div>
+          {% if not is_local_dev %}<div class="perm-lock-overlay"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>{% endif %}
+        </div>
+
+        <div class="perm-card {% if not is_local_dev %}perm-card-locked{% endif %}" data-perm="local_filesystem">
+          <div class="perm-card-accent" style="background: linear-gradient(135deg, #ffd38a, #d29922);"></div>
+          <div class="perm-card-body">
+            <div class="perm-card-top">
+              <span class="perm-card-icon" style="color:#d29922; background:rgba(210,153,34,.1); border-color:rgba(210,153,34,.22);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+              </span>
+              <label class="switch-toggle {% if not is_local_dev %}perm-locked{% endif %}">
+                <input type="checkbox" id="perm-local-fs" onchange="savePermission('local_filesystem', this.checked)" {% if not is_local_dev %}disabled{% endif %}>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+            <div class="perm-card-name">Local filesystem</div>
+            <div class="perm-card-desc">Đọc/ghi file ngoài thư mục workspace.</div>
+            <span class="perm-risk risk-medium">Risk: Medium</span>
+          </div>
+          {% if not is_local_dev %}<div class="perm-lock-overlay"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>{% endif %}
+        </div>
+
+        <div class="perm-card {% if not is_local_dev %}perm-card-locked{% endif %}" data-perm="subprocess_shell" style="grid-column: span 2;">
+          <div class="perm-card-accent" style="background: linear-gradient(135deg, #ff7b72, #f85149);"></div>
+          <div class="perm-card-body" style="flex-direction: row; align-items: center; gap: 16px; flex-wrap: wrap;">
+            <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:200px;">
+              <span class="perm-card-icon" style="color:#f85149; background:rgba(248,81,73,.1); border-color:rgba(248,81,73,.22);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></svg>
+              </span>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;">
+                  <div class="perm-card-name" style="margin:0;">Subprocess shell</div>
+                  <span class="perm-risk risk-high">Risk: High</span>
+                </div>
+                <div class="perm-card-desc" style="margin:0;">Spawn subprocess với <code style="font-size:11px;padding:1px 4px;border:1px solid var(--border);border-radius:3px;background:var(--surface-2);">shell=True</code>. Cần cho một số tác vụ build/test nội bộ.</div>
+              </div>
+            </div>
+            <label class="switch-toggle {% if not is_local_dev %}perm-locked{% endif %}">
+              <input type="checkbox" id="perm-subprocess" onchange="savePermission('subprocess_shell', this.checked)" {% if not is_local_dev %}disabled{% endif %}>
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+          {% if not is_local_dev %}<div class="perm-lock-overlay"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>{% endif %}
+        </div>
+
+      </div>
+    </div>
   </div>
 </div>
 
 <style>
+  .settings-section-head {
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:16px;
+    margin-bottom:16px;
+  }
+  .settings-section-head h3 {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--text);
+    font-size:15px;
+    font-weight:650;
+    margin:0 0 4px;
+  }
+  .settings-section-head p {
+    color:var(--text-muted);
+    font-size:12px;
+    margin:0;
+  }
+  .theme-grid {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+  }
+  .theme-card {
+    position:relative;
+    min-height:132px;
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    background:var(--surface-2);
+    color:var(--text);
+    cursor:pointer;
+    text-align:left;
+  }
+  .theme-card:hover {
+    border-color:var(--text-link);
+    background:var(--surface-hover);
+  }
+  .theme-card.active {
+    border-color:var(--text-link);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--text-link) 34%, transparent);
+  }
+  .theme-card strong {
+    font-size:13px;
+    font-weight:700;
+  }
+  .theme-card small {
+    color:var(--text-muted);
+    font-size:12px;
+    line-height:1.45;
+  }
+  .theme-active {
+    display:none;
+    position:absolute;
+    top:10px;
+    right:10px;
+    padding:2px 7px;
+    border:1px solid var(--info-border);
+    border-radius:999px;
+    background:var(--info-bg);
+    color:var(--info-text);
+    font-size:10px;
+    font-weight:700;
+  }
+  .theme-card.active .theme-active { display:inline-flex; }
+  .theme-preview {
+    width:100%;
+    height:38px;
+    display:grid;
+    grid-template-columns:1.3fr 1fr .7fr;
+    gap:5px;
+    padding:5px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:7px;
+  }
+  .theme-preview i { display:block; border-radius:4px; }
+  .github-dark-preview { background:#0d1117; }
+  .github-dark-preview i:nth-child(1) { background:#161b22; }
+  .github-dark-preview i:nth-child(2) { background:#30363d; }
+  .github-dark-preview i:nth-child(3) { background:#58a6ff; }
+  .vercel-midnight-preview { background:#050505; }
+  .vercel-midnight-preview i:nth-child(1) { background:#111; }
+  .vercel-midnight-preview i:nth-child(2) { background:#2a2a2a; }
+  .vercel-midnight-preview i:nth-child(3) { background:#ededed; }
+  .linear-graphite-preview { background:#101112; }
+  .linear-graphite-preview i:nth-child(1) { background:#1b1c1e; }
+  .linear-graphite-preview i:nth-child(2) { background:#313236; }
+  .linear-graphite-preview i:nth-child(3) { background:#5e6ad2; }
+  .nord-night-preview { background:#242933; }
+  .nord-night-preview i:nth-child(1) { background:#2e3440; }
+  .nord-night-preview i:nth-child(2) { background:#4c566a; }
+  .nord-night-preview i:nth-child(3) { background:#88c0d0; }
+  .tokyo-night-preview { background:#16161e; }
+  .tokyo-night-preview i:nth-child(1) { background:#1a1b26; }
+  .tokyo-night-preview i:nth-child(2) { background:#353b55; }
+  .tokyo-night-preview i:nth-child(3) { background:#7aa2f7; }
+  .system-preview { background:linear-gradient(90deg, #0d1117, #2e3440); }
+  .system-preview i:nth-child(1) { background:#161b22; }
+  .system-preview i:nth-child(2) { background:#4c566a; }
+  .system-preview i:nth-child(3) { background:#81a1c1; }
+  .ai-mode-grid {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .ai-mode-card {
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    min-height:116px;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    background:var(--surface-2);
+    cursor:pointer;
+    transition:border-color .16s, background .16s, transform .16s;
+  }
+  .ai-mode-card:hover {
+    border-color:var(--text-link);
+    background:var(--surface-hover);
+    transform:translateY(-1px);
+  }
+  .ai-mode-card input {
+    margin-top:3px;
+    accent-color:var(--text-link);
+  }
+  .ai-mode-card strong {
+    display:block;
+    color:var(--text);
+    font-size:13px;
+    margin-bottom:5px;
+  }
+  .ai-mode-card small {
+    display:block;
+    color:var(--text-muted);
+    font-size:12px;
+    line-height:1.45;
+  }
+  .ai-cloud-limits {
+    display:grid;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    margin-bottom:14px;
+  }
+  .ai-cloud-limits div {
+    padding:10px 12px;
+    border:1px solid var(--border-sub);
+    border-radius:var(--radius);
+    background:rgba(88,166,255,.05);
+  }
+  .ai-cloud-limits strong {
+    display:block;
+    color:var(--text);
+    font-size:12px;
+    margin-bottom:4px;
+  }
+  .ai-cloud-limits span {
+    color:var(--text-muted);
+    font-size:12px;
+  }
+  .ai-key-grid {
+    display:grid;
+    grid-template-columns:repeat(3, minmax(0, 1fr));
+    gap:12px;
+  }
+  .ai-key-card {
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    background:var(--surface-2);
+    padding:12px;
+  }
+  .ai-key-card-head {
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .ai-key-card-head strong {
+    display:block;
+    color:var(--text);
+    font-size:13px;
+    margin-bottom:3px;
+  }
+  .ai-key-card-head span {
+    color:var(--text-muted);
+    font-size:12px;
+    line-height:1.45;
+  }
+  .provider-pill {
+    flex-shrink:0;
+    padding:3px 8px;
+    border:1px solid var(--info-border);
+    border-radius:999px;
+    background:var(--info-bg);
+    color:var(--info-text) !important;
+    font-size:10px !important;
+    font-weight:800;
+  }
+  .secret-input-row {
+    display:flex;
+    gap:8px;
+  }
+  .secret-input {
+    width:100%;
+    min-height:32px;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    background:var(--surface);
+    color:var(--text);
+    font:13px "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    padding:6px 9px;
+    outline:0;
+  }
+  .secret-input:focus {
+    border-color:var(--text-link);
+  }
+  .ai-provider-footer {
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--border-sub);
+  }
+  .ai-provider-footer label {
+    display:grid;
+    gap:6px;
+    color:var(--text-muted);
+    font-size:12px;
+    font-weight:650;
+  }
+  .ai-key-actions {
+    display:flex;
+    justify-content:flex-end;
+    gap:8px;
+  }
+  .settings-note {
+    margin:12px 0 0;
+    color:var(--text-muted);
+    font-size:12px;
+    line-height:1.55;
+  }
+  .settings-note code {
+    padding:1px 5px;
+    border:1px solid var(--border);
+    border-radius:4px;
+    background:var(--surface-2);
+    color:var(--text);
+    font-size:11px;
+  }
   /* Toggle Switch */
   .switch-toggle {
     position: relative;
@@ -229,6 +899,21 @@
     opacity: .45;
   }
   @media (max-width: 860px) {
+    .theme-grid,
+    .ai-mode-grid,
+    .ai-cloud-limits,
+    .ai-key-grid { grid-template-columns:1fr; }
+    .settings-section-head { flex-direction:column; }
+    .ai-provider-footer {
+      align-items:stretch;
+      flex-direction:column;
+    }
+    .ai-key-actions {
+      justify-content:stretch;
+    }
+    .ai-key-actions .btn {
+      flex:1;
+    }
     .branch-settings-row {
       grid-template-columns: 1fr;
     }
@@ -237,11 +922,574 @@
 {% endblock %}
 
 {% block page_scripts %}
+<style>
+  /* ── AI Settings ─────────────────────────────────────────── */
+  .ai-block { margin-bottom: 18px; }
+  .ai-block:last-child { margin-bottom: 0; }
+  .ai-block-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  /* Mode grid */
+  .ai-mode-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 10px;
+  }
+  .ai-mode-card {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    cursor: pointer;
+    transition: border-color .16s, background .16s, transform .14s, box-shadow .16s;
+    overflow: hidden;
+  }
+  .ai-mode-card:hover {
+    border-color: var(--text-link);
+    background: var(--surface-hover);
+    transform: translateY(-1px);
+  }
+  .ai-mode-card.selected {
+    border-color: var(--text-link);
+    background: rgba(88,166,255,.06);
+    box-shadow: inset 0 0 0 1px rgba(88,166,255,.28), 0 4px 18px rgba(0,0,0,.14);
+  }
+  .ai-mode-card input[type=radio] { display: none; }
+  .ai-mode-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    height: 100%;
+  }
+  .ai-mode-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid;
+    border-radius: 9px;
+    flex-shrink: 0;
+  }
+  .ai-mode-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .ai-mode-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.45;
+    flex: 1;
+  }
+  .ai-mode-check {
+    display: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--text-link);
+    place-items: center;
+    color: #fff;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+  .ai-mode-card.selected .ai-mode-check { display: grid; }
+
+  /* Badge row */
+  .ai-badge-row { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; }
+  .ai-mode-badge {
+    padding: 4px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+  .ai-badge-byok {
+    color: #a371f7;
+    border-color: rgba(163,113,247,.35);
+    background: rgba(163,113,247,.08);
+  }
+  .ai-badge-cloud {
+    color: #3fb950;
+    border-color: rgba(63,185,80,.35);
+    background: rgba(63,185,80,.08);
+  }
+
+  /* Provider chips */
+  .ai-provider-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ai-provider-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: border-color .14s, background .14s, color .14s;
+  }
+  .ai-provider-chip:hover { border-color: var(--text-link); color: var(--text); }
+  .ai-provider-chip.active {
+    border-color: var(--text-link);
+    background: rgba(88,166,255,.1);
+    color: var(--text-link);
+  }
+  .ai-provider-chip input[type=radio] { display: none; }
+
+  /* API Key input */
+  .ai-key-row { display: flex; gap: 8px; }
+  .ai-key-input {
+    flex: 1;
+    min-height: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    color: var(--text);
+    font: 13px "SFMono-Regular", Consolas, monospace;
+    padding: 7px 10px;
+    outline: 0;
+    transition: border-color .14s;
+  }
+  .ai-key-input:focus { border-color: var(--text-link); }
+  .ai-key-toggle {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: border-color .14s, color .14s;
+  }
+  .ai-key-toggle:hover { border-color: var(--text-link); color: var(--text-link); }
+  .ai-key-hint {
+    margin-top: 7px;
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* Tier grid */
+  .ai-tier-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+  .ai-tier-card {
+    position: relative;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+  }
+  .ai-tier-free { border-color: var(--border); }
+  .ai-tier-pro {
+    border-color: rgba(163,113,247,.36);
+    background: rgba(163,113,247,.06);
+  }
+  .ai-tier-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #a371f7, #7c3aed);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: .06em;
+    margin-bottom: 6px;
+  }
+  .ai-tier-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .ai-tier-limit { font-size: 22px; font-weight: 800; color: var(--text); margin-bottom: 12px; line-height: 1.1; }
+  .ai-tier-free .ai-tier-limit { color: var(--text-muted); font-size: 16px; }
+  .ai-tier-list { padding: 0; margin: 0; list-style: none; display: grid; gap: 6px; }
+  .ai-tier-list li {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .ai-tier-list li::before {
+    content: "";
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .ai-tier-pro .ai-tier-list li::before { background: #a371f7; }
+  .ai-tier-pro .ai-tier-list li { color: var(--text); }
+
+  @media (max-width: 640px) {
+    .ai-mode-grid, .ai-tier-grid { grid-template-columns: 1fr; }
+    .ai-provider-row { flex-direction: column; }
+  }
+
+  /* ── Permission badge & env dot ─────────────────────────── */
+
+  .perm-badge-dev {
+    color: var(--success-text);
+    border-color: var(--success-border);
+    background: var(--success-bg);
+  }
+  .perm-badge-prod {
+    color: var(--warn-text);
+    border-color: var(--warn-border);
+    background: var(--warn-bg);
+  }
+  .perm-env-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-dev {
+    background: var(--success-text);
+    box-shadow: 0 0 0 3px rgba(63,185,80,.18);
+    animation: perm-pulse 2s ease-in-out infinite;
+  }
+  .dot-prod {
+    background: var(--warn-text);
+  }
+  @keyframes perm-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(63,185,80,.18); }
+    50%       { box-shadow: 0 0 0 5px rgba(63,185,80,.08); }
+  }
+
+  /* ── Lock banner ────────────────────────────────────────── */
+  .perm-lock-banner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    border: 1px solid var(--warn-border);
+    border-radius: var(--radius);
+    background: var(--warn-bg);
+    color: var(--warn-text);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .perm-lock-banner code {
+    padding: 1px 5px;
+    border: 1px solid var(--warn-border);
+    border-radius: 4px;
+    background: rgba(0,0,0,.2);
+    font-size: 11px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+
+  /* ── Permission grid ────────────────────────────────────── */
+  .perm-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .perm-card {
+    position: relative;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-2);
+    overflow: hidden;
+    transition: border-color .18s, box-shadow .18s, transform .18s;
+  }
+  .perm-card:not(.perm-card-locked):hover {
+    border-color: rgba(88,166,255,.4);
+    box-shadow: 0 4px 20px rgba(0,0,0,.18);
+    transform: translateY(-1px);
+  }
+  .perm-card-locked {
+    opacity: .6;
+  }
+  .perm-card-accent {
+    height: 3px;
+    width: 100%;
+  }
+  .perm-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 14px 12px;
+  }
+  .perm-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2px;
+  }
+  .perm-card-icon {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border: 1px solid;
+    border-radius: 9px;
+    flex-shrink: 0;
+  }
+  .perm-card-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 2px;
+  }
+  .perm-card-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.45;
+    margin-bottom: 4px;
+  }
+
+  /* ── Risk badges ────────────────────────────────────────── */
+  .perm-risk {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .04em;
+    align-self: flex-start;
+  }
+  .risk-low    { background: rgba(63,185,80,.1);   border: 1px solid rgba(63,185,80,.28);   color: #3fb950; }
+  .risk-medium { background: rgba(210,153,34,.1);  border: 1px solid rgba(210,153,34,.28);  color: #d29922; }
+  .risk-high   { background: rgba(248,81,73,.1);   border: 1px solid rgba(248,81,73,.28);   color: #f85149; }
+
+  /* ── Lock overlay ───────────────────────────────────────── */
+  .perm-lock-overlay {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text-muted);
+  }
+
+  /* ── Locked toggle ──────────────────────────────────────── */
+  .switch-toggle.perm-locked {
+    opacity: .38;
+    cursor: not-allowed;
+  }
+
+  @media (max-width: 640px) {
+    .perm-grid { grid-template-columns: 1fr; }
+    .perm-card[style*="span 2"] { grid-column: span 1 !important; }
+  }
+</style>
 <script>
+const IS_LOCAL_DEV = {{ 'true' if is_local_dev else 'false' }};
+const PERM_KEY = 'ga_permissions';
+const AI_SETTINGS_KEY = 'ga_ai_settings';
+
+/* ── AI Settings ─────────────────────────────────────────── */
+const AI_PROVIDER_LABELS = {
+  local_fallback: 'Local fallback',
+  openai: 'OpenAI API Key',
+  gemini: 'Gemini API Key',
+  claude: 'Claude API Key',
+};
+
+function onModeChange(mode) {
+  saveAiSetting('mode', mode);
+  document.querySelectorAll('.ai-mode-card').forEach(c => c.classList.remove('selected'));
+  const card = document.getElementById('mode-' + mode);
+  if (card) card.classList.add('selected');
+  document.getElementById('ai-provider-block').style.display = mode === 'byok' ? '' : 'none';
+  document.getElementById('ai-key-block').style.display = mode === 'byok' ? '' : 'none';
+  document.getElementById('ai-cloud-block').style.display = mode === 'cloud' ? '' : 'none';
+  document.getElementById('ai-badge-local').style.display = mode === 'local' ? '' : 'none';
+  document.getElementById('ai-badge-byok').style.display = mode === 'byok' ? '' : 'none';
+  document.getElementById('ai-badge-cloud').style.display = mode === 'cloud' ? '' : 'none';
+}
+
+function onProviderChange(provider) {
+  saveAiSetting('provider', provider);
+  document.querySelectorAll('.ai-provider-chip').forEach(c => c.classList.remove('active'));
+  const chip = document.querySelector(`.ai-provider-chip[data-provider="${provider}"]`);
+  if (chip) chip.classList.add('active');
+  const labelEl = document.getElementById('ai-key-label');
+  if (labelEl) labelEl.textContent = AI_PROVIDER_LABELS[provider] || 'API Key';
+  const inputEl = document.getElementById('ai-api-key-input');
+  if (inputEl) {
+    if (provider === 'local_fallback') {
+      document.getElementById('ai-key-block').style.display = 'none';
+    } else {
+      document.getElementById('ai-key-block').style.display = '';
+      inputEl.placeholder = provider === 'openai' ? 'sk-...' : provider === 'gemini' ? 'AIza...' : 'sk-ant-...';
+    }
+  }
+}
+
+function saveAiSetting(key, value) {
+  try {
+    const stored = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || '{}');
+    stored[key] = value;
+    localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(stored));
+  } catch (_) {}
+}
+
+function toggleKeyVisibility() {
+  const input = document.getElementById('ai-api-key-input');
+  const icon = document.getElementById('eye-icon');
+  if (!input) return;
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" x2="23" y1="1" y2="23"/>';
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+function loadAiSettings() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || '{}');
+    const mode = stored.mode || 'local';
+    const provider = stored.provider || 'local_fallback';
+    // Apply mode
+    const modeRadio = document.querySelector(`input[name="ai_mode"][value="${mode}"]`);
+    if (modeRadio) modeRadio.checked = true;
+    onModeChange(mode);
+    // Apply provider
+    const provRadio = document.querySelector(`input[name="ai_provider"][value="${provider}"]`);
+    if (provRadio) provRadio.checked = true;
+    onProviderChange(provider);
+    // Restore key
+    const keyInput = document.getElementById('ai-api-key-input');
+    if (keyInput && stored.api_key) keyInput.value = stored.api_key;
+  } catch (_) {}
+}
+
+function loadPermissions() {
+  if (!IS_LOCAL_DEV) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem(PERM_KEY) || '{}');
+    const map = {
+      terminal: 'perm-terminal',
+      execute_command: 'perm-execute-command',
+      git_push: 'perm-git-push',
+      local_filesystem: 'perm-local-fs',
+      subprocess_shell: 'perm-subprocess',
+    };
+    for (const [key, id] of Object.entries(map)) {
+      const el = document.getElementById(id);
+      if (el && stored[key] !== undefined) {
+        el.checked = Boolean(stored[key]);
+      }
+    }
+  } catch (_) {}
+}
+
+function savePermission(key, value) {
+  if (!IS_LOCAL_DEV) return;
+  try {
+    const stored = JSON.parse(localStorage.getItem(PERM_KEY) || '{}');
+    stored[key] = value;
+    localStorage.setItem(PERM_KEY, JSON.stringify(stored));
+  } catch (_) {}
+}
+
+function loadAIKeys() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(AI_KEY) || '{}');
+    const openai = document.getElementById('openai-api-key');
+    const gemini = document.getElementById('gemini-api-key');
+    const claude = document.getElementById('claude-api-key');
+    const provider = document.getElementById('ai-provider-select');
+    const mode = document.querySelector(`input[name="ai-mode"][value="${stored.mode || 'local'}"]`);
+    if (openai && stored.openai_api_key) openai.value = stored.openai_api_key;
+    if (gemini && stored.gemini_api_key) gemini.value = stored.gemini_api_key;
+    if (claude && stored.claude_api_key) claude.value = stored.claude_api_key;
+    if (provider && stored.provider) provider.value = stored.provider;
+    if (mode) mode.checked = true;
+  } catch (_) {}
+}
+
+function saveAIKeys() {
+  const openai = document.getElementById('openai-api-key');
+  const gemini = document.getElementById('gemini-api-key');
+  const claude = document.getElementById('claude-api-key');
+  const provider = document.getElementById('ai-provider-select');
+  const mode = document.querySelector('input[name="ai-mode"]:checked');
+  const payload = {
+    mode: mode ? mode.value : 'local',
+    provider: provider ? provider.value : 'local',
+    openai_api_key: openai ? openai.value.trim() : '',
+    gemini_api_key: gemini ? gemini.value.trim() : '',
+    claude_api_key: claude ? claude.value.trim() : '',
+  };
+  localStorage.setItem(AI_KEY, JSON.stringify(payload));
+  if (window.showToast) {
+    window.showToast('Đã lưu cấu hình AI provider.');
+  }
+}
+
+function clearAIKeys() {
+  localStorage.removeItem(AI_KEY);
+  const openai = document.getElementById('openai-api-key');
+  const gemini = document.getElementById('gemini-api-key');
+  const claude = document.getElementById('claude-api-key');
+  const provider = document.getElementById('ai-provider-select');
+  const localMode = document.querySelector('input[name="ai-mode"][value="local"]');
+  if (openai) openai.value = '';
+  if (gemini) gemini.value = '';
+  if (claude) claude.value = '';
+  if (provider) provider.value = 'local';
+  if (localMode) localMode.checked = true;
+  if (window.showToast) {
+    window.showToast('Đã xóa key khỏi trình duyệt.');
+  }
+}
+
+function toggleSecret(id) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
 function toggleAutoSync(val) {
-  // Client side localStorage persistence or mock feedback
   localStorage.setItem('settings_auto_sync', val ? 'true' : 'false');
   console.log('Auto sync updated:', val);
+}
+
+function selectDashboardTheme(theme) {
+  if (window.GitAnalyticsTheme) {
+    window.GitAnalyticsTheme.apply(theme);
+  }
+  markActiveTheme(theme);
+}
+
+function markActiveTheme(theme) {
+  const current = theme || localStorage.getItem('ga_theme') || 'system';
+  document.querySelectorAll('[data-theme-option]').forEach(card => {
+    card.classList.toggle('active', card.dataset.themeOption === current);
+  });
+  const labels = {
+    'github-dark': 'GitHub Dark',
+    'vercel-midnight': 'Vercel Midnight',
+    'linear-graphite': 'Linear Graphite',
+    'nord-night': 'Nord Night',
+    'tokyo-night': 'Tokyo Night',
+    'system': 'System Default'
+  };
+  const label = document.getElementById('active-theme-label');
+  if (label) label.textContent = labels[current] || 'Theme hiện tại';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -249,6 +1497,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (localVal === 'false') {
     document.getElementById('auto-sync-check').checked = false;
   }
+  markActiveTheme(localStorage.getItem('ga_theme') || 'system');
+  loadPermissions();
+  loadAiSettings();
+  loadAIKeys();
 });
 
 function toggleSelectedBranches(select) {
