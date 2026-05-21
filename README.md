@@ -63,42 +63,105 @@ _Add screenshots here for maximum impact._
 
 ## Architecture
 
+```mermaid
+graph TB
+    Client["Browser (Jinja2 + Chart.js)"]
+    
+    subgraph FastAPI["FastAPI Application"]
+        Routes["Routes Layer<br/>/dashboard/* /api/v1/* /auth/* /reports/*"]
+        Services["Service Layer<br/>Sync | Analytics | Reports | AI | Export"]
+        Clients["Client Layer<br/>GitHub REST API (paginated, rate-limited)"]
+        DB["Data Layer<br/>SQLAlchemy 2.0 + Alembic"]
+    end
+    
+    GitHub["GitHub REST API"]
+    Database["SQLite (dev) / PostgreSQL (prod)"]
+    
+    Client -- page routes --> Routes
+    Client -- API routes --> Routes
+    Routes --> Services
+    Services --> Clients
+    Services --> DB
+    Clients --> GitHub
+    DB --> Database
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    CLIENT (Browser)                       │
-├─────────────────────────────────────────────────────────┤
-│  Jinja2 Templates        │  Chart.js                    │
-│  Dark SaaS UI            │  Async data fetching          │
-└──────────────────┬───────┴──────────┬────────────────────┘
-                   │ page routes       │ API routes
-                   ▼                   ▼
-┌─────────────────────────────────────────────────────────┐
-│                    FASTAPI APPLICATION                    │
-├─────────────────────────────────────────────────────────┤
-│  Routes: /dashboard/*  /api/v1/*  /auth/*  /reports/*   │
-│  Services: Sync, Analytics, Reports, AI, Export          │
-│  Clients: GitHub REST API (paginated, rate-limited)       │
-│  ORM: SQLAlchemy 2.0 + Alembic migrations                │
-└─────────────────────────────────────────────────────────┘
+
+### System Workflows
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant B as Browser
+    participant R as Routes
+    participant S as Services
+    participant C as Clients
+    participant G as GitHub API
+    participant D as Database
+
+    Note over U,D: OAuth Login
+    U->>B: Click Login
+    B->>R: GET /auth/github/login
+    R->>G: Redirect to GitHub OAuth
+    G->>B: Authorization prompt
+    U->>G: Approve
+    G->>R: Callback with code
+    R->>G: Exchange code for token
+    G->>R: access_token
+    R->>D: Encrypt and store token
+    R->>B: Set signed cookie, redirect
+
+    Note over U,D: Data Sync
+    U->>B: Click Sync
+    B->>R: POST /api/v1/sync
+    R->>S: SyncService.sync()
+    S->>C: Check rate limit
+    C->>G: GET /rate_limit
+    G->>C: remaining: 4500
+    C->>G: GET /commits?per_page=100
+    G->>C: Page 1 (100 commits)
+    C->>G: GET /commits?page=2
+    G->>C: Page 2 ...
+    C->>G: GET /pulls?state=all
+    G->>C: Pull requests
+    C->>G: GET /issues?state=all
+    G->>C: Issues
+    S->>D: Upsert all data
+    S->>D: Update last_synced_at
+    R->>B: Sync complete
+
+    Note over U,D: Analytics Dashboard
+    U->>B: Open Dashboard
+    B->>R: GET /dashboard/overview
+    R->>B: HTML skeleton
+    B->>R: fetch /api/v1/analytics
+    R->>S: AnalyticsService.get_metrics()
+    S->>D: SQL aggregation queries
+    D->>S: Aggregated results
+    R->>B: JSON response
+    B->>B: Chart.js render
+
+    Note over U,D: Report Generation
+    U->>B: Generate Report
+    B->>R: POST /api/v1/reports
+    R->>S: EngineeringReportService
+    S->>S: Snapshot analytics state
+    S->>S: Generate release notes
+    S->>S: Compute risk insights
+    S->>D: Serialize snapshot
+    R->>B: Report ready
+    B->>B: Show capability URL
 ```
 
-### Frontend
-- Jinja2 templates with server-rendered pages
-- Chart.js for interactive charts and heatmaps
-- Dark SaaS UI (GitHub / Vercel / Linear inspired)
-- Responsive layout with compact analytics cards
+### Layered Stack
 
-### Backend
-- FastAPI async application with Swagger UI
-- SQLAlchemy 2.0 ORM (SQLite dev, PostgreSQL prod)
-- GitHub REST API client with pagination and rate limit handling
-- Repository sync services (full and incremental)
-
-### Analytics Engine
-- Branch-aware data sync and aggregation
-- Contributor identity resolution (github_login with email fallback)
-- Repository health scoring (commit frequency, PR merge rate, issue closure)
-- Snapshot-based immutable engineering reports
+| Layer | Technology | Responsibility |
+|---|---|---|
+| **Frontend** | Jinja2 + Chart.js | Server-rendered pages, interactive charts, dark SaaS UI |
+| **Routes** | FastAPI | HTTP handling, hybrid page/API routing |
+| **Services** | Python | Business logic orchestration, domain exceptions |
+| **Clients** | httpx | GitHub REST API, pagination, rate limit handling |
+| **ORM** | SQLAlchemy 2.0 | Data access, upsert, migration (Alembic) |
+| **Database** | SQLite / PostgreSQL | Persistence
 
 ---
 
@@ -126,6 +189,37 @@ _Add screenshots here for maximum impact._
 - Multi-repo intelligence
 - Contributor identity resolution (aliases, email mapping, confidence scoring)
 - Cross-repo analytics and ranking
+
+---
+
+### Sync State Machine
+
+```mermaid
+stateDiagram-v2
+    [*] --> Pending: Repository connected
+    Pending --> Syncing: User clicks Sync
+    
+    state Syncing {
+        [*] --> RateLimitCheck
+        RateLimitCheck --> FetchData: Quota sufficient
+        RateLimitCheck --> Failed: Quota exceeded
+        
+        FetchData --> FetchCommits
+        FetchCommits --> FetchPullRequests
+        FetchPullRequests --> FetchIssues
+        FetchIssues --> PersistData
+        PersistData --> [*]
+    end
+    
+    Syncing --> Success: All data persisted
+    Syncing --> Failed: Error at any step
+    
+    Success --> Syncing: User clicks Sync (incremental)
+    Failed --> Syncing: User clicks Sync (retry)
+    
+    Success --> [*]
+    Failed --> [*]
+```
 
 ---
 
