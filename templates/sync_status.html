@@ -1,179 +1,141 @@
 {% extends 'layouts/dashboard_base.html' %}
 
-{% block title %}Nhật Ký Đồng Bộ — Git Analytics{% endblock %}
+{% block title %}Sync Status - Git Analytics{% endblock %}
+
+{% block extra_head %}
+<style>
+  .sync-shell { display: grid; gap: 20px; max-width: 1200px; }
+  .sync-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
+  .sync-header h1 { margin: 0 0 4px; font-size: 24px; letter-spacing: 0; }
+  .sync-header p { margin: 0; color: var(--text-muted); }
+  .sync-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+  .sync-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-soft); }
+  .sync-card span { display: block; color: var(--text-muted); font-size: 12px; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+  .sync-card strong { font-size: 30px; line-height: 1; }
+  .sync-card small { display: block; color: var(--text-muted); margin-top: 8px; }
+  .table-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-soft); }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .panel-head h2 { margin: 0; font-size: 16px; }
+  .table-scroll { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 11px 12px; border-bottom: 1px solid var(--border-sub); text-align: left; font-size: 13px; vertical-align: middle; }
+  th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  tr:last-child td { border-bottom: 0; }
+  .muted { color: var(--text-muted); }
+  .repo-name { font-weight: 700; }
+  .status { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 999px; padding: 3px 8px; font-size: 12px; color: var(--text-muted); background: var(--surface-2); }
+  .status.success { color: var(--success-text); border-color: var(--success-border); background: var(--success-bg); }
+  .status.failed { color: var(--danger-text); border-color: var(--danger); background: var(--danger-bg); }
+  .status.running, .status.syncing, .status.queued { color: var(--info-text); border-color: var(--info-border); background: var(--info-bg); }
+  .actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+  .error-cell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--danger-text); }
+  .empty-row { padding: 28px; text-align: center; color: var(--text-muted); }
+  @media (max-width: 980px) { .sync-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .sync-grid { grid-template-columns: 1fr; } .sync-header { display: block; } }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="sync-status-container">
-  <!-- Page Header -->
-  <div class="dh-header" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
+<div class="sync-shell">
+  <header class="sync-header">
     <div>
-      <h1 style="font-size: 24px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; margin-bottom: 4px;">Trạng Thái Cập Nhật</h1>
-      <p style="font-size: 14px; color: var(--text-muted);">Theo dõi tiến trình GitHub, tốc độ xử lý và API budget.</p>
+      <h1>Sync Status</h1>
+      <p>Background queue, retry attempts, stale recovery, and repository sync state.</p>
     </div>
-    
-    <div>
-      <a href="/repositories" class="btn btn-primary">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-        Quản Lý Repo
-      </a>
-    </div>
-  </div>
+    <a href="/repositories" class="btn btn-primary">Manage repositories</a>
+  </header>
 
-  <!-- Rate Limit & Sync Summary Cards -->
-  <div class="stats-grid" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));">
-    <!-- Live Rate Limit Card -->
-    <div class="card rate-limit-card" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
-      <div class="card-glow"></div>
-      <div>
-        <div class="card-title" style="display: flex; align-items: center; gap: 8px;">
-          <span class="pulse-dot active"></span>
-          GitHub API Budget
-        </div>
-        <div class="card-value" style="font-size: 36px;">{{ rate_limit.remaining }} <span style="font-size: 18px; color: var(--text-muted);">/ {{ rate_limit.limit }}</span></div>
-      </div>
-      <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px;">
-        Làm mới lúc: <strong style="color: var(--text)">{{ rate_limit.reset_time_local }}</strong>
-      </div>
+  <section class="sync-grid">
+    <div class="sync-card">
+      <span>GitHub API budget</span>
+      <strong>{{ rate_limit.remaining }}</strong>
+      <small>/ {{ rate_limit.limit }} resets at {{ rate_limit.reset_time_local }}</small>
     </div>
+    <div class="sync-card">
+      <span>Updated repos</span>
+      <strong>{{ sync_stats.success_count }}</strong>
+      <small>{{ sync_stats.total }} total, {{ sync_stats.failed_count }} failed</small>
+    </div>
+    <div class="sync-card">
+      <span>Queue</span>
+      <strong>{{ job_summary.queued }}</strong>
+      <small>{{ job_summary.running }} running</small>
+    </div>
+    <div class="sync-card">
+      <span>Failed jobs</span>
+      <strong>{{ job_summary.failed }}</strong>
+      <small>Retry is bounded by max attempts</small>
+    </div>
+  </section>
 
-    <!-- Sync Statistics Card -->
-    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-      <div>
-        <div class="card-title">Repo Đã Cập Nhật</div>
-        <div class="card-value" style="font-size: 36px;">{{ sync_stats.success_count }} <span style="font-size: 18px; color: var(--text-muted);">/ {{ sync_stats.total }} Repos</span></div>
-      </div>
-      <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px; display: flex; justify-content: space-between;">
-        <span>Lỗi: <strong style="color: var(--danger-text)">{{ sync_stats.failed_count }}</strong></span>
-        <span>Đang chạy: <strong style="color: var(--info-text)">{{ sync_stats.syncing_count }}</strong></span>
-      </div>
+  <section class="table-panel">
+    <div class="panel-head">
+      <h2>Repositories</h2>
+      <span class="muted">{{ repos | length }} repository</span>
     </div>
-
-    <!-- System Performance Card -->
-    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-      <div>
-        <div class="card-title">Thời Gian TB</div>
-        <div class="card-value" style="font-size: 36px;">{{ sync_stats.avg_duration_str }}</div>
-      </div>
-      <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px;">
-        Chiến lược: <strong style="color: var(--text)">Incremental</strong>
-      </div>
-    </div>
-
-    <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
-      <div>
-        <div class="card-title">Hàng Đợi</div>
-        <div class="card-value" style="font-size: 36px;">{{ job_summary.queued }}</div>
-      </div>
-      <div class="card-sub" style="margin-top: 12px; font-size: 12px; border-top: 1px solid var(--border-sub); padding-top: 10px; display: flex; justify-content: space-between;">
-        <span>Đang chạy: <strong style="color: var(--info-text)">{{ job_summary.running }}</strong></span>
-        <span>Lỗi: <strong style="color: var(--danger-text)">{{ job_summary.failed }}</strong></span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Repository Logs Grid -->
-  <div style="margin-top: 24px;">
-    <div class="section-title">
-      Lịch Sử Cập Nhật
-      <span class="section-count">{{ repos | length }} repository</span>
-    </div>
-    
-    <div class="table-wrap">
+    <div class="table-scroll">
       {% if repos %}
-        <table>
-          <thead>
-            <tr>
-              <th>Kho Lưu Trữ</th>
-              <th>Trạng thái</th>
-              <th>Thời gian bắt đầu</th>
-              <th>Hoàn thành</th>
-              <th>Thời lượng</th>
-              <th style="max-width: 250px;">Ghi chú</th>
-              <th style="text-align: right;">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in repos %}
-              <tr>
-                <td>
-                  <div style="font-weight: 600; color: var(--text);">{{ r.name }}</div>
-                  <div style="font-size: 11px; color: var(--text-muted);">{{ r.owner }}</div>
-                </td>
-                <td>
-                  {% if r.last_sync_status == 'success' %}
-                    <span class="badge badge-open">✓ Thành công</span>
-                  {% elif r.last_sync_status == 'failed' %}
-                    <span class="badge badge-closed" style="background: var(--danger-bg); color: var(--danger-text); border-color: var(--danger);">✕ Lỗi cập nhật</span>
-                  {% elif r.last_sync_status == 'syncing' %}
-                    <span class="badge badge-merged" style="animation: pulse-op 1.5s infinite">↻ Đang cập nhật</span>
-                  {% else %}
-                    <span class="badge badge-closed">○ Chờ xử lý</span>
-                  {% endif %}
-                </td>
-                <td>
-                  {% if r.sync_started_at %}
-                    <div class="timestamp-muted" title="{{ r.sync_started_at | vn_full }}">{{ r.sync_started_at | vn_compact }}</div>
-                    <div class="timestamp-relative">{{ r.sync_started_at | relative_time }}</div>
-                  {% else %}—{% endif %}
-                </td>
-                <td>
-                  {% if r.last_synced_at %}
-                    <div class="timestamp-muted" title="{{ r.last_synced_at | vn_full }}">{{ r.last_synced_at | vn_compact }}</div>
-                    <div class="timestamp-relative">{{ r.last_synced_at | relative_time }}</div>
-                  {% else %}—{% endif %}
-                </td>
-                <td style="font-weight: 500; font-size: 12px;">
-                  {{ r.duration_str }}
-                </td>
-                <td style="max-width: 250px; font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="{{ r.last_sync_error or '' }}">
-                  {% if r.last_sync_error %}
-                    <span style="color: var(--danger-text)">{{ r.last_sync_error }}</span>
-                  {% elif r.last_sync_status == 'success' %}
-                    <span style="color: var(--success-text)">Dữ liệu GitHub đã sẵn sàng.</span>
-                  {% elif r.last_sync_status == 'syncing' %}
-                    <span style="color: var(--info-text)">Đang lấy hoạt động mới từ GitHub.</span>
-                  {% else %}
-                    <span style="color: var(--text-muted)">Chưa có lịch sử cập nhật.</span>
-                  {% endif %}
-                </td>
-                <td style="text-align: right;">
-                  <button onclick="triggerSync({{ r.id }}, this)" class="btn btn-outline btn-sm" {% if r.last_sync_status == 'syncing' %}disabled{% endif %}>
-                    <svg class="sync-icon-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                    Cập Nhật
-                  </button>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <table>
+        <thead>
+          <tr>
+            <th>Repository</th>
+            <th>Status</th>
+            <th>Started</th>
+            <th>Last synced</th>
+            <th>Duration</th>
+            <th>Error</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in repos %}
+          <tr>
+            <td>
+              <div class="repo-name">{{ r.full_name }}</div>
+              <div class="muted">{{ r.default_branch or "main" }}</div>
+            </td>
+            <td><span class="status {{ r.last_sync_status }}">{{ r.last_sync_status }}</span></td>
+            <td>{% if r.sync_started_at %}{{ r.sync_started_at | vn_compact }}<div class="muted">{{ r.sync_started_at | relative_time }}</div>{% else %}<span class="muted">-</span>{% endif %}</td>
+            <td>{% if r.last_synced_at %}{{ r.last_synced_at | vn_compact }}<div class="muted">{{ r.last_synced_at | relative_time }}</div>{% else %}<span class="muted">-</span>{% endif %}</td>
+            <td>{{ r.duration_str }}</td>
+            <td class="error-cell" title="{{ r.last_sync_error or '' }}">{{ r.last_sync_error or "-" }}</td>
+            <td>
+              <div class="actions">
+                <button onclick="triggerSync({{ r.id }}, this)" class="btn btn-outline btn-sm" {% if r.last_sync_status == 'syncing' %}disabled{% endif %}>Sync</button>
+                {% if r.last_sync_status == 'syncing' %}
+                <button onclick="resetSync({{ r.id }}, this)" class="btn btn-outline btn-sm">Reset</button>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
       {% else %}
-        <div class="empty-state">
-          <div class="empty-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          </div>
-          <h3>Chưa có repository</h3>
-          <p>Kết nối repository GitHub để bắt đầu theo dõi hoạt động.</p>
-        </div>
+      <div class="empty-row">No repositories connected.</div>
       {% endif %}
     </div>
-  </div>
+  </section>
 
-  <div style="margin-top: 24px;">
-    <div class="section-title">
-      Queue Jobs
-      <span class="section-count">{{ sync_jobs | length }}</span>
+  <section class="table-panel">
+    <div class="panel-head">
+      <h2>Sync Jobs</h2>
+      <span class="muted">{{ sync_jobs | length }} recent jobs</span>
     </div>
-    <div class="table-wrap">
+    <div class="table-scroll">
       {% if sync_jobs %}
       <table>
         <thead>
           <tr>
             <th>Job</th>
             <th>Repository</th>
-            <th>Trạng thái</th>
-            <th>Lần thử</th>
-            <th>Bắt đầu</th>
-            <th>Hoàn tất</th>
+            <th>Status</th>
+            <th>Attempts</th>
+            <th>Queued</th>
+            <th>Started</th>
+            <th>Finished</th>
+            <th>Error</th>
+            <th style="text-align:right;">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -181,118 +143,89 @@
           <tr>
             <td>#{{ job.id }}</td>
             <td>{{ job.repository.full_name if job.repository else job.repository_id }}</td>
-            <td><span class="badge badge-label">{{ job.status }}</span></td>
+            <td><span class="status {{ job.status }}">{{ job.status }}</span></td>
             <td>{{ job.attempts }}/{{ job.max_attempts }}</td>
+            <td>{{ job.queued_at | vn_compact }}</td>
+            <td>{% if job.started_at %}{{ job.started_at | vn_compact }}{% else %}<span class="muted">-</span>{% endif %}</td>
+            <td>{% if job.finished_at %}{{ job.finished_at | vn_compact }}{% else %}<span class="muted">-</span>{% endif %}</td>
+            <td class="error-cell" title="{{ job.error or '' }}">{{ job.error or "-" }}</td>
             <td>
-              {% if job.started_at %}
-                <div class="timestamp-muted" title="{{ job.started_at | vn_full }}">{{ job.started_at | vn_compact }}</div>
-                <div class="timestamp-relative">{{ job.started_at | relative_time }}</div>
-              {% else %}—{% endif %}
-            </td>
-            <td>
-              {% if job.finished_at %}
-                <div class="timestamp-muted" title="{{ job.finished_at | vn_full }}">{{ job.finished_at | vn_compact }}</div>
-                <div class="timestamp-relative">{{ job.finished_at | relative_time }}</div>
-              {% else %}—{% endif %}
+              <div class="actions">
+                {% if job.status in ["failed", "success"] %}
+                <button onclick="retryJob({{ job.id }}, this)" class="btn btn-outline btn-sm">Retry</button>
+                {% else %}
+                <span class="muted">Active</span>
+                {% endif %}
+              </div>
             </td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
       {% else %}
-      <div class="empty-state">
-        <h3>Queue đang trống</h3>
-        <p>Job cập nhật mới sẽ xuất hiện tại đây.</p>
-      </div>
+      <div class="empty-row">Queue is empty.</div>
       {% endif %}
     </div>
-  </div>
-
-  <!-- System Worker Info -->
-  <div class="card" style="margin-top: 24px; background: rgba(22, 27, 34, 0.4);">
-    <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-      Tiến Trình Nền
-    </h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; font-size: 13px;">
-      <div>
-        <span style="color: var(--text-muted)">Hệ thống chạy:</span> <strong style="color: var(--text)">FastAPI BackgroundTasks</strong>
-      </div>
-      <div>
-        <span style="color: var(--text-muted)">Tự động cập nhật:</span> <strong style="color: var(--success-text)">Bật mỗi giờ</strong>
-      </div>
-      <div>
-        <span style="color: var(--text-muted)">Database Engine:</span> <strong style="color: var(--text)">SQLite 3 (WAL mode)</strong>
-      </div>
-      <div>
-        <span style="color: var(--text-muted)">Trạng thái kết nối:</span> <strong style="color: var(--success-text)">Đã kết nối (OK)</strong>
-      </div>
-    </div>
-  </div>
+  </section>
 </div>
-
-<style>
-  .rate-limit-card {
-    border-color: var(--info-border);
-  }
-  .card-glow {
-    position: absolute;
-    top: -50px;
-    right: -50px;
-    width: 150px;
-    height: 150px;
-    background: radial-gradient(circle, rgba(88, 166, 255, 0.1) 0%, rgba(0,0,0,0) 70%);
-    pointer-events: none;
-  }
-  .pulse-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    display: inline-block;
-  }
-  .pulse-dot.active {
-    background: var(--success-text);
-    box-shadow: 0 0 0 3px rgba(63, 185, 80, 0.3);
-    animation: pulse-op 1.5s infinite;
-  }
-  @keyframes pulse-op {
-    0% { opacity: 0.6; }
-    50% { opacity: 1; }
-    100% { opacity: 0.6; }
-  }
-</style>
 {% endblock %}
 
 {% block page_scripts %}
 <script>
+async function postJson(path) {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    credentials: 'same-origin'
+  });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({}));
+    throw new Error(payload?.error?.message || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 async function triggerSync(repoId, btn) {
   if (btn.disabled) return;
-  
-  // Disable button and animate icon
+  const original = btn.innerHTML;
   btn.disabled = true;
-  const originalText = btn.innerHTML;
-  btn.innerHTML = `<span class="spinner" style="display:block;margin-right:4px;"></span> Đang cập nhật...`;
-  btn.classList.add('loading');
-  
+  btn.innerHTML = 'Queueing...';
   try {
-    const res = await fetch(`/api/v1/sync/${repoId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin'
-    });
-    
-    if (!res.ok) {
-      const errData = await res.json();
-      throw new Error(errData?.error?.message || `HTTP ${res.status}`);
-    }
-    
-    // Refresh page on success to show new state
+    await postJson(`/api/v1/sync/${repoId}`);
     window.location.reload();
   } catch (err) {
-    showError('Không thể bắt đầu cập nhật: ' + err.message);
+    showError('Cannot start sync: ' + err.message);
     btn.disabled = false;
-    btn.innerHTML = originalText;
-    btn.classList.remove('loading');
+    btn.innerHTML = original;
+  }
+}
+
+async function resetSync(repoId, btn) {
+  if (!confirm('Force reset this running sync to failed?')) return;
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Resetting...';
+  try {
+    await postJson(`/api/v1/sync/${repoId}/reset`);
+    window.location.reload();
+  } catch (err) {
+    showError('Cannot reset sync: ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+}
+
+async function retryJob(jobId, btn) {
+  const original = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = 'Retrying...';
+  try {
+    await postJson(`/api/v1/sync/jobs/${jobId}/retry`);
+    window.location.reload();
+  } catch (err) {
+    showError('Cannot retry job: ' + err.message);
+    btn.disabled = false;
+    btn.innerHTML = original;
   }
 }
 </script>

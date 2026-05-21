@@ -21,6 +21,7 @@ def test_models_create_expected_sqlite_schema() -> None:
         "pull_requests",
         "issues",
         "sync_jobs",
+        "repository_engineering_reports",
     }
 
     unique_constraints = {
@@ -48,3 +49,6 @@ def test_models_create_expected_sqlite_schema() -> None:
     assert "ix_issues_repo_state" in indexes["issues"]
     assert "ix_sync_jobs_status" in indexes["sync_jobs"]
     assert "ix_sync_jobs_repository" in indexes["sync_jobs"]
+    assert "ix_reports_user_generated" in indexes["repository_engineering_reports"]
+    assert "ix_reports_repo_range" in indexes["repository_engineering_reports"]
+    assert "ix_reports_public_token" in indexes["repository_engineering_reports"]

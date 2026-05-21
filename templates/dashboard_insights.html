@@ -87,25 +87,123 @@
     line-height: 1.4;
   }
 
-  /* Heatmap custom CSS grid */
-  .heatmap-grid {
-    display: grid;
-    grid-template-rows: repeat(7, 11px);
-    grid-auto-flow: column;
-    gap: 3px;
+  /* Upgraded Heatmap & Badges Styles */
+  .commit-heatmap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px;
+    margin-top: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(48, 54, 61, 0.8) rgba(22, 27, 34, 0.4);
   }
-  .heatmap-cell {
-    width: 11px;
-    height: 11px;
-    border-radius: 2px;
-    transition: transform 0.1s ease;
+  .commit-heatmap::-webkit-scrollbar {
+    height: 6px;
+  }
+  .commit-heatmap::-webkit-scrollbar-track {
+    background: rgba(22, 27, 34, 0.4);
+    border-radius: 999px;
+  }
+  .commit-heatmap::-webkit-scrollbar-thumb {
+    background: rgba(48, 54, 61, 0.8);
+    border-radius: 999px;
+  }
+  .commit-heatmap::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 148, 158, 0.6);
+  }
+
+  .heatmap-container {
+    --heatmap-cell: 12px;
+    --heatmap-gap: 4px;
+    display: grid;
+    grid-template-columns: 32px max-content;
+    grid-template-rows: auto auto;
+    column-gap: 10px;
+    row-gap: 6px;
+    width: fit-content;
+    min-width: 100%;
+    justify-content: center;
+  }
+
+  .month-headers {
+    grid-row: 1;
+    grid-column: 2;
+    display: grid;
+    grid-template-columns: repeat(var(--heatmap-columns, 53), var(--heatmap-cell));
+    gap: var(--heatmap-gap);
+    width: fit-content;
+    max-width: calc((var(--heatmap-columns, 53) * var(--heatmap-cell)) + ((var(--heatmap-columns, 53) - 1) * var(--heatmap-gap)));
+    height: 16px;
+    margin-bottom: 2px;
+    overflow: hidden;
+  }
+
+  .month-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .day-labels {
+    grid-row: 2;
+    grid-column: 1;
+    display: grid;
+    grid-template-rows: repeat(7, var(--heatmap-cell));
+    gap: var(--heatmap-gap);
+    font-size: 9px;
+    color: var(--text-muted);
+    text-align: right;
+    align-items: center;
+    padding-right: 2px;
+  }
+
+  .heatmap-grid {
+    grid-row: 2;
+    grid-column: 2;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, var(--heatmap-cell));
+    grid-template-columns: repeat(var(--heatmap-columns, 53), var(--heatmap-cell));
+    gap: var(--heatmap-gap);
+    width: fit-content;
+    max-width: none;
+    margin: 0;
+  }
+
+  .heatmap-day {
+    aspect-ratio: 1 / 1;
+    width: var(--heatmap-cell);
+    height: var(--heatmap-cell);
+    border-radius: 3px;
+    background: var(--surface-2);
+    transition: transform 120ms cubic-bezier(0.4, 0, 0.2, 1), background-color 120ms ease, box-shadow 120ms ease;
     cursor: pointer;
   }
-  .heatmap-cell:hover {
-    transform: scale(1.3);
-    outline: 1px solid var(--text);
+
+  .heatmap-day:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 1px rgba(230, 237, 243, .22), 0 0 10px rgba(63, 185, 80, .2);
     z-index: 10;
   }
+
+  @media (max-width: 900px) {
+    .heatmap-container { --heatmap-gap: 3px; }
+  }
+  @media (max-width: 560px) {
+    .heatmap-container { --heatmap-gap: 2px; column-gap: 8px; }
+    .day-labels { font-size: 8px; }
+  }
+
+  .heatmap-day.level-0 { background: #161b22; }
+  .heatmap-day.level-1 { background: #0e4429; }
+  .heatmap-day.level-2 { background: #006d32; }
+  .heatmap-day.level-3 { background: #26a641; }
+  .heatmap-day.level-4 { background: #39d353; box-shadow: 0 0 4px rgba(57, 211, 83, 0.4); }
 
   /* Sub-intelligence grids */
   .intel-grid {
@@ -272,33 +370,25 @@
     </div>
 
     <!-- Heatmap Row -->
-    <div class="chart-card heatmap-card">
-      <div class="chart-title">Heatmap Đóng Góp</div>
-      <div class="heatmap-container" style="overflow-x: auto; padding-bottom: 8px;">
-        <div style="display: flex; gap: 8px; align-items: start; min-width: 720px;">
-          <div class="heatmap-weekdays" style="display: grid; grid-template-rows: repeat(7, 11px); gap: 3px; font-size: 9px; color: var(--text-muted); line-height: 11px; padding-top: 1px;">
-            <span></span>
-            <span>T2</span>
-            <span></span>
-            <span>T4</span>
-            <span></span>
-            <span>T6</span>
-            <span></span>
-          </div>
-          <div class="heatmap-grid" id="heatmap-grid">
-            <!-- Cells added dynamically -->
-          </div>
+    <div class="chart-card heatmap-card" style="height: fit-content;">
+      <div class="chart-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <span>Heatmap Đóng Góp</span>
+        <div class="heatmap-badges" id="heatmap-badges" style="display: flex; gap: 8px; font-weight: normal;">
+          <!-- Will be rendered dynamically -->
         </div>
+      </div>
+      <div class="commit-heatmap" id="commit-heatmap">
+        <!-- Padded grid rendered dynamically -->
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: var(--text-muted);">
         <div id="heatmap-cell-hover-details">Di chuột để xem hoạt động theo ngày</div>
-        <div style="display: flex; align-items: center; gap: 4px;">
+        <div class="heatmap-legend" style="display: flex; align-items: center; gap: 4px;">
           <span>Ít</span>
-          <div style="background:#161b22; width:11px; height:11px; border-radius:2px;"></div>
-          <div style="background:#0e4429; width:11px; height:11px; border-radius:2px;"></div>
-          <div style="background:#006d32; width:11px; height:11px; border-radius:2px;"></div>
-          <div style="background:#26a641; width:11px; height:11px; border-radius:2px;"></div>
-          <div style="background:#39d353; width:11px; height:11px; border-radius:2px;"></div>
+          <div class="heatmap-day level-0" style="width:11px; height:11px; border-radius:2px; cursor: default; pointer-events: none;"></div>
+          <div class="heatmap-day level-1" style="width:11px; height:11px; border-radius:2px; cursor: default; pointer-events: none;"></div>
+          <div class="heatmap-day level-2" style="width:11px; height:11px; border-radius:2px; cursor: default; pointer-events: none;"></div>
+          <div class="heatmap-day level-3" style="width:11px; height:11px; border-radius:2px; cursor: default; pointer-events: none;"></div>
+          <div class="heatmap-day level-4" style="width:11px; height:11px; border-radius:2px; cursor: default; pointer-events: none;"></div>
           <span>Nhiều</span>
         </div>
       </div>
@@ -470,46 +560,218 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("score-details").innerHTML = detailsText;
 
     // 3. Heatmap Rendering
-    const heatmap = data.heatmap;
-    const grid = document.getElementById("heatmap-grid");
+    function calculateStreaks(days) {
+      let longest = 0;
+      let current = 0;
+      let running = 0;
+      
+      const sortedDays = [...days].sort((a, b) => a.date.localeCompare(b.date));
+      
+      for (let i = 0; i < sortedDays.length; i++) {
+        const day = sortedDays[i];
+        if (day.count > 0) {
+          running++;
+          if (running > longest) {
+            longest = running;
+          }
+        } else {
+          running = 0;
+        }
+      }
+      
+      let currentRunning = 0;
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().slice(0, 10);
+      
+      let todayIndex = sortedDays.findIndex(d => d.date === todayStr);
+      if (todayIndex === -1) {
+        todayIndex = sortedDays.findIndex(d => d.date === yesterdayStr);
+      }
+      
+      if (todayIndex !== -1) {
+        for (let i = todayIndex; i >= 0; i--) {
+          if (sortedDays[i].count > 0) {
+            currentRunning++;
+          } else {
+            if (i === todayIndex && sortedDays[i].date === todayStr) {
+              continue;
+            }
+            break;
+          }
+        }
+      }
+      current = currentRunning;
+      
+      const totalCommits = days.reduce((sum, d) => sum + d.count, 0);
+      
+      return { longest, current, totalCommits };
+    }
+
+    const heatmap = data.heatmap || {};
     const hoverDetails = document.getElementById("heatmap-cell-hover-details");
     
     // Sort keys (dates) chronologically
     const sortedDates = Object.keys(heatmap).sort();
     
-    sortedDates.forEach(dateStr => {
+    const maxCount = Math.max(...Object.values(heatmap), 0);
+    
+    let days = sortedDates.map(dateStr => {
       const count = heatmap[dateStr];
-      const cell = document.createElement("div");
-      cell.className = "heatmap-cell";
-      
-      // Determine green color scale
-      if (count === 0) {
-        cell.style.background = "#161b22";
-      } else if (count === 1) {
-        cell.style.background = "#0e4429";
-      } else if (count <= 3) {
-        cell.style.background = "#006d32";
-      } else if (count <= 6) {
-        cell.style.background = "#26a641";
-      } else {
-        cell.style.background = "#39d353";
+      let level = 0;
+      if (count > 0) {
+        if (maxCount === 0) level = 1;
+        else {
+          const ratio = count / maxCount;
+          if (ratio <= 0.25) level = 1;
+          else if (ratio <= 0.5) level = 2;
+          else if (ratio <= 0.75) level = 3;
+          else level = 4;
+        }
       }
-      
-      // Hover event
-      cell.addEventListener("mouseenter", () => {
-        const prettyDate = new Date(dateStr).toLocaleDateString('vi-VN', {
-          weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh'
-        });
-        const commitText = count === 1 ? '1 commit' : `${count} commit`;
-        hoverDetails.innerHTML = `<strong>${commitText}</strong> vào ${prettyDate}`;
-      });
-      
-      cell.addEventListener("mouseleave", () => {
-        hoverDetails.textContent = "Di chuột để xem hoạt động theo ngày";
-      });
-      
-      grid.appendChild(cell);
+      return {
+        date: dateStr,
+        count: count,
+        level: level
+      };
     });
+
+    if (!days.length) {
+      // Generate fallback 365 days ending today
+      const today = new Date();
+      const start = new Date();
+      start.setDate(today.getDate() - 364);
+      for (let offset = 0; offset < 365; offset++) {
+        const current = new Date(start);
+        current.setDate(start.getDate() + offset);
+        const isoStr = current.toISOString().slice(0, 10);
+        days.push({
+          date: isoStr,
+          count: 0,
+          level: 0
+        });
+      }
+    }
+
+    const streaks = calculateStreaks(days);
+    
+    // Render dynamic streak badges
+    const badgesContainer = document.getElementById("heatmap-badges");
+    if (badgesContainer) {
+      badgesContainer.innerHTML = `
+        <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(22, 27, 34, 0.6); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 11px;">
+          <span style="color: var(--text-muted);">Tổng:</span>
+          <strong style="color: var(--success-text); font-weight: 600;">${streaks.totalCommits} commits</strong>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(22, 27, 34, 0.6); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 11px;">
+          <span style="color: var(--text-muted);">Streak hiện tại:</span>
+          <strong style="color: var(--success-text); font-weight: 600;">${streaks.current} ngày</strong>
+        </div>
+        <div style="display: inline-flex; align-items: center; gap: 4px; background: rgba(22, 27, 34, 0.6); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 11px;">
+          <span style="color: var(--text-muted);">Streak dài nhất:</span>
+          <strong style="color: var(--success-text); font-weight: 600;">${streaks.longest} ngày</strong>
+        </div>
+      `;
+    }
+
+    // Pad the days to start on Monday
+    function getDayIndex(dateStr) {
+      const d = new Date(dateStr);
+      const day = d.getDay();
+      return day === 0 ? 6 : day - 1;
+    }
+
+    const paddedDays = [];
+    if (days.length > 0) {
+      const firstDayIdx = getDayIndex(days[0].date);
+      for (let i = 0; i < firstDayIdx; i++) {
+        paddedDays.push({ date: null, count: 0, level: -1 });
+      }
+      days.forEach(day => paddedDays.push(day));
+    }
+    
+    while (paddedDays.length % 7 !== 0) {
+      paddedDays.push({ date: null, count: 0, level: -1 });
+    }
+
+    const columnsCount = paddedDays.length / 7;
+
+    // Build month labels at the top
+    const monthLabels = [];
+    let prevMonth = -1;
+    const monthNames = ["Thg 1", "Thg 2", "Thg 3", "Thg 4", "Thg 5", "Thg 6", "Thg 7", "Thg 8", "Thg 9", "Thg 10", "Thg 11", "Thg 12"];
+    
+    for (let col = 0; col < columnsCount; col++) {
+      for (let row = 0; row < 7; row++) {
+        const day = paddedDays[col * 7 + row];
+        if (day && day.date) {
+          const d = new Date(day.date);
+          const m = d.getMonth();
+          if (m !== prevMonth) {
+            monthLabels.push({ name: monthNames[m], colIndex: col });
+            prevMonth = m;
+            break;
+          }
+        }
+      }
+    }
+
+    const monthHeadersHtml = monthLabels.map((label, index) => {
+      const next = monthLabels[index + 1];
+      const span = Math.max(3, (next ? next.colIndex : columnsCount) - label.colIndex);
+      return `<span class="month-label" style="grid-column: ${label.colIndex + 1} / span ${span};">${label.name}</span>`;
+    }).join('');
+
+    const cellsHtml = paddedDays.map(day => {
+      if (day.level === -1) {
+        return `<span class="heatmap-day spacer" style="background: transparent; cursor: default; pointer-events: none;"></span>`;
+      }
+      return `<span class="heatmap-day level-${day.level}" data-date="${day.date}" data-count="${day.count}"></span>`;
+    }).join('');
+
+    const commitHeatmapContainer = document.getElementById("commit-heatmap");
+    if (commitHeatmapContainer) {
+      if (commitHeatmapContainer.clientWidth === 0) return;
+      commitHeatmapContainer.innerHTML = `
+        <div class="heatmap-container" style="--heatmap-columns: ${columnsCount};">
+          <div class="month-headers">
+            ${monthHeadersHtml}
+          </div>
+          <div class="day-labels">
+            <span>Th 2</span>
+            <span></span>
+            <span>Th 4</span>
+            <span></span>
+            <span>Th 6</span>
+            <span></span>
+            <span>CN</span>
+          </div>
+          <div class="heatmap-grid">
+            ${cellsHtml}
+          </div>
+        </div>
+      `;
+      
+      // Add event listeners to the new cells
+      const cells = commitHeatmapContainer.querySelectorAll('.heatmap-grid .heatmap-day:not(.spacer)');
+      cells.forEach(cell => {
+        const count = parseInt(cell.getAttribute('data-count') || '0');
+        const dateStr = cell.getAttribute('data-date');
+        
+        cell.addEventListener('mouseenter', () => {
+          const prettyDate = new Date(dateStr).toLocaleDateString('vi-VN', {
+            weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh'
+          });
+          const commitText = count === 1 ? '1 commit' : `${count} commit`;
+          hoverDetails.innerHTML = `<strong>${commitText}</strong> vào ${prettyDate}`;
+        });
+        
+        cell.addEventListener('mouseleave', () => {
+          hoverDetails.textContent = "Di chuột để xem hoạt động theo ngày";
+        });
+      });
+    }
 
     // 4. Commit pattern chart
     const commitIntel = data.commit_intelligence;

@@ -162,6 +162,12 @@ def test_analytics_contributors_requires_auth(db_session: Session) -> None:
     assert response.status_code == 401
 
 
+def test_global_analytics_requires_auth(db_session: Session) -> None:
+    client = _test_client(db_session)
+    response = client.get("/api/v1/analytics/global")
+    assert response.status_code == 401
+
+
 # ── Ownership validation ──────────────────────────────────────────────────────
 
 def test_analytics_rejects_wrong_repo(db_session: Session) -> None:
@@ -221,6 +227,56 @@ def test_analytics_overview_empty_repo(db_session: Session) -> None:
     assert data["summary"]["open_issues"] == 0
     assert data["charts"]["commits_per_day"] == []
     assert data["recent"]["commits"] == []
+
+
+def test_global_analytics_includes_delta_and_last_sync(db_session: Session) -> None:
+    user, cookie = _make_user(db_session)
+    repo = _make_repo(db_session, user.id)
+    repo.last_synced_at = datetime(2026, 5, 21, 3, 0, tzinfo=UTC)
+    db_session.commit()
+
+    client = _test_client(db_session)
+    client.cookies.set(global_settings.session_cookie_name, cookie)
+
+    response = client.get("/api/v1/analytics/global")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    summary = data["summary"]
+    assert summary["last_synced_at"] is not None
+    assert set(summary["deltas"]) == {"repositories", "commits", "pull_requests", "issues"}
+    assert summary["deltas"]["commits"] == 0.0
+    assert summary["deltas"]["pull_requests"] == 0.0
+    assert summary["deltas"]["issues"] == 0.0
+    assert "max_score" in data["team"]
+
+
+def test_global_analytics_heatmap_has_safe_structure(db_session: Session) -> None:
+    user, cookie = _make_user(db_session)
+    repo = _make_repo(db_session, user.id)
+    _seed_data(db_session, repo.id)
+    client = _test_client(db_session)
+    client.cookies.set(global_settings.session_cookie_name, cookie)
+
+    response = client.get("/api/v1/analytics/global")
+    assert response.status_code == 200
+    heatmap = response.json()["data"]["heatmap"]
+    assert isinstance(heatmap["days"], list)
+    assert len(heatmap["days"]) == 365
+    assert heatmap["total_commits"] == 1
+    assert {"date", "count", "level", "label"} <= set(heatmap["days"][0])
+
+
+def test_global_analytics_normalizes_all_branch_filters(db_session: Session) -> None:
+    user, cookie = _make_user(db_session)
+    repo = _make_repo(db_session, user.id)
+    _seed_data(db_session, repo.id)
+    client = _test_client(db_session)
+    client.cookies.set(global_settings.session_cookie_name, cookie)
+
+    for query in ("branch=all", "branch=*", "branch=", "contributor=all", "contributor=*"):
+        response = client.get(f"/api/v1/analytics/global?{query}")
+        assert response.status_code == 200
+        assert response.json()["data"]["summary"]["total_commits"] == 1
 
 
 def test_analytics_commits_empty_repo(db_session: Session) -> None:

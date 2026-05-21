@@ -22,6 +22,15 @@ from app.repositories import (
 )
 
 
+def _normalize_global_filter(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = value.strip()
+    if not normalized or normalized.lower() == "all" or normalized == "*":
+        return None
+    return normalized
+
+
 class AnalyticsService:
     def __init__(self, db: Session) -> None:
         self.db = db
@@ -31,39 +40,66 @@ class AnalyticsService:
         self.issue_repo = IssueRepository(db)
         self.contributor_repo = ContributorRepository(db)
 
-    def get_global_overview(self, user_id: int) -> dict[str, Any]:
+    def get_global_overview(
+        self,
+        user_id: int,
+        branch: str | None = None,
+        contributor: str | None = None,
+    ) -> dict[str, Any]:
+        branch = _normalize_global_filter(branch)
+        contributor = _normalize_global_filter(contributor)
+        now = datetime.now(UTC)
         repos = self.repo_repo.list_by_user(user_id, page=1, per_page=100)
         repo_ids = [repo.id for repo in repos]
         total_repos = len(repos)
         synced_repos = sum(1 for r in repos if r.last_sync_status == "success")
         private_repos = sum(1 for r in repos if r.is_private)
         public_repos = total_repos - private_repos
+        last_synced_at = max((r.last_synced_at for r in repos if r.last_synced_at), default=None)
 
-        total_commits = self.db.scalar(
+        total_commits_query = (
             select(func.count(Commit.id))
             .join(Repository)
             .where(Repository.user_id == user_id)
-        ) or 0
+        )
+        if branch:
+            total_commits_query = total_commits_query.where(Commit.branch_name == branch)
+        if contributor:
+            total_commits_query = total_commits_query.where(Commit.author_login == contributor)
+        total_commits = self.db.scalar(total_commits_query) or 0
 
-        total_prs = self.db.scalar(
+        total_prs_query = (
             select(func.count(PullRequest.id))
             .join(Repository)
             .where(Repository.user_id == user_id)
-        ) or 0
+        )
+        if branch:
+            total_prs_query = total_prs_query.where(PullRequest.base_branch == branch)
+        if contributor:
+            total_prs_query = total_prs_query.where(PullRequest.author_login == contributor)
+        total_prs = self.db.scalar(total_prs_query) or 0
 
-        total_issues = self.db.scalar(
+        total_issues_query = (
             select(func.count(Issue.id))
             .join(Repository)
             .where(Repository.user_id == user_id)
-        ) or 0
+        )
+        if contributor:
+            total_issues_query = total_issues_query.where(Issue.author_login == contributor)
+        total_issues = self.db.scalar(total_issues_query) or 0
 
-        total_contributors = self.db.scalar(
-            select(func.count(func.distinct(func.coalesce(Contributor.github_login, Contributor.display_name))))
+        total_contributors_query = (
+            select(func.count(func.distinct(func.coalesce(Commit.author_login, Commit.author_name))))
             .join(Repository)
             .where(Repository.user_id == user_id)
-        ) or 0
+        )
+        if branch:
+            total_contributors_query = total_contributors_query.where(Commit.branch_name == branch)
+        if contributor:
+            total_contributors_query = total_contributors_query.where(Commit.author_login == contributor)
+        total_contributors = self.db.scalar(total_contributors_query) or 0
 
-        most_active_rows = self.db.execute(
+        most_active_query = (
             select(
                 Repository.id,
                 Repository.full_name,
@@ -72,7 +108,14 @@ class AnalyticsService:
             )
             .join(Commit, Repository.id == Commit.repo_id)
             .where(Repository.user_id == user_id)
-            .group_by(Repository.id, Repository.full_name, Repository.html_url)
+        )
+        if branch:
+            most_active_query = most_active_query.where(Commit.branch_name == branch)
+        if contributor:
+            most_active_query = most_active_query.where(Commit.author_login == contributor)
+
+        most_active_rows = self.db.execute(
+            most_active_query.group_by(Repository.id, Repository.full_name, Repository.html_url)
             .order_by(func.count(Commit.id).desc())
             .limit(5)
         ).all()
@@ -102,80 +145,221 @@ class AnalyticsService:
             for r in sync_activity_repos
         ]
 
-        timeline_rows = self.db.execute(
+        timeline_query = (
             select(
                 func.date(Commit.committed_at).label("date"),
                 func.count(Commit.id).label("count")
             )
             .join(Repository)
             .where(Repository.user_id == user_id)
-            .group_by(func.date(Commit.committed_at))
+        )
+        if branch:
+            timeline_query = timeline_query.where(Commit.branch_name == branch)
+        if contributor:
+            timeline_query = timeline_query.where(Commit.author_login == contributor)
+
+        timeline_rows = self.db.execute(
+            timeline_query.group_by(func.date(Commit.committed_at))
             .order_by(func.date(Commit.committed_at))
         ).all()
         global_commits_per_day = [{"date": str(row.date), "count": row.count} for row in timeline_rows][-30:]
 
         # --- Advanced Analytics for Phase B ---
         # 1. Active vs Inactive Repositories
-        repo_commit_counts = self.db.execute(
+        repo_commit_query = (
             select(Repository.id, func.count(Commit.id).label("c_count"))
-            .outerjoin(Commit, Repository.id == Commit.repo_id)
+            .outerjoin(Commit, (Repository.id == Commit.repo_id) & 
+                       ((Commit.branch_name == branch) if branch else True) &
+                       ((Commit.author_login == contributor) if contributor else True))
             .where(Repository.user_id == user_id)
             .group_by(Repository.id)
-        ).all()
+        )
+        repo_commit_counts = self.db.execute(repo_commit_query).all()
         active_repos_count = sum(1 for row in repo_commit_counts if row.c_count > 0)
         inactive_repos_count = total_repos - active_repos_count
 
         # 2. Commits last 7 days
-        seven_days_ago = datetime.now(UTC) - timedelta(days=7)
-        commits_last_7 = self.db.scalar(
+        seven_days_ago = now - timedelta(days=7)
+        previous_seven_days = now - timedelta(days=14)
+        
+        commits_last_7_query = (
             select(func.count(Commit.id))
             .join(Repository)
             .where(Repository.user_id == user_id, Commit.committed_at >= seven_days_ago)
-        ) or 0
+        )
+        commits_prev_7_query = (
+            select(func.count(Commit.id))
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                Commit.committed_at >= previous_seven_days,
+                Commit.committed_at < seven_days_ago,
+            )
+        )
+        if branch:
+            commits_last_7_query = commits_last_7_query.where(Commit.branch_name == branch)
+            commits_prev_7_query = commits_prev_7_query.where(Commit.branch_name == branch)
+        if contributor:
+            commits_last_7_query = commits_last_7_query.where(Commit.author_login == contributor)
+            commits_prev_7_query = commits_prev_7_query.where(Commit.author_login == contributor)
+            
+        commits_last_7 = self.db.scalar(commits_last_7_query) or 0
+        commits_prev_7 = self.db.scalar(commits_prev_7_query) or 0
+
+        prs_last_7_query = (
+            select(func.count(PullRequest.id))
+            .join(Repository)
+            .where(Repository.user_id == user_id, PullRequest.created_at >= seven_days_ago)
+        )
+        prs_prev_7_query = (
+            select(func.count(PullRequest.id))
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                PullRequest.created_at >= previous_seven_days,
+                PullRequest.created_at < seven_days_ago,
+            )
+        )
+        if branch:
+            prs_last_7_query = prs_last_7_query.where(PullRequest.base_branch == branch)
+            prs_prev_7_query = prs_prev_7_query.where(PullRequest.base_branch == branch)
+        if contributor:
+            prs_last_7_query = prs_last_7_query.where(PullRequest.author_login == contributor)
+            prs_prev_7_query = prs_prev_7_query.where(PullRequest.author_login == contributor)
+            
+        prs_last_7 = self.db.scalar(prs_last_7_query) or 0
+        prs_prev_7 = self.db.scalar(prs_prev_7_query) or 0
+
+        issues_last_7_query = (
+            select(func.count(Issue.id))
+            .join(Repository)
+            .where(Repository.user_id == user_id, Issue.created_at >= seven_days_ago)
+        )
+        issues_prev_7_query = (
+            select(func.count(Issue.id))
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                Issue.created_at >= previous_seven_days,
+                Issue.created_at < seven_days_ago,
+            )
+        )
+        if contributor:
+            issues_last_7_query = issues_last_7_query.where(Issue.author_login == contributor)
+            issues_prev_7_query = issues_prev_7_query.where(Issue.author_login == contributor)
+            
+        issues_last_7 = self.db.scalar(issues_last_7_query) or 0
+        issues_prev_7 = self.db.scalar(issues_prev_7_query) or 0
+
+        active_current_query = (
+            select(Commit.repo_id)
+            .join(Repository)
+            .where(Repository.user_id == user_id, Commit.committed_at >= seven_days_ago)
+        )
+        active_prev_query = (
+            select(Commit.repo_id)
+            .join(Repository)
+            .where(
+                Repository.user_id == user_id,
+                Commit.committed_at >= previous_seven_days,
+                Commit.committed_at < seven_days_ago,
+            )
+        )
+        if branch:
+            active_current_query = active_current_query.where(Commit.branch_name == branch)
+            active_prev_query = active_prev_query.where(Commit.branch_name == branch)
+        if contributor:
+            active_current_query = active_current_query.where(Commit.author_login == contributor)
+            active_prev_query = active_prev_query.where(Commit.author_login == contributor)
+            
+        active_repo_ids_current = {row.repo_id for row in self.db.execute(active_current_query.group_by(Commit.repo_id)).all()}
+        active_repo_ids_previous = {row.repo_id for row in self.db.execute(active_prev_query.group_by(Commit.repo_id)).all()}
+        
+        repositories_delta = None
+        if active_repo_ids_current or active_repo_ids_previous:
+            repositories_delta = _percent_delta(len(active_repo_ids_current), len(active_repo_ids_previous))
 
         # 3. Top Contributor
-        top_contrib_row = self.db.execute(
+        top_contrib_query = (
             select(Commit.author_login, Commit.author_name, func.count(Commit.id).label("c_count"))
             .join(Repository)
             .where(Repository.user_id == user_id)
-            .group_by(Commit.author_login, Commit.author_name)
+        )
+        if branch:
+            top_contrib_query = top_contrib_query.where(Commit.branch_name == branch)
+        if contributor:
+            top_contrib_query = top_contrib_query.where(Commit.author_login == contributor)
+            
+        top_contrib_row = self.db.execute(
+            top_contrib_query.group_by(Commit.author_login, Commit.author_name)
             .order_by(func.count(Commit.id).desc())
             .limit(1)
         ).first()
+        
         top_contributor = {
             "login": top_contrib_row.author_login or top_contrib_row.author_name if top_contrib_row else "N/A",
             "count": top_contrib_row.c_count if top_contrib_row else 0
         }
 
         # 4. Weekly Trend (commits per day in last 7 days)
-        last_7_days_rows = self.db.execute(
+        last_7_days_query = (
             select(func.date(Commit.committed_at).label("date"), func.count(Commit.id).label("count"))
             .join(Repository)
             .where(Repository.user_id == user_id, Commit.committed_at >= seven_days_ago)
-            .group_by(func.date(Commit.committed_at))
+        )
+        if branch:
+            last_7_days_query = last_7_days_query.where(Commit.branch_name == branch)
+        if contributor:
+            last_7_days_query = last_7_days_query.where(Commit.author_login == contributor)
+            
+        last_7_days_rows = self.db.execute(
+            last_7_days_query.group_by(func.date(Commit.committed_at))
             .order_by(func.date(Commit.committed_at))
         ).all()
         last_7_days_map = {str(row.date): row.count for row in last_7_days_rows}
         weekly_trend = []
         for i in range(7):
-            d = (datetime.now(UTC) - timedelta(days=6-i)).date()
+            d = (now - timedelta(days=6-i)).date()
             ds = str(d)
             weekly_trend.append({"date": ds, "count": last_7_days_map.get(ds, 0)})
 
         # 5. Commit Distribution by day of week (last 30 days)
-        thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
-        recent_commits_dates = self.db.scalars(
+        thirty_days_ago = now - timedelta(days=30)
+        recent_commits_query = (
             select(Commit.committed_at)
             .join(Repository)
             .where(Repository.user_id == user_id, Commit.committed_at >= thirty_days_ago)
-        ).all()
+        )
+        if branch:
+            recent_commits_query = recent_commits_query.where(Commit.branch_name == branch)
+        if contributor:
+            recent_commits_query = recent_commits_query.where(Commit.author_login == contributor)
+            
+        recent_commits_dates = self.db.scalars(recent_commits_query).all()
         day_names = ["Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật"]
         day_counts = [0] * 7
         for dt in recent_commits_dates:
             day_counts[dt.weekday()] += 1
         commit_dist_by_day = [{"day": day_names[i], "count": day_counts[i]} for i in range(7)]
 
-        advanced = self._build_global_advanced_analytics(user_id, repos, repo_ids)
+        # Fetch overall branches and contributors for filters
+        branches_rows = self.db.execute(
+            select(func.distinct(Commit.branch_name))
+            .join(Repository)
+            .where(Repository.user_id == user_id, Commit.branch_name.is_not(None))
+            .order_by(Commit.branch_name)
+        ).scalars().all()
+        
+        contributors_rows = self.db.execute(
+            select(func.distinct(Commit.author_login))
+            .join(Repository)
+            .where(Repository.user_id == user_id, Commit.author_login.is_not(None))
+            .order_by(Commit.author_login)
+        ).scalars().all()
+
+        advanced = self._build_global_advanced_analytics(
+            user_id, repos, repo_ids, branch=branch, contributor=contributor
+        )
 
         return {
             "summary": {
@@ -187,12 +371,21 @@ class AnalyticsService:
                 "total_prs": total_prs,
                 "total_issues": total_issues,
                 "total_contributors": total_contributors,
+                "last_synced_at": _vn_iso(last_synced_at) if last_synced_at else None,
+                "deltas": {
+                    "repositories": repositories_delta,
+                    "commits": _percent_delta(commits_last_7, commits_prev_7),
+                    "pull_requests": _percent_delta(prs_last_7, prs_prev_7),
+                    "issues": _percent_delta(issues_last_7, issues_prev_7),
+                },
                 "active_repositories": active_repos_count,
                 "inactive_repositories": inactive_repos_count,
                 "commits_last_7_days": commits_last_7,
                 "top_contributor": top_contributor,
                 "most_active_repository": most_active[0] if most_active else {"full_name": "N/A", "commit_count": 0},
             },
+            "branches": [b for b in branches_rows if b],
+            "contributors": [c for c in contributors_rows if c],
             "most_active_repositories": most_active,
             "latest_sync_activity": latest_syncs,
             "charts": {
@@ -222,6 +415,8 @@ class AnalyticsService:
         user_id: int,
         repos: list[Repository],
         repo_ids: list[int],
+        branch: str | None = None,
+        contributor: str | None = None,
     ) -> dict[str, Any]:
         now = datetime.now(UTC)
         if not repo_ids:
@@ -241,32 +436,58 @@ class AnalyticsService:
         since_90 = now - timedelta(days=90)
         since_365 = now - timedelta(days=364)
 
-        commits_recent = self.db.scalars(
+        commits_recent_query = (
             select(Commit)
             .join(Repository)
             .where(Repository.user_id == user_id, Commit.committed_at >= since_90)
             .order_by(Commit.committed_at.desc())
-        ).all()
-        commits_year = self.db.execute(
+        )
+        if branch:
+            commits_recent_query = commits_recent_query.where(Commit.branch_name == branch)
+        if contributor:
+            commits_recent_query = commits_recent_query.where(Commit.author_login == contributor)
+            
+        commits_recent = self.db.scalars(commits_recent_query).all()
+
+        commits_year_query = (
             select(
                 func.date(Commit.committed_at).label("day"),
                 func.count(Commit.id).label("count"),
             )
             .join(Repository)
             .where(Repository.user_id == user_id, Commit.committed_at >= since_365)
-            .group_by(func.date(Commit.committed_at))
+        )
+        if branch:
+            commits_year_query = commits_year_query.where(Commit.branch_name == branch)
+        if contributor:
+            commits_year_query = commits_year_query.where(Commit.author_login == contributor)
+
+        commits_year = self.db.execute(
+            commits_year_query.group_by(func.date(Commit.committed_at))
             .order_by(func.date(Commit.committed_at))
         ).all()
-        prs = self.db.scalars(
+
+        prs_query = (
             select(PullRequest)
             .join(Repository)
             .where(Repository.user_id == user_id)
-        ).all()
-        issues = self.db.scalars(
+        )
+        if branch:
+            prs_query = prs_query.where(PullRequest.base_branch == branch)
+        if contributor:
+            prs_query = prs_query.where(PullRequest.author_login == contributor)
+            
+        prs = self.db.scalars(prs_query).all()
+
+        issues_query = (
             select(Issue)
             .join(Repository)
             .where(Repository.user_id == user_id)
-        ).all()
+        )
+        if contributor:
+            issues_query = issues_query.where(Issue.author_login == contributor)
+            
+        issues = self.db.scalars(issues_query).all()
 
         health = self._calculate_health_score(
             repos=repos,
@@ -594,6 +815,7 @@ class AnalyticsService:
                 }
             )
         leaderboard.sort(key=lambda row: row["score"], reverse=True)
+        max_score = max((row["score"] for row in leaderboard), default=0)
 
         return {
             "leaderboard": leaderboard[:10],
@@ -601,6 +823,7 @@ class AnalyticsService:
             "top_contributors": sorted(leaderboard, key=lambda row: row["commits"], reverse=True)[:6],
             "issue_resolvers": sorted(leaderboard, key=lambda row: row["issues_closed"], reverse=True)[:6],
             "pr_activity": sorted(leaderboard, key=lambda row: row["prs_merged"], reverse=True)[:6],
+            "max_score": max_score,
             "summary": {
                 "contributors": len(leaderboard),
                 "active_days": len({day for item in people.values() for day in item["active_days"]}),
@@ -1485,6 +1708,7 @@ def _empty_team_dashboard() -> dict[str, Any]:
         "top_contributors": [],
         "issue_resolvers": [],
         "pr_activity": [],
+        "max_score": 0,
         "summary": {
             "contributors": 0,
             "active_days": 0,

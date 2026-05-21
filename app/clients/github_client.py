@@ -1,6 +1,8 @@
 import asyncio
 from collections.abc import Mapping
 from datetime import UTC, datetime
+import logging
+import time
 from typing import Any
 
 import httpx
@@ -12,6 +14,8 @@ from app.core.exceptions import (
     GitHubRateLimitExceeded,
     GitHubServerError,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class GitHubClient:
@@ -27,6 +31,7 @@ class GitHubClient:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.retries = retries
+        self.repo_id: int | None = None
         self._client = httpx.AsyncClient(
             base_url=self.base_url,
             timeout=httpx.Timeout(timeout),
@@ -134,9 +139,40 @@ class GitHubClient:
         items: list[dict[str, Any]] = []
         request_params: Mapping[str, Any] | None = {"per_page": 100, **dict(params or {})}
         next_url: str | None = path
+        visited_urls = set()
+        page = 0
+        max_pages = 100
 
         while next_url is not None:
-            response = await self._request("GET", next_url, params=request_params)
+            if page >= max_pages:
+                logger.warning(
+                    "Repo %s: Pagination page limit reached (%s pages). Stopping to prevent infinite loop.",
+                    self.repo_id,
+                    max_pages
+                )
+                break
+
+            url_key = next_url
+            if request_params:
+                url_key = f"{next_url}?{sorted(request_params.items())}"
+            if url_key in visited_urls:
+                logger.warning(
+                    "Repo %s: Detected duplicate pagination URL '%s'. Stopping pagination to avoid loop.",
+                    self.repo_id,
+                    next_url
+                )
+                break
+            visited_urls.add(url_key)
+
+            page += 1
+            logger.info(
+                "Repo %s: Fetching page %s of '%s'",
+                self.repo_id,
+                page,
+                next_url
+            )
+
+            response = await self._request("GET", next_url, params=request_params, page=page)
             payload = response.json()
             if not isinstance(payload, list):
                 raise GitHubAPIError("Expected a list response from GitHub API.")
@@ -153,12 +189,40 @@ class GitHubClient:
         url: str,
         *,
         params: Mapping[str, Any] | None = None,
+        page: int | None = None,
     ) -> httpx.Response:
         attempts = self.retries + 1
         for attempt in range(attempts):
+            t0 = time.perf_counter()
             try:
                 response = await self._client.request(method, url, params=params)
+                duration = time.perf_counter() - t0
+                page_str = f" page {page}" if page is not None else ""
+                logger.info(
+                    "Repo %s: %s %s%s - Status: %s - Duration: %.2fs",
+                    self.repo_id,
+                    method,
+                    url,
+                    page_str,
+                    response.status_code,
+                    duration
+                )
+                self._handle_error_response(response)
+                return response
             except httpx.TransportError as exc:
+                duration = time.perf_counter() - t0
+                page_str = f" page {page}" if page is not None else ""
+                logger.warning(
+                    "Repo %s: %s %s%s failed (attempt %s/%s) - Duration: %.2fs - Error: %s",
+                    self.repo_id,
+                    method,
+                    url,
+                    page_str,
+                    attempt + 1,
+                    attempts,
+                    duration,
+                    exc
+                )
                 if attempt == attempts - 1:
                     raise GitHubAPIError(
                         "Network error while calling GitHub API.",
@@ -166,9 +230,6 @@ class GitHubClient:
                     ) from exc
                 await asyncio.sleep(0.1 * (attempt + 1))
                 continue
-
-            self._handle_error_response(response)
-            return response
 
         raise GitHubAPIError("GitHub API request failed.")
 

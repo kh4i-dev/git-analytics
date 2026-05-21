@@ -46,13 +46,15 @@ def _get_repo_or_none(db: Session, user_id: int, repo_id: int):
 @router.get("/dashboard/global", response_class=HTMLResponse, response_model=None)
 async def global_dashboard(
     request: Request,
+    branch: str | None = None,
+    contributor: str | None = None,
     db: Session = Depends(get_db),
 ) -> Response:
     user = _authenticate(request, db)
     if user is None:
         return _login_redirect()
     repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100)
-    stats = AnalyticsService(db).get_global_overview(user.id)
+    stats = AnalyticsService(db).get_global_overview(user.id, branch=branch, contributor=contributor)
     return templates.TemplateResponse(
         request=request,
         name="dashboard_global.html",
@@ -205,7 +207,7 @@ async def sync_status_page(
         "syncing_count": syncing_count,
         "avg_duration_str": avg_duration_str,
     }
-    sync_jobs = SyncJobRepository(db).list_recent(limit=30)
+    sync_jobs = SyncJobRepository(db).list_recent_by_user(user.id, limit=30)
     job_summary = {
         "queued": sum(1 for job in sync_jobs if job.status == "queued"),
         "running": sum(1 for job in sync_jobs if job.status == "running"),

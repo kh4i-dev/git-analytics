@@ -1,4 +1,7 @@
 import pytest
+import re
+import shutil
+import subprocess
 from collections.abc import Generator
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -84,10 +87,36 @@ def test_global_dashboard_page_loads(db_session: Session) -> None:
     
     response = client.get("/dashboard")
     assert response.status_code == 200
-    assert "Tổng Quan" in response.text
+    assert "Engineering Intelligence" in response.text
     assert "octo/super-project" in response.text
     assert "octo" in response.text  # Username in sidebar
     assert "Đăng Xuất" in response.text
+
+def test_global_dashboard_script_parses() -> None:
+    node = shutil.which("node")
+    if node is None:
+        pytest.skip("Node.js is required for dashboard script parse check.")
+
+    template = open("templates/dashboard_global.html", encoding="utf-8").read()
+    match = re.search(
+        r"{% block page_scripts %}\s*<script>([\s\S]*?)</script>\s*{% endblock %}",
+        template,
+    )
+    assert match is not None
+    script = match.group(1).replace(
+        "let dashboardData = {{ stats | tojson }};",
+        "let dashboardData = {};",
+    )
+    result = subprocess.run(
+        [node, "--check", "-"],
+        input=script,
+        text=True,
+        encoding="utf-8",
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+
 
 def test_placeholder_pages(db_session: Session) -> None:
     user, session_cookie = create_logged_in_user(db_session)

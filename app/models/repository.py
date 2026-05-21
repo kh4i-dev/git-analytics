@@ -22,6 +22,7 @@ if TYPE_CHECKING:
     from app.models.branch import Branch
     from app.models.commit import Commit
     from app.models.contributor import Contributor
+    from app.models.engineering_report import RepositoryEngineeringReport
     from app.models.issue import Issue
     from app.models.pull_request import PullRequest
     from app.models.user import User
@@ -103,6 +104,10 @@ class Repository(Base):
         cascade="all, delete-orphan",
     )
     issues: Mapped[list["Issue"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+    )
+    engineering_reports: Mapped[list["RepositoryEngineeringReport"]] = relationship(
         back_populates="repository",
         cascade="all, delete-orphan",
     )

@@ -20,6 +20,85 @@
 - **Organization**: A GitHub org. Deferred to post-MVP.
 - **Membership / Role**: Relationship between User and Team. Deferred to post-MVP.
 
+## Product Direction
+
+- **Personal Developer Utility**: The primary product direction for the current roadmap; a tool for an Individual Developer to turn repository activity into useful personal outputs.
+
+- **Team Engineering Intelligence**: A later product direction for team and organization workflows. Avoid treating "workspace", "team", or "org" as current-domain concepts until Team, Organization, and Membership / Role are introduced.
+
+- **Active Product Phases**: The current implementation roadmap covers Phase 1 Engineering Toolkit, Phase 2 Single-Repo AI Insight Engine, and Phase 3 Hosted/SaaS Foundation.
+
+- **Future Operating System Update**: The deferred roadmap update for multi-repo intelligence, workspace-level reports, cross-repo contributor ranking, executive overview, and identity resolution.
+
+- **Engineering Report**: A shareable snapshot of repository activity for an Individual Developer, combining release notes, changelog, risk insights, and summary context into one canonical report object.
+
+- **As-of Date**: The visible timestamp that tells a report reader when the Engineering Report was generated and which synced dataset it is based on.
+
+- **Report Generation**: Creating an Engineering Report from repository data already synced into the local database; it does not fetch new GitHub data.
+
+- **Stale Data Threshold**: The configurable age after which synced repository data should be treated as stale for report-generation warnings.
+
+- **Report Date Range**: The stored period that an Engineering Report covers, with explicit `from_date` and `to_date` values visible to report readers.
+
+- **Continuity Range**: The default report date range that starts after the previous report for the same Repository; for the first report, it falls back to the shorter of first sync date or the default lookback window.
+
+- **Risk Insight Snapshot**: Risk insight data serialized into an Engineering Report at generation time so the shared report remains stable when viewed later.
+
+- **Generated Report Title**: The automatic title assigned when an Engineering Report is created, usually derived from repository name and Report Date Range.
+
+- **Custom Report Title**: An optional user-edited display title for an Engineering Report; when absent, readers see the Generated Report Title.
+
+- **Public Link Revocation**: Removing public access to an Engineering Report without deleting the private report from the owner's dashboard.
+
+- **Public Report Anonymization**: A report-level setting that hides the Repository's real `full_name` in the public view and replaces it with a snapshot display name, without changing the Repository itself.
+
+- **Public Report Name**: The repository name shown to anonymous readers of a public Engineering Report; by default it is the Repository `full_name`, but anonymized reports show the configured public display name or "Private Repository".
+
+- **Report Deletion**: Permanently removing an Engineering Report from the owner's dashboard; distinct from Public Link Revocation.
+
+- **Public Report Not Found**: The public response for invalid or revoked report tokens; public routes return 404 to avoid revealing whether a token ever existed.
+
+- **Public Report Token Rotation**: Publishing a report after revocation creates a new public token; revoked tokens are never reused.
+
+- **Non-indexed Public Report**: A public Engineering Report shared by capability URL that should not be indexed or followed by search engines in Phase 1.
+
+- **Capability URL Access**: The Phase 1 public sharing model where possession of a long random public report URL grants anonymous read access to that immutable report snapshot.
+
+- **No Public Report Password**: Phase 1 public Engineering Reports do not use passwords or passcodes; access is controlled through Capability URL Access, Public Link Revocation, and Public Report Token Rotation.
+
+- **Future Report Access Control**: Later access-control options for shared reports, such as allowed email/domain, signed invite links, expiring links, and team permission models.
+
+- **Non-expiring Public Report Link**: The Phase 1 default where a public report link remains valid until the owner revokes it or deletes the report.
+
+## Relationships
+
+- A **User** owns one or more **Engineering Reports**.
+- An **Engineering Report** belongs to exactly one **Repository** in Phase 1.
+- An **Engineering Report** has one **Generated Report Title** and may have one **Custom Report Title**.
+- An **Engineering Report** has one **Report Date Range** and one **As-of Date**.
+- **Public Link Revocation** affects anonymous access only; the owner can still access the **Engineering Report** privately.
+- **Public Report Anonymization** affects only the public report snapshot; the owner dashboard still shows the real **Repository** name.
+- A revoked or invalid public report token produces **Public Report Not Found**.
+- **Public Report Token Rotation** ensures a revoked public link cannot regain access after republishing.
+- A **Non-indexed Public Report** is shareable by URL but is not treated as a public portfolio page.
+- **Capability URL Access** applies only to the immutable public snapshot; the private report record still belongs to the owner **User**.
+- **No Public Report Password** keeps Phase 1 sharing separate from **Future Report Access Control**.
+- A **Non-expiring Public Report Link** can be invalidated by **Public Link Revocation** or **Report Deletion**.
+- **Future Operating System Update** depends on sync, job-status, rate-limit, and contributor-identity foundations that are not part of Phase 1-3.
+
+## Flagged Ambiguities
+
+- "revoke" does not mean "delete"; revoking a public link removes public access but keeps the private report.
+- "title" splits into **Generated Report Title** and **Custom Report Title**; editing the display title must not overwrite the generated title.
+- "anonymize repository" means anonymize the **Engineering Report** public view, not mutate the **Repository**.
+- Revoked public links return 404, not 410, so anonymous readers cannot distinguish revoked links from invalid tokens.
+- Republish after revoke creates a new public token; the old token remains invalid.
+- Public report pages are `noindex, nofollow` in Phase 1; SEO/portfolio publishing is a separate future mode.
+- Phase 1 public reports do not require a password or passcode.
+- Higher-control sharing belongs to **Future Report Access Control**, not the Phase 1 capability URL model.
+- Phase 1 public report links do not expire by default; expiring links are a future access-control option.
+- Multi-repo intelligence and workspace-level KPIs belong to **Future Operating System Update**, not the active Phase 1-3 roadmap.
+
 ## Key Distinctions
 
 - **Sync**: Pulling data from GitHub REST API into the local database. User-initiated (button press), not a background process (in MVP). Uses **Incremental Sync** strategy: first sync is full, subsequent syncs use `since=last_synced_at` to fetch only new data.

@@ -31,10 +31,12 @@ def _get_user_id(request: Request, db) -> int:
 @router.get("/global")
 async def global_analytics_overview(
     request: Request,
+    branch: str | None = None,
+    contributor: str | None = None,
     db: Session = Depends(get_db),
 ) -> JSONResponse:
     user_id = _get_user_id(request, db)
-    data = AnalyticsService(db).get_global_overview(user_id)
+    data = AnalyticsService(db).get_global_overview(user_id, branch=branch, contributor=contributor)
     return JSONResponse(success_response(request, data))
 
 
@@ -42,10 +44,12 @@ async def global_analytics_overview(
 async def export_global_analytics(
     request: Request,
     format_name: str,
+    branch: str | None = None,
+    contributor: str | None = None,
     db: Session = Depends(get_db),
 ) -> Response:
     user_id = _get_user_id(request, db)
-    stats = AnalyticsService(db).get_global_overview(user_id)
+    stats = AnalyticsService(db).get_global_overview(user_id, branch=branch, contributor=contributor)
     exporter = AnalyticsExportService()
     rows = exporter.build_rows(stats)
     if format_name == "xlsx":

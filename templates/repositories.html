@@ -168,6 +168,11 @@
                   <span class="badge badge-closed" style="background:var(--danger-bg); color:var(--danger-text); border-color:var(--danger-border);">✕ Thất Bại</span>
                 {% elif s == "syncing" %}
                   <span class="badge badge-merged">↻ Đang cập nhật</span>
+                  {% if repo.sync_started_at and repo.sync_started_at | is_stale_sync(15) %}
+                    <span class="stale-warning" style="font-size: 11px; color: #e3b341; margin-top: 2px; display: inline-flex; align-items: center; gap: 4px; font-weight: 500;">
+                      ⚠ Sync có thể bị treo
+                    </span>
+                  {% endif %}
                 {% else %}
                   <span class="badge badge-label">○ Chờ</span>
                 {% endif %}
@@ -201,17 +206,30 @@
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
                   GitHub
                 </a>
+                {% if repo.last_sync_status == "syncing" %}
+                <form method="post" action="/repositories/{{ repo.id }}/reset" class="js-submit-form">
+                  <button
+                    id="btn-reset-{{ repo.id }}"
+                    type="submit"
+                    class="btn btn-outline btn-sm js-loading-btn"
+                    style="border-color: #f85149; color: #f85149;"
+                  >
+                    <span class="spinner" aria-hidden="true"></span>
+                    <span class="btn-label">Force Reset</span>
+                  </button>
+                </form>
+                {% else %}
                 <form method="post" action="/repositories/{{ repo.id }}/sync" class="js-submit-form">
                   <button
                     id="btn-sync-{{ repo.id }}"
                     type="submit"
                     class="btn btn-outline btn-sm js-loading-btn"
-                    {% if repo.last_sync_status == "syncing" %}disabled{% endif %}
                   >
                     <span class="spinner" aria-hidden="true"></span>
-                    <span class="btn-label">{% if repo.last_sync_status == "syncing" %}Đang chạy{% else %}↻ Cập Nhật{% endif %}</span>
+                    <span class="btn-label">↻ Cập Nhật</span>
                   </button>
                 </form>
+                {% endif %}
               </div>
             </td>
           </tr>

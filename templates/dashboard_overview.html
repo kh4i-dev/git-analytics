@@ -47,6 +47,88 @@
     color: var(--text-muted);
     margin-top: 4px;
   }
+
+  /* Premium SaaS stat card styling */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stats-grid .card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 108px;
+    min-height: 108px;
+    box-sizing: border-box;
+    padding: 16px 18px;
+  }
+  .stats-grid .card-title {
+    margin-bottom: 4px;
+  }
+  .custom-kpi-card {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+    width: 100%;
+  }
+  .card-title-row .card-title {
+    margin-bottom: 0;
+  }
+  .status-pill-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text);
+  }
+  .status-pill-bullet {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .card-body-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-top: auto;
+    margin-bottom: auto;
+  }
+  .card-value-date {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.1;
+    letter-spacing: -0.2px;
+  }
+  .card-value-time {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+  .card-footer-row {
+    font-size: 10.5px;
+    color: var(--text-muted);
+    margin-top: auto;
+    border-top: 1px dashed var(--border);
+    padding-top: 4px;
+    width: 100%;
+    text-transform: none;
+    letter-spacing: normal;
+  }
 </style>
 {% endblock %}
 
@@ -63,11 +145,11 @@
 
 <!-- Stat cards (rendered client-side via JS after API call) -->
 <div id="stats-grid" class="stats-grid">
-  <div class="card skeleton" style="height:88px"></div>
-  <div class="card skeleton" style="height:88px"></div>
-  <div class="card skeleton" style="height:88px"></div>
-  <div class="card skeleton" style="height:88px"></div>
-  <div class="card skeleton" style="height:88px"></div>
+  <div class="card skeleton" style="height:108px"></div>
+  <div class="card skeleton" style="height:108px"></div>
+  <div class="card skeleton" style="height:108px"></div>
+  <div class="card skeleton" style="height:108px"></div>
+  <div class="card skeleton" style="height:108px"></div>
 </div>
 
 <!-- Charts -->
@@ -136,6 +218,71 @@ function mkCard(title, value, sub) {
   </div>`;
 }
 
+function formatSaaSDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return { date: '—', time: '' };
+  
+  const day = String(d.getDate()).padStart(2, '0');
+  const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  const dateStr = `${day} Thg ${month}, ${year}`;
+  
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12; 
+  const hoursStr = String(hours).padStart(2, '0');
+  const timeStr = `${hoursStr}:${minutes} ${ampm}`;
+  
+  return { date: dateStr, time: timeStr };
+}
+
+function mkLastUpdatedCard(title, iso, status) {
+  let statusText = 'Hoàn thành';
+  let bulletColor = '#2ea44f'; 
+  
+  if (status === 'syncing') {
+    statusText = 'Đang chạy';
+    bulletColor = '#58a6ff'; 
+  } else if (status === 'failed') {
+    statusText = 'Thất bại';
+    bulletColor = '#f85149'; 
+  } else if (status === 'pending') {
+    statusText = 'Chờ';
+    bulletColor = '#8b949e'; 
+  }
+
+  let dateContent = '—';
+  let timeContent = '';
+  let relativeContent = '';
+  
+  if (iso) {
+    const formatted = formatSaaSDate(iso);
+    dateContent = formatted.date;
+    timeContent = formatted.time;
+    relativeContent = window.GitAnalyticsTime ? window.GitAnalyticsTime.relative(iso) : '';
+  }
+
+  return `<div class="card custom-kpi-card">
+    <div class="card-title-row">
+      <div class="card-title">${title}</div>
+      <div class="status-pill-badge">
+        <span class="status-pill-bullet" style="background-color: ${bulletColor}"></span>
+        <span class="status-pill-text">${statusText}</span>
+      </div>
+    </div>
+    <div class="card-body-row">
+      <div class="card-value-date">${dateContent}</div>
+      ${timeContent ? `<span class="card-value-time">${timeContent}</span>` : ''}
+    </div>
+    <div class="card-footer-row">
+      ${relativeContent ? `Đồng bộ ${relativeContent}` : 'Chưa đồng bộ'}
+    </div>
+  </div>`;
+}
+
 function fmtDate(iso) {
   return window.GitAnalyticsTime ? window.GitAnalyticsTime.compact(iso) : '—';
 }
@@ -165,7 +312,7 @@ async function loadOverview() {
     mkCard('Pull Request', s.total_prs.toLocaleString(), `${s.merged_prs} merged · ${s.open_prs} open`) +
     mkCard('Issue Đang Mở', s.open_issues.toLocaleString(), `${s.closed_issues} đã xử lý`) +
     mkCard('Contributor', s.total_contributors.toLocaleString(), '') +
-    mkCard('Cập Nhật Gần Nhất', data.repository.last_synced_at ? fmtDate(data.repository.last_synced_at) : '—', data.repository.last_sync_status);
+    mkLastUpdatedCard('Cập Nhật Gần Nhất', data.repository.last_synced_at, data.repository.last_sync_status);
 
   // Commits timeline
   const cpd = data.charts.commits_per_day;

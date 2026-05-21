@@ -1,0 +1,263 @@
+{% extends "layouts/dashboard_base.html" %}
+
+{% block title %}Engineering Reports - Git Analytics{% endblock %}
+{% block meta_desc %}Generate immutable engineering report snapshots from synced repository data{% endblock %}
+
+{% block extra_head %}
+<style>
+  .reports-shell { display: grid; gap: 18px; max-width: 1200px; }
+  .reports-header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-end; }
+  .reports-header h1 { margin: 0; font-size: 26px; letter-spacing: 0; }
+  .reports-header p { margin: 5px 0 0; color: var(--text-muted); max-width: 680px; }
+  .reports-grid { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px; box-shadow: var(--shadow-soft); }
+  .panel h2 { margin: 0 0 12px; font-size: 16px; }
+  .field { display: grid; gap: 6px; margin-bottom: 12px; }
+  .field label { font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .field input, .field select { width: 100%; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); border-radius: var(--radius); padding: 9px 10px; font: inherit; }
+  .field input:focus, .field select:focus { outline: 0; border-color: var(--text-link); box-shadow: 0 0 0 2px rgba(88, 166, 255, .14); }
+  .hint { color: var(--text-muted); font-size: 12px; margin: 10px 0 0; }
+  .notice { border: 1px solid var(--warn-border); background: var(--warn-bg); color: var(--warn-text); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; margin-bottom: 12px; }
+  .report-list { display: grid; gap: 12px; }
+  .report-item { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; background: var(--surface-2); }
+  .report-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .report-title { font-weight: 700; margin-bottom: 4px; overflow-wrap: anywhere; }
+  .report-meta { color: var(--text-muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 10px; }
+  .status-pill { border: 1px solid var(--border); border-radius: 999px; padding: 2px 8px; font-size: 11px; color: var(--text-muted); background: var(--surface); white-space: nowrap; }
+  .status-pill.live { color: var(--success-text); border-color: var(--success-border); background: var(--success-bg); }
+  .report-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+  .preview { margin-top: 16px; display: none; border-top: 1px solid var(--border); padding-top: 12px; }
+  .preview-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 12px; }
+  .preview-card { background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px; }
+  .preview-card span { display: block; color: var(--text-muted); font-size: 11px; margin-bottom: 3px; }
+  .preview-card strong { font-size: 14px; }
+  .preview pre { white-space: pre-wrap; overflow: auto; max-height: 260px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; font-size: 12px; }
+  .publish-panel { display: none; margin-top: 12px; padding: 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+  .toggle-row { display: flex; gap: 8px; align-items: center; color: var(--text-muted); font-size: 13px; margin-bottom: 10px; }
+  .public-url { display: none; margin-top: 10px; padding: 9px 10px; border: 1px solid var(--success-border); border-radius: var(--radius); background: var(--success-bg); color: var(--success-text); overflow-wrap: anywhere; font-size: 12px; }
+  .empty { color: var(--text-muted); padding: 22px; text-align: center; border: 1px dashed var(--border); border-radius: var(--radius-lg); }
+  @media (max-width: 980px) { .reports-grid { grid-template-columns: 1fr; } .preview-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .reports-header { display: block; } .preview-grid { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-shell">
+  <header class="reports-header">
+    <div>
+      <h1>Engineering Reports</h1>
+      <p>Generate immutable, single-repo snapshots from synced data. Public links are noindex, revocable, and rotate after revoke.</p>
+    </div>
+  </header>
+
+  <div class="reports-grid">
+    <section class="panel">
+      <h2>Generate Snapshot</h2>
+      {% if not repos %}
+      <div class="notice">Connect and sync a repository before generating reports.</div>
+      {% endif %}
+      <form id="report-form">
+        <div class="field">
+          <label for="repository_id">Repository</label>
+          <select id="repository_id" name="repository_id" required {% if not repos %}disabled{% endif %}>
+            {% for repo in repos %}
+            <option value="{{ repo.id }}">{{ repo.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="custom_title">Custom title</label>
+          <input id="custom_title" name="custom_title" placeholder="Client update / Sprint report">
+        </div>
+        <div class="field">
+          <label for="from_date">From</label>
+          <input id="from_date" name="from_date" type="datetime-local">
+        </div>
+        <div class="field">
+          <label for="to_date">To</label>
+          <input id="to_date" name="to_date" type="datetime-local">
+        </div>
+        <button class="btn btn-primary" type="submit" {% if not repos %}disabled{% endif %}>Generate report</button>
+        <p class="hint">Leave dates empty to use continuity range. Generate never syncs GitHub; it uses the current database snapshot.</p>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>Report Library</h2>
+      <div id="report-list" class="report-list">
+        {% for report in reports %}
+        <article class="report-item" data-report-id="{{ report.id }}">
+          <div class="report-head">
+            <div>
+              <div class="report-title">{{ report.custom_title or report.generated_title }}</div>
+              <div class="report-meta">
+                <span>{{ report.repository.full_name }}</span>
+                <span>{{ report.from_date.date() }} to {{ report.to_date.date() }}</span>
+                <span>Generated {{ report.generated_at.date() }}</span>
+              </div>
+            </div>
+            <span class="status-pill {% if report.public_token %}live{% endif %}">{{ "Published" if report.public_token else "Private" }}</span>
+          </div>
+          <div class="report-actions">
+            <button class="btn btn-outline btn-sm" type="button" data-action="view">View</button>
+            <button class="btn btn-outline btn-sm" type="button" data-action="publish-panel">Publish</button>
+            <a class="btn btn-outline btn-sm" href="/reports/{{ report.id }}/download">Download MD</a>
+            {% if report.public_token %}
+            <a class="btn btn-outline btn-sm" href="/r/{{ report.public_token }}" target="_blank" rel="noopener">Open public</a>
+            {% endif %}
+            <button class="btn btn-outline btn-sm" type="button" data-action="revoke">Revoke</button>
+          </div>
+          <div class="publish-panel">
+            <div class="toggle-row">
+              <input id="anon-{{ report.id }}" type="checkbox" data-anon-toggle>
+              <label for="anon-{{ report.id }}">Ẩn tên repository trên public report</label>
+            </div>
+            <div class="field">
+              <label>Tên hiển thị công khai</label>
+              <input data-display-name placeholder="Client Project / Private Repository / Internal Tool" disabled>
+            </div>
+            <p class="hint">Thiết lập này chỉ áp dụng cho bản report công khai, không thay đổi repository gốc.</p>
+            <button class="btn btn-primary btn-sm" type="button" data-action="publish">Publish and copy link</button>
+            <div class="public-url"></div>
+          </div>
+          <div class="preview"></div>
+        </article>
+        {% else %}
+        <div class="empty">No reports yet.</div>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const list = document.getElementById('report-list');
+const form = document.getElementById('report-form');
+
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+}
+
+function localDateTimeToIso(value) {
+  if (!value) return null;
+  return new Date(value).toISOString();
+}
+
+async function jsonFetch(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json', ...(options.headers || {})},
+    ...options
+  });
+  const payload = await response.json();
+  if (!response.ok || payload.error) throw new Error(payload.error?.message || `HTTP ${response.status}`);
+  return payload.data;
+}
+
+async function copyText(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch (_) {
+    const input = document.createElement('textarea');
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    input.remove();
+  }
+}
+
+function renderPreview(report) {
+  const counts = report.summary.counts || {};
+  return `
+    <div class="report-title">${escapeHtml(report.display_title)}</div>
+    <div class="report-meta">
+      <span>${escapeHtml(report.repository_full_name)}</span>
+      <span>${new Date(report.from_date).toLocaleString()} to ${new Date(report.to_date).toLocaleString()}</span>
+      <span>Generated ${new Date(report.generated_at).toLocaleString()}</span>
+      <span>Data synced ${report.data_synced_at ? new Date(report.data_synced_at).toLocaleString() : 'never'}</span>
+    </div>
+    <div class="preview-grid">
+      <div class="preview-card"><span>Commits</span><strong>${counts.commits || 0}</strong></div>
+      <div class="preview-card"><span>Pull requests</span><strong>${counts.pull_requests || 0}</strong></div>
+      <div class="preview-card"><span>Issues</span><strong>${counts.issues || 0}</strong></div>
+      <div class="preview-card"><span>Risks</span><strong>${counts.risks || 0}</strong></div>
+    </div>
+    ${report.summary.ai_summary ? `
+      <h3>AI Summary</h3>
+      <p>${escapeHtml(report.summary.ai_summary.headline)}</p>
+      <ul>${(report.summary.ai_summary.bullets || []).map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
+    ` : ''}
+    <h3>Release Notes</h3>
+    <pre>${escapeHtml(report.release_notes_markdown)}</pre>
+    <h3>Changelog</h3>
+    <pre>${escapeHtml(report.changelog_markdown)}</pre>
+  `;
+}
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  button.textContent = 'Generating...';
+  try {
+    const body = {
+      repository_id: Number(form.repository_id.value),
+      custom_title: form.custom_title.value || null,
+      from_date: localDateTimeToIso(form.from_date.value),
+      to_date: localDateTimeToIso(form.to_date.value)
+    };
+    await jsonFetch('/api/v1/reports', {method: 'POST', body: JSON.stringify(body)});
+    window.location.reload();
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Generate report';
+  }
+});
+
+list.addEventListener('change', (event) => {
+  const toggle = event.target.closest('[data-anon-toggle]');
+  if (!toggle) return;
+  const panel = toggle.closest('.publish-panel');
+  const input = panel.querySelector('[data-display-name]');
+  input.disabled = !toggle.checked;
+  if (toggle.checked && !input.value) input.value = 'Private Repository';
+});
+
+list.addEventListener('click', async (event) => {
+  const button = event.target.closest('button[data-action]');
+  if (!button) return;
+  const item = button.closest('[data-report-id]');
+  const reportId = item.dataset.reportId;
+  if (button.dataset.action === 'view') {
+    const report = await jsonFetch(`/api/v1/reports/${reportId}`);
+    const preview = item.querySelector('.preview');
+    preview.style.display = preview.style.display === 'block' ? 'none' : 'block';
+    preview.innerHTML = renderPreview(report);
+  }
+  if (button.dataset.action === 'publish-panel') {
+    const panel = item.querySelector('.publish-panel');
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  }
+  if (button.dataset.action === 'publish') {
+    const panel = item.querySelector('.publish-panel');
+    const anonymize = panel.querySelector('[data-anon-toggle]').checked;
+    const displayName = panel.querySelector('[data-display-name]').value || null;
+    const report = await jsonFetch(`/api/v1/reports/${reportId}/publish`, {
+      method: 'POST',
+      body: JSON.stringify({is_repository_anonymized: anonymize, display_repository_name: displayName})
+    });
+    const publicUrl = `${window.location.origin}${report.public_url}`;
+    await copyText(publicUrl);
+    const urlBox = panel.querySelector('.public-url');
+    urlBox.style.display = 'block';
+    urlBox.textContent = `Copied: ${publicUrl}`;
+  }
+  if (button.dataset.action === 'revoke') {
+    if (!window.confirm('Revoke public access for this report? The private snapshot remains available.')) return;
+    await jsonFetch(`/api/v1/reports/${reportId}/revoke`, {method: 'POST', body: '{}'});
+    window.location.reload();
+  }
+});
+</script>
+{% endblock %}

@@ -1,52 +1,67 @@
 {% set health = stats.health %}
 {% set team = stats.team %}
+{% set max_score = team.max_score or 0 %}
+{% set ring_color = 'var(--success-text)' if health.score >= 70 else 'var(--warn-text)' if health.score >= 40 else 'var(--danger-text)' %}
 
-<section class="exec-hero" aria-label="Executive overview">
+<section class="exec-hero" aria-label="Engineering intelligence overview">
   <div>
-    <p class="eyebrow">Tổng quan</p>
-    <h1>Tổng Quan</h1>
+    <p class="eyebrow">Tổng quan vận hành</p>
+    <h1>Engineering Intelligence</h1>
     {% include 'components/repository_context.html' %}
-    <p class="exec-subtitle">Tín hiệu hoạt động, review flow và sức khỏe đội ngũ.</p>
+    <p class="exec-subtitle">Theo dõi nhịp commit, review flow, sức khỏe repository và tín hiệu vận hành của đội ngũ.</p>
   </div>
   <div class="exec-hero-actions">
-    <a class="live-pill" href="/api/v1/analytics/export/pdf"><i data-lucide="file-text"></i> Xuất PDF</a>
-    <a class="live-pill" href="/api/v1/analytics/export/xlsx"><i data-lucide="table"></i> Xuất Excel</a>
-    <span class="live-pill"><i data-lucide="radio"></i> Phân tích trực tiếp</span>
-    <span class="live-pill muted"><i data-lucide="database"></i> Dữ liệu từ DB</span>
+    <a class="live-pill" id="btn-export-pdf" href="/api/v1/analytics/export/pdf"><i data-lucide="file-text"></i> PDF</a>
+    <a class="live-pill" href="/api/v1/analytics/export/xlsx"><i data-lucide="table"></i> Excel</a>
+    <span class="live-pill live-now"><span class="pulse-dot"></span> Phân tích trực tiếp</span>
+    <span class="live-pill muted" data-last-sync="{{ stats.summary.last_synced_at or '' }}"><i data-lucide="clock-3"></i> <span data-global-last-sync>{% if stats.summary.last_synced_at %}Đồng bộ {{ stats.summary.last_synced_at }}{% else %}Chưa có lần đồng bộ{% endif %}</span></span>
   </div>
 </section>
 
 <section class="exec-kpi-grid" aria-label="Key metrics">
-  <article class="metric-card">
+  {% set deltas = stats.summary.deltas or {} %}
+  <article class="metric-card metric-repos" style="--metric-color: #58a6ff; --metric-bg: rgba(88, 166, 255, .10);">
     <div class="metric-icon"><i data-lucide="folder-git-2"></i></div>
-    <div>
-      <p class="metric-label">Kho Lưu Trữ</p>
-      <strong>{{ stats.summary.total_repositories }}</strong>
-      <span>{{ stats.summary.active_repositories }} hoạt động &middot; {{ stats.summary.inactive_repositories }} tạm ngưng</span>
+    <div class="metric-content">
+      <div class="metric-topline">
+        <p class="metric-label">Repository</p>
+        <span class="delta-badge" data-kpi-delta="repositories"{% if deltas.repositories is none %} hidden{% endif %}>{% if deltas.repositories is not none %}{{ "%+.1f"|format(deltas.repositories) }}%{% endif %}</span>
+      </div>
+      <strong data-kpi-value="repositories">{{ stats.summary.total_repositories }}</strong>
+      <span data-kpi-subtext="repositories">{{ stats.summary.active_repositories }} đang hoạt động · {{ stats.summary.inactive_repositories }} tạm lắng</span>
     </div>
   </article>
-  <article class="metric-card">
+  <article class="metric-card metric-commits" style="--metric-color: #a371f7; --metric-bg: rgba(163, 113, 247, .10);">
     <div class="metric-icon"><i data-lucide="git-commit-horizontal"></i></div>
-    <div>
-      <p class="metric-label">Commit</p>
-      <strong>{{ stats.summary.total_commits | default(0) }}</strong>
-      <span>{{ stats.summary.commits_last_7_days }} commit &middot; 7 ngày qua</span>
+    <div class="metric-content">
+      <div class="metric-topline">
+        <p class="metric-label">Commit</p>
+        <span class="delta-badge" data-kpi-delta="commits">{{ "%+.1f"|format(deltas.commits or 0) }}%</span>
+      </div>
+      <strong data-kpi-value="commits">{{ stats.summary.total_commits | default(0) }}</strong>
+      <span data-kpi-subtext="commits">{{ stats.summary.commits_last_7_days }} commit · 7 ngày qua</span>
     </div>
   </article>
-  <article class="metric-card">
+  <article class="metric-card metric-prs" style="--metric-color: #3fb950; --metric-bg: rgba(63, 185, 80, .10);">
     <div class="metric-icon"><i data-lucide="git-pull-request-arrow"></i></div>
-    <div>
-      <p class="metric-label">Pull Request</p>
-      <strong>{{ stats.summary.total_prs | default(0) }}</strong>
-      <span>Merge TB {{ stats.health.raw.avg_pr_merge_hours or "—" }} giờ</span>
+    <div class="metric-content">
+      <div class="metric-topline">
+        <p class="metric-label">Pull Request</p>
+        <span class="delta-badge" data-kpi-delta="pull_requests">{{ "%+.1f"|format(deltas.pull_requests or 0) }}%</span>
+      </div>
+      <strong data-kpi-value="pull_requests">{{ stats.summary.total_prs | default(0) }}</strong>
+      <span data-kpi-subtext="pull_requests">Merge TB {{ stats.health.raw.avg_pr_merge_hours or "—" }} giờ</span>
     </div>
   </article>
-  <article class="metric-card">
+  <article class="metric-card metric-issues" style="--metric-color: #d29922; --metric-bg: rgba(210, 153, 34, .10);">
     <div class="metric-icon"><i data-lucide="circle-dot"></i></div>
-    <div>
-      <p class="metric-label">Issue</p>
-      <strong>{{ stats.summary.total_issues | default(0) }}</strong>
-      <span>{{ stats.health.raw.stale_issues }} issue tồn đọng</span>
+    <div class="metric-content">
+      <div class="metric-topline">
+        <p class="metric-label">Issue</p>
+        <span class="delta-badge" data-kpi-delta="issues">{{ "%+.1f"|format(deltas.issues or 0) }}%</span>
+      </div>
+      <strong data-kpi-value="issues">{{ stats.summary.total_issues | default(0) }}</strong>
+      <span data-kpi-subtext="issues">{{ stats.health.raw.stale_issues }} issue cần chú ý</span>
     </div>
   </article>
 </section>
@@ -55,27 +70,30 @@
   <article class="analytics-panel health-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Sức Khỏe Dự Án</p>
-        <h2>Điểm hoạt động</h2>
+        <p class="panel-kicker">Sức khỏe dự án</p>
+        <h2>Điểm vận hành</h2>
       </div>
-      <span class="status-badge status-{{ health.status.tone }}">{{ health.status.label }}</span>
+      <span class="status-badge status-{{ health.status.tone }}" data-health-status>{{ health.status.label }}</span>
     </div>
     <div class="health-body">
-      <div class="health-ring" style="--score: {{ health.score }}%;">
-        <span>{{ health.score }}</span>
-        <small>/100</small>
+      <div class="health-ring" data-health-ring style="--score: {{ health.score }}%; --ring-color: {{ ring_color }};">
+        <div class="health-ring-value">
+          <span data-health-score>{{ health.score }}</span>
+          <small>/100</small>
+        </div>
       </div>
       <div class="health-copy">
-        <p>{{ health.primary_insight }}</p>
+        <p data-health-primary>{{ health.primary_insight }}</p>
         <strong>Gợi ý</strong>
-        <span>{{ health.recommendation }}</span>
+        <span data-health-recommendation>{{ health.recommendation }}</span>
       </div>
     </div>
-    <div class="breakdown-list">
+    <div class="breakdown-list" data-health-breakdown>
       {% for item in health.breakdown %}
+      {% set metric_tone = 'good' if item.value >= 70 else 'warn' if item.value >= 40 else 'bad' %}
       <div class="breakdown-row">
-        <span>{{ item.label }}</span>
-        <div class="breakdown-track"><i style="width: {{ item.value }}%"></i></div>
+        <span><i data-lucide="gauge"></i>{{ item.label }}</span>
+        <div class="breakdown-track"><i class="{{ metric_tone }}" style="width: {{ item.value }}%"></i></div>
         <strong>{{ item.value }}</strong>
       </div>
       {% endfor %}
@@ -83,15 +101,100 @@
   </article>
 
   <article class="analytics-panel">
-    <div class="panel-header">
+    <div class="panel-header" style="flex-wrap: wrap; gap: 10px;">
       <div>
         <p class="panel-kicker">Heatmap</p>
-        <h2>Mức độ hoạt động</h2>
+        <h2>Nhịp commit</h2>
       </div>
-      <span class="panel-stat">{{ stats.heatmap.total_commits }} commit</span>
+      <div class="heatmap-filters">
+        <select id="heatmap-branch-select" class="exec-select" onchange="onFilterChange()">
+          <option value="">Tất cả nhánh</option>
+          {% for b in stats.branches %}
+          <option value="{{ b }}">{{ b }}</option>
+          {% endfor %}
+        </select>
+        <select id="heatmap-contributor-select" class="exec-select" onchange="onFilterChange()">
+          <option value="">Tất cả contributor</option>
+          {% for c in stats.contributors %}
+          <option value="{{ c }}">{{ c }}</option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
-    <div id="commit-heatmap" class="commit-heatmap" aria-label="GitHub-style contribution heatmap">
+    
+    <div class="heatmap-badges">
+      <div class="heatmap-badge"><span class="badge-label">Tổng commit:</span> <strong data-heatmap-total>{{ stats.heatmap.total_commits }}</strong></div>
+      <div class="heatmap-badge"><span class="badge-label">Streak hiện tại:</span> <strong data-heatmap-current-streak>0 ngày</strong></div>
+      <div class="heatmap-badge"><span class="badge-label">Streak dài nhất:</span> <strong data-heatmap-longest-streak>0 ngày</strong></div>
+    </div>
+
+    <div id="commit-heatmap" class="commit-heatmap" aria-label="Contribution heatmap">
       <div class="loading-state"><span class="mini-spinner"></span> Đang tải heatmap</div>
+    </div>
+  </article>
+</section>
+
+<section class="exec-grid exec-grid-insights">
+  <article class="analytics-panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-kicker">Hiệu suất</p>
+        <h2>Team Velocity</h2>
+      </div>
+      <span class="panel-stat"><i data-lucide="zap"></i> Tốc độ</span>
+    </div>
+    <div class="kpi-insights-body">
+      <div class="kpi-insight-row">
+        <span>Commits / tuần</span>
+        <strong data-insight-commits-week>{{ stats.summary.commits_last_7_days }} commits</strong>
+      </div>
+      <div class="kpi-insight-row">
+        <span>Merge PR TB</span>
+        <strong data-insight-merge-time>{{ stats.health.raw.avg_pr_merge_hours or "—" }} giờ</strong>
+      </div>
+      <div class="kpi-insight-row">
+        <span>Streak dài nhất</span>
+        <strong data-insight-longest-streak-kpi>0 ngày</strong>
+      </div>
+    </div>
+  </article>
+
+  <article class="analytics-panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-kicker">Chất lượng</p>
+        <h2>Repository Health</h2>
+      </div>
+      <span class="panel-stat"><i data-lucide="activity"></i> Sức khỏe</span>
+    </div>
+    <div class="kpi-insights-body">
+      <div class="kpi-insight-row">
+        <span>Tỷ lệ Issue tồn đọng</span>
+        <strong data-insight-stale-ratio>{{ stats.health.raw.stale_issues or 0 }} issue</strong>
+      </div>
+      <div class="kpi-insight-row">
+        <span>Thời gian phản hồi PR</span>
+        <strong data-insight-pr-speed>{{ stats.health.raw.avg_pr_merge_hours or "—" }} giờ</strong>
+      </div>
+      <div class="kpi-insight-row">
+        <span>Nhánh hoạt động</span>
+        <strong data-insight-active-branches>{{ stats.summary.total_repositories }} repo</strong>
+      </div>
+    </div>
+  </article>
+
+  <article class="analytics-panel">
+    <div class="panel-header">
+      <div>
+        <p class="panel-kicker">Tự động hóa</p>
+        <h2>AI Insight Summary</h2>
+      </div>
+      <span class="status-badge status-positive"><span class="pulse-dot"></span> Đúc kết</span>
+    </div>
+    <div class="ai-summary-list">
+      <div class="ai-summary-item"><i data-lucide="sparkles"></i> <span data-ai-summary-1>Đang đúc kết...</span></div>
+      <div class="ai-summary-item"><i data-lucide="user"></i> <span data-ai-summary-2>Đang đúc kết...</span></div>
+      <div class="ai-summary-item"><i data-lucide="check-circle"></i> <span data-ai-summary-3>Đang đúc kết...</span></div>
     </div>
   </article>
 </section>
@@ -99,13 +202,12 @@
 <section class="analytics-panel">
   <div class="panel-header">
     <div>
-        <p class="panel-kicker">Insight</p>
+      <p class="panel-kicker">Insight</p>
       <h2>Tín hiệu nổi bật</h2>
     </div>
     <span class="panel-stat">Phân tích</span>
   </div>
-  {% if stats.insights %}
-  <div class="insight-grid">
+  <div class="insight-grid" data-insight-grid>
     {% for insight in stats.insights %}
     <article class="insight-card tone-{{ insight.tone }}">
       <div class="insight-icon"><i data-lucide="{{ insight.icon }}"></i></div>
@@ -115,221 +217,162 @@
         <span>{{ insight.detail }}</span>
       </div>
     </article>
+    {% else %}
+    <div class="empty-state compact">
+      <div class="empty-icon"><i data-lucide="sparkles"></i></div>
+      <h3>Chưa có insight nổi bật</h3>
+      <p>Các tín hiệu đáng chú ý sẽ xuất hiện tại đây.</p>
+    </div>
     {% endfor %}
   </div>
-  {% else %}
-  <div class="empty-state">
-    <div class="empty-icon"><i data-lucide="sparkles"></i></div>
-    <h3>Chưa có insight nổi bật</h3>
-    <p>Các tín hiệu đáng chú ý sẽ xuất hiện tại đây.</p>
-  </div>
-  {% endif %}
 </section>
 
 <section class="analytics-panel">
   <div class="panel-header">
     <div>
-        <p class="panel-kicker">KPI</p>
-      <h2>KPI Nổi Bật</h2>
+      <p class="panel-kicker">KPI</p>
+      <h2>Điểm nhấn vận hành</h2>
     </div>
-    <span class="panel-stat">Đánh giá</span>
+    <span class="panel-stat">Đội ngũ</span>
   </div>
   <div class="kpi-grid">
-    <article class="kpi-card">
-    <span>Contributor Nổi Bật</span>
-      {% if stats.kpi.top_contributor.login %}
-        <a class="kpi-person-link" href="https://github.com/{{ stats.kpi.top_contributor.login }}" target="_blank" rel="noopener noreferrer">{{ stats.kpi.top_contributor.name }}</a>
-      {% else %}
-        <strong>{{ stats.kpi.top_contributor.name }}</strong>
-      {% endif %}
-      <p>{{ stats.kpi.top_contributor.detail }}</p>
+    {% set kpi_items = [
+      ('user-round-check', 'Contributor nổi bật', stats.kpi.top_contributor, 'top_contributor'),
+      ('badge-check', 'Hiệu suất xử lý issue', stats.kpi.top_issue_resolver, 'top_issue_resolver'),
+      ('timer', 'Review nhanh nhất', stats.kpi.fastest_reviewer, 'fastest_reviewer')
+    ] %}
+    {% for icon, label, person, key in kpi_items %}
+    <article class="kpi-card" data-kpi-person="{{ key }}">
+      <div class="kpi-card-head">
+        <span class="kpi-icon"><i data-lucide="{{ icon }}"></i></span>
+        <span>{{ label }}</span>
+      </div>
+      <div class="kpi-person-line">
+        {% if person.avatar_url %}<img src="{{ person.avatar_url }}" alt="{{ person.name }}">{% endif %}
+        {% if person.login %}
+          <a class="kpi-person-link" href="https://github.com/{{ person.login }}" target="_blank" rel="noopener noreferrer">{{ person.name }}</a>
+        {% else %}
+          <strong>{{ person.name }}</strong>
+        {% endif %}
+      </div>
+      <p>{{ person.detail }}{% if key == 'fastest_reviewer' %} · {{ person.value }}{% endif %}</p>
     </article>
-    <article class="kpi-card">
-      <span>Hiệu Suất Xử Lý Issue</span>
-      {% if stats.kpi.top_issue_resolver.login %}
-        <a class="kpi-person-link" href="https://github.com/{{ stats.kpi.top_issue_resolver.login }}" target="_blank" rel="noopener noreferrer">{{ stats.kpi.top_issue_resolver.name }}</a>
-      {% else %}
-        <strong>{{ stats.kpi.top_issue_resolver.name }}</strong>
-      {% endif %}
-      <p>{{ stats.kpi.top_issue_resolver.detail }}</p>
-    </article>
-    <article class="kpi-card">
-      <span>Review Nhanh Nhất</span>
-      {% if stats.kpi.fastest_reviewer.login %}
-        <a class="kpi-person-link" href="https://github.com/{{ stats.kpi.fastest_reviewer.login }}" target="_blank" rel="noopener noreferrer">{{ stats.kpi.fastest_reviewer.name }}</a>
-      {% else %}
-        <strong>{{ stats.kpi.fastest_reviewer.name }}</strong>
-      {% endif %}
-      <p>{{ stats.kpi.fastest_reviewer.detail }} &middot; {{ stats.kpi.fastest_reviewer.value }}</p>
-    </article>
-    <article class="kpi-card">
-      <span>Repo Sôi Động Nhất</span>
+    {% endfor %}
+    <article class="kpi-card" data-kpi-repo>
+      <div class="kpi-card-head">
+        <span class="kpi-icon"><i data-lucide="folder-kanban"></i></span>
+        <span>Repo sôi động nhất</span>
+      </div>
       <strong>{{ stats.kpi.most_active_repo.full_name }}</strong>
       <p>{{ stats.kpi.most_active_repo.score }} điểm hoạt động</p>
     </article>
   </div>
 </section>
 
-<section class="exec-grid">
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">Repository</p>
-        <h2>Commit Theo Repo</h2>
-      </div>
+<section class="analytics-panel charts-section">
+  <div class="panel-header">
+    <div>
+      <p class="panel-kicker">Charts</p>
+      <h2>Xu hướng kỹ thuật</h2>
     </div>
-    <div class="chart-wrap"><canvas id="repo-ranking-chart"></canvas></div>
-  </article>
+    <span class="panel-stat">Chart.js</span>
+  </div>
+  
+  <div class="recharts-grid">
+    <!-- Chart 1: Commit Trend (Wide) -->
+    <article class="recharts-card is-wide">
+      <h3>Xu hướng Commit (30 ngày qua)</h3>
+      <div class="chart-body">
+        <canvas id="chart-commits"></canvas>
+      </div>
+    </article>
 
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">Xu Hướng</p>
-        <h2>30 Ngày Gần Nhất</h2>
+    <!-- Chart 2: Repo Activity -->
+    <article class="recharts-card">
+      <h3>Repo Ranking (Top hoạt động)</h3>
+      <div class="chart-body">
+        <canvas id="chart-repos"></canvas>
       </div>
-    </div>
-    <div class="chart-wrap"><canvas id="commit-trend-chart"></canvas></div>
-  </article>
+    </article>
+
+    <!-- Chart 3: Team Activity -->
+    <article class="recharts-card">
+      <h3>Hoạt động đội ngũ</h3>
+      <div class="chart-body">
+        <canvas id="chart-team"></canvas>
+      </div>
+    </article>
+
+    <!-- Chart 4: Contributor Mix -->
+    <article class="recharts-card">
+      <h3>Tỷ lệ đóng góp (Commit)</h3>
+      <div class="chart-body">
+        <canvas id="chart-mix"></canvas>
+      </div>
+    </article>
+
+    <!-- Chart 5: PR Merge Performance -->
+    <article class="recharts-card">
+      <h3>Hiệu suất & Tốc độ Merge PR</h3>
+      <div class="chart-body" style="position: relative;">
+        <canvas id="chart-prs"></canvas>
+        <div class="chart-center-text" id="chart-prs-center" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -30%); text-align: center; pointer-events: none;">
+          <strong style="font-size: 24px; color: var(--text); display: block; line-height: 1;">0%</strong>
+          <span style="font-size: 11px; color: var(--text-muted);">Hiệu suất</span>
+        </div>
+      </div>
+    </article>
+
+    <!-- Chart 6: Issue Status (Wide) -->
+    <article class="recharts-card is-wide">
+      <h3>Trạng thái Issue</h3>
+      <div class="chart-body">
+        <canvas id="chart-issues"></canvas>
+      </div>
+    </article>
+  </div>
 </section>
 
 <section class="exec-grid">
   <article class="analytics-panel">
     <div class="panel-header">
       <div>
-        <p class="panel-kicker">Contributor</p>
-        <h2>Phân Bố Commit</h2>
+        <p class="panel-kicker">Đội ngũ</p>
+        <h2>Bảng thành tích</h2>
       </div>
+      <span class="panel-stat" data-team-count>{{ team.summary.contributors }} contributor</span>
     </div>
-    <div class="chart-wrap small"><canvas id="commits-contributor-pie"></canvas></div>
-  </article>
-
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">Issue</p>
-        <h2>Hiệu Suất Xử Lý</h2>
-      </div>
-    </div>
-    <div class="chart-wrap small"><canvas id="issues-user-bar"></canvas></div>
-  </article>
-</section>
-
-<section class="exec-grid">
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">Đội Ngũ</p>
-        <h2>Bảng Thành Tích</h2>
-      </div>
-      <span class="panel-stat">{{ team.summary.contributors }} contributor</span>
-    </div>
-    {% if team.leaderboard %}
-    <div class="leaderboard">
+    <div class="leaderboard" data-leaderboard>
       {% for person in team.leaderboard[:6] %}
-      <div class="leader-row">
-        <span class="leader-rank">{{ loop.index }}</span>
+      {% set score_width = ((person.score / max_score) * 100) if max_score else 0 %}
+      <div class="leader-row{% if loop.index == 1 %} is-top{% endif %}">
+        <span class="leader-rank">{% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{% else %}#{{ loop.index }}{% endif %}</span>
         {% if person.login %}
-          <a class="leader-avatar" href="https://github.com/{{ person.login }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ person.login }} on GitHub">
-            {% if person.avatar_url %}
-              <img src="{{ person.avatar_url }}" alt="{{ person.login or person.name }}">
-            {% else %}
-              {{ (person.login or person.name or "U")[0].upper() }}
-            {% endif %}
+          <a class="leader-avatar" href="https://github.com/{{ person.login }}" target="_blank" rel="noopener noreferrer" aria-label="Mở GitHub {{ person.login }}">
+            {% if person.avatar_url %}<img src="{{ person.avatar_url }}" alt="{{ person.login or person.name }}">{% else %}{{ (person.login or person.name or "U")[0].upper() }}{% endif %}
           </a>
         {% else %}
-          <div class="leader-avatar">
-            {% if person.avatar_url %}
-              <img src="{{ person.avatar_url }}" alt="{{ person.login or person.name }}">
-            {% else %}
-              {{ (person.login or person.name or "U")[0].upper() }}
-            {% endif %}
-          </div>
+          <div class="leader-avatar">{% if person.avatar_url %}<img src="{{ person.avatar_url }}" alt="{{ person.name }}">{% else %}{{ (person.name or "U")[0].upper() }}{% endif %}</div>
         {% endif %}
         <div class="leader-main">
           {% if person.login %}
-            <a class="leader-name-link" href="https://github.com/{{ person.login }}" target="_blank" rel="noopener noreferrer">{{ person.login }}</a>
+            <a class="leader-name-link" href="https://github.com/{{ person.login }}" target="_blank" rel="noopener noreferrer">{{ person.login }} <i data-lucide="arrow-up-right"></i></a>
           {% else %}
             <strong>{{ person.name }}</strong>
           {% endif %}
-          <span>{{ person.commits }} commit &middot; {{ person.prs_merged }} PR đã merge &middot; {{ person.issues_closed }} issue đã xử lý</span>
+          <span>{{ person.commits }} commit · {{ person.prs_merged }} PR merged · {{ person.issues_closed }} issue xử lý</span>
+          <div class="leader-score-track"><i style="width: {{ score_width }}%"></i></div>
         </div>
-        <span class="leader-score">{{ person.score }}</span>
+        <span class="leader-score">{{ person.score }} điểm</span>
+      </div>
+      {% else %}
+      <div class="empty-state compact">
+        <div class="empty-icon"><i data-lucide="users"></i></div>
+        <h3>Chưa có contributor nổi bật</h3>
+        <p>Hoạt động của đội ngũ sẽ xuất hiện tại đây.</p>
       </div>
       {% endfor %}
     </div>
-    {% else %}
-    <div class="empty-state compact">
-      <div class="empty-icon"><i data-lucide="users"></i></div>
-      <h3>Chưa có contributor nổi bật</h3>
-      <p>Hoạt động của đội ngũ sẽ xuất hiện tại đây.</p>
-    </div>
-    {% endif %}
-  </article>
-
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">KPI Đội Ngũ</p>
-        <h2>So Sánh Hiệu Suất</h2>
-      </div>
-    </div>
-    <div class="team-kpi-grid">
-      <div><span>Commit</span><strong>{{ team.summary.commits }}</strong></div>
-      <div><span>Issue Đã Xử Lý</span><strong>{{ team.summary.issues_closed }}</strong></div>
-      <div><span>PR Đã Merge</span><strong>{{ team.summary.prs_merged }}</strong></div>
-      <div><span>Ngày Hoạt Động</span><strong>{{ team.summary.active_days }}</strong></div>
-    </div>
-    <div class="chart-wrap small"><canvas id="team-activity-chart"></canvas></div>
-  </article>
-</section>
-
-<section class="exec-grid">
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">Pull Request</p>
-        <h2>Hiệu Suất Merge</h2>
-      </div>
-    </div>
-    <div class="chart-wrap small"><canvas id="pr-metrics-chart"></canvas></div>
-  </article>
-
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">Issue</p>
-        <h2>Tình Trạng Xử Lý</h2>
-      </div>
-    </div>
-    <div class="chart-wrap small"><canvas id="issue-metrics-chart"></canvas></div>
-  </article>
-</section>
-
-<section class="exec-grid">
-  <article class="analytics-panel">
-    <div class="panel-header">
-      <div>
-        <p class="panel-kicker">Sôi Động Nhất</p>
-        <h2>Xếp Hạng Repo</h2>
-      </div>
-      <span class="panel-stat">5 repo</span>
-    </div>
-    {% if stats.most_active_repositories %}
-    <div class="repo-list">
-      {% for r in stats.most_active_repositories %}
-      <a class="repo-row" href="/dashboard/{{ r.id }}">
-        <span>{{ r.full_name }}</span>
-        <strong>{{ r.commit_count }} commits</strong>
-      </a>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state compact">
-      <div class="empty-icon"><i data-lucide="folder-search"></i></div>
-      <h3>Chưa có repo nổi bật</h3>
-      <p>Repo có hoạt động cao sẽ được làm nổi bật tại đây.</p>
-    </div>
-    {% endif %}
   </article>
 
   <article class="analytics-panel">
@@ -340,11 +383,11 @@
       </div>
       <span class="panel-stat">Mới nhất</span>
     </div>
-    {% if stats.activity_timeline %}
-    <div class="timeline-feed">
+    <div class="timeline-feed" data-timeline>
       {% for event in stats.activity_timeline %}
+      {% set event_icon = 'git-commit-horizontal' if event.type == 'commit' else 'git-pull-request-arrow' if event.type == 'pull_request' else 'circle-dot' if event.type == 'issue' else 'refresh-cw' %}
       <div class="timeline-item">
-        <span class="timeline-dot {{ event.type }}"></span>
+        <span class="timeline-dot {{ event.type }}"><i data-lucide="{{ event_icon }}"></i></span>
         <div>
           <div class="timeline-top">
             <strong>{{ event.label }}</strong>
@@ -354,14 +397,13 @@
           {% if event.detail %}<span>{{ event.detail }}</span>{% endif %}
         </div>
       </div>
+      {% else %}
+      <div class="empty-state compact">
+        <div class="empty-icon"><i data-lucide="rss"></i></div>
+        <h3>Chưa phát hiện hoạt động</h3>
+        <p>Commit, PR và issue mới sẽ xuất hiện theo thời gian.</p>
+      </div>
       {% endfor %}
     </div>
-    {% else %}
-    <div class="empty-state compact">
-      <div class="empty-icon"><i data-lucide="rss"></i></div>
-      <h3>Chưa phát hiện hoạt động</h3>
-      <p>Commit, PR và issue mới sẽ xuất hiện theo thời gian.</p>
-    </div>
-    {% endif %}
   </article>
 </section>

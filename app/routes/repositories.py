@@ -186,3 +186,35 @@ async def sync_all_repositories(
         f"/repositories?error=sync_failed&message={message}",
         status_code=302,
     )
+
+
+@router.post("/repositories/{repo_id}/reset")
+async def force_reset_repository(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> Response:
+    user = _authenticate(request, db)
+    if user is None:
+        return _login_redirect()
+
+    repo_repo = RepositoryRepository(db)
+    repository = repo_repo.get_by_user_and_id(user.id, repo_id)
+    if repository is None:
+        return RedirectResponse(
+            f"/repositories?error=reset_failed&message={quote('Repository not found.')}",
+            status_code=302,
+        )
+
+    repo_repo.update_sync_status(
+        repository,
+        status="failed",
+        last_sync_error="Sync was manually force reset.",
+        sync_started_at=None,
+    )
+    db.commit()
+
+    return RedirectResponse(
+        "/repositories?reset=1",
+        status_code=302,
+    )

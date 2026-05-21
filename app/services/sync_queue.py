@@ -1,6 +1,7 @@
 import asyncio
 import contextlib
 import logging
+from datetime import timedelta
 
 from sqlalchemy import select
 
@@ -9,6 +10,8 @@ from app.db.session import SessionLocal
 from app.models.repository import Repository
 from app.repositories import SyncJobRepository
 from app.services.sync_service import SyncService
+
+from app.utils.timezone import is_stale_sync, now_utc
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +26,7 @@ class SyncQueue:
     def start(self) -> None:
         if self._task is None or self._task.done():
             self._task = asyncio.create_task(self._worker(), name="git-analytics-sync-worker")
+        asyncio.create_task(self._recover_queued_jobs(), name="git-analytics-sync-recovery")
         if self._periodic_task is None or self._periodic_task.done():
             self._periodic_task = asyncio.create_task(
                 self._periodic_enqueue(),
@@ -64,6 +68,27 @@ class SyncQueue:
             db = SessionLocal()
             try:
                 job_repo = SyncJobRepository(db)
+                stale_before = now_utc() - timedelta(minutes=30)
+                for job in job_repo.list_stale_running(stale_before):
+                    logger.warning("Sync job %s exceeded 30 minutes. Marking failed.", job.id)
+                    job_repo.mark_failed(job, "Sync job timed out and was marked stale.")
+                db.commit()
+
+                # 1. Detect stale sync:
+                # If status = syncing and sync_started_at > 30 minutes, auto mark failed/stale.
+                for repo in db.scalars(select(Repository).where(Repository.last_sync_status == "syncing")).all():
+                    if is_stale_sync(repo.sync_started_at, threshold_minutes=30):
+                        logger.warning(
+                            "Repo %s: Sync has been running since %s (exceeded 30 minutes). Marking as stale/failed.",
+                            repo.id,
+                            repo.sync_started_at
+                        )
+                        repo.last_sync_status = "failed"
+                        repo.last_sync_error = "Sync timed out (stale sync)"
+                        repo.sync_started_at = None
+                        db.commit()
+
+                # 2. Auto-enqueue jobs
                 for user_repo in db.scalars(select(Repository)).all():
                     if user_repo.last_sync_status == "syncing":
                         continue
@@ -79,6 +104,27 @@ class SyncQueue:
                 logger.exception("Auto sync enqueue failed")
             finally:
                 db.close()
+
+    async def _recover_queued_jobs(self) -> None:
+        db = SessionLocal()
+        try:
+            job_repo = SyncJobRepository(db)
+            stale_before = now_utc() - timedelta(minutes=30)
+            recovered = 0
+            for job in job_repo.list_stale_running(stale_before):
+                job_repo.mark_retry_queued(job, "Recovered stale running job after worker restart.")
+                recovered += 1
+            for job in job_repo.list_queued(limit=100):
+                self.enqueue(job.id)
+                recovered += 1
+            db.commit()
+            if recovered:
+                logger.info("Recovered %s sync job(s) into the worker queue", recovered)
+        except Exception:
+            db.rollback()
+            logger.exception("Sync job recovery failed")
+        finally:
+            db.close()
 
     async def _run_job(self, job_id: int) -> None:
         db = SessionLocal()
@@ -102,7 +148,13 @@ class SyncQueue:
                 job = job_repo.get_by_id(job_id)
                 if job is None:
                     return
-                job_repo.mark_failed(job, str(exc) or exc.__class__.__name__)
+                error = str(exc) or exc.__class__.__name__
+                if job.attempts < job.max_attempts:
+                    job_repo.mark_retry_queued(job, error)
+                    db.commit()
+                    self.enqueue(job.id)
+                    return
+                job_repo.mark_failed(job, error)
                 db.commit()
         finally:
             db.close()

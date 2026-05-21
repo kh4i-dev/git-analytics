@@ -48,3 +48,11 @@ class Commit(Base):
 
     repository: Mapped["Repository"] = relationship(back_populates="commits")
     contributor: Mapped["Contributor | None"] = relationship(back_populates="commits")
+
+    @property
+    def repository_id(self) -> int:
+        return self.repo_id
+
+    @repository_id.setter
+    def repository_id(self, value: int) -> None:
+        self.repo_id = value

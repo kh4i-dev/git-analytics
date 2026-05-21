@@ -3,8 +3,33 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from io import BytesIO
 from typing import Any
+import unicodedata
 from xml.sax.saxutils import escape
 from zipfile import ZIP_DEFLATED, ZipFile
+
+
+def remove_vietnamese_accents(text: str) -> str:
+    char_map = {
+        'đ': 'd', 'Đ': 'D',
+        '—': '-', '–': '-',
+        '“': '"', '”': '"',
+        '‘': "'", '’': "'",
+        '•': '*', '·': '*',
+        '…': '...',
+    }
+    for k, v in char_map.items():
+        text = text.replace(k, v)
+    normalized = unicodedata.normalize('NFKD', text)
+    cleaned = "".join(c for c in normalized if not unicodedata.combining(c))
+    
+    final_chars = []
+    for c in cleaned:
+        try:
+            c.encode('latin-1')
+            final_chars.append(c)
+        except UnicodeEncodeError:
+            final_chars.append('?')
+    return "".join(final_chars)
 
 
 class AnalyticsExportService:
@@ -61,7 +86,8 @@ class AnalyticsExportService:
                 lines.append("")
             else:
                 lines.append("  ".join(row))
-        return _simple_pdf(lines)
+        stripped_lines = [remove_vietnamese_accents(line) for line in lines]
+        return _simple_pdf(stripped_lines)
 
 
 def _worksheet_xml(rows: list[list[str]]) -> str:

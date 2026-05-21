@@ -86,3 +86,11 @@ def relative_time(dt: datetime | None) -> str:
         m = diff.days // 30
         return f"{m} tháng trước"
     return format_date(vn_dt)
+
+
+def is_stale_sync(dt: datetime | None, threshold_minutes: int = 15) -> bool:
+    if dt is None:
+        return False
+    vn_dt = utc_to_vn(dt)
+    now = now_vn()
+    return now - vn_dt > timedelta(minutes=threshold_minutes)

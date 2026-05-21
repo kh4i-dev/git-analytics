@@ -420,3 +420,42 @@ def test_sync_requires_login(db_session: Session) -> None:
 
     assert response.status_code == 302
     assert response.headers["location"] == "/login"
+
+
+def test_force_reset_repository_route_marks_failed(
+    db_session: Session,
+) -> None:
+    user, session_cookie = create_logged_in_user(db_session)
+    repo_repo = RepositoryRepository(db_session)
+    repo = repo_repo.create(
+        {
+            "user_id": user.id,
+            "github_repo_id": 101,
+            "owner": "octo",
+            "name": "repo-alpha",
+            "full_name": "octo/repo-alpha",
+            "html_url": "https://github.com/octo/repo-alpha",
+            "last_sync_status": "syncing",
+            "sync_started_at": datetime(2026, 5, 21, 12, 0, tzinfo=UTC),
+        }
+    )
+    db_session.commit()
+
+    app = create_app()
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    client.cookies.set("git_analytics_session", session_cookie)
+
+    response = client.post(f"/repositories/{repo.id}/reset", follow_redirects=False)
+
+    assert response.status_code == 302
+    assert "reset=1" in response.headers["location"]
+
+    updated_repo = repo_repo.get_by_id(repo.id)
+    assert updated_repo.last_sync_status == "failed"
+    assert updated_repo.last_sync_error == "Sync was manually force reset."
+    assert updated_repo.sync_started_at is None

@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     oauth_state_cookie_name: str = "git_analytics_oauth_state"
     auto_sync_interval_minutes: int = 30
     workspace_feature_enabled: bool = False
+    report_default_lookback_days: int = 30
+    report_staleness_threshold_hours: int = 24
 
     model_config = SettingsConfigDict(
         env_file=".env",

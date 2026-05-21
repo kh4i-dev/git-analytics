@@ -1,10 +1,14 @@
+import asyncio
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 import json
+import logging
 from typing import Any, Protocol
 
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from app.clients.github_client import GitHubClient
 from app.core.exceptions import (
@@ -129,6 +133,8 @@ class SyncService:
             raise SyncFailedException(self._short_error(exc)) from exc
 
         client = self.github_client_factory(access_token)
+        if hasattr(client, "repo_id"):
+            client.repo_id = repository.id
 
         try:
             await self._check_rate_limit(client)
@@ -159,9 +165,12 @@ class SyncService:
                 started_at=started_at,
                 completed_at=completed_at,
             )
-        except Exception as exc:
+        except BaseException as exc:
             self.db.rollback()
             self._mark_failed(repo_id, exc)
+            if isinstance(exc, asyncio.CancelledError):
+                logger.warning("Repo %s: Sync task was cancelled", repo_id)
+                raise
             if isinstance(exc, AppException):
                 raise
             raise SyncFailedException(self._short_error(exc)) from exc
@@ -189,9 +198,20 @@ class SyncService:
     ) -> dict[str, int]:
         owner = repository.owner
         repo = repository.name
+        repo_id = repository.id
 
-        raw_contributors = await client.list_contributors(owner, repo)
-        raw_branches = await self._list_branches(client, repository)
+        import time
+
+        async def run_step(step_name: str, coro):
+            t0 = time.perf_counter()
+            logger.info("Repo %s: Starting step '%s'", repo_id, step_name)
+            res = await coro
+            duration = time.perf_counter() - t0
+            logger.info("Repo %s: Completed step '%s' in %.2fs", repo_id, step_name, duration)
+            return res
+
+        raw_contributors = await run_step("contributors", client.list_contributors(owner, repo))
+        raw_branches = await run_step("branches", self._list_branches(client, repository))
         branches_to_sync = self._branches_to_sync(repository, raw_branches)
         branch_rows = [
             {
@@ -216,12 +236,17 @@ class SyncService:
             branch_since = self._ensure_utc(branch.synced_at) if branch else None
             if branch_since is None:
                 branch_since = since
-            branch_commits = await self._list_commits_for_branch(
-                client,
-                owner,
-                repo,
-                since=branch_since,
-                branch_name=branch_name,
+            
+            logger.info("Repo %s: Syncing branch '%s'", repo_id, branch_name)
+            branch_commits = await run_step(
+                f"commits-branch-{branch_name}",
+                self._list_commits_for_branch(
+                    client,
+                    owner,
+                    repo,
+                    since=branch_since,
+                    branch_name=branch_name,
+                )
             )
             if branch_commits:
                 branch_last_sha[branch_name] = branch_commits[0].get("sha")
@@ -233,13 +258,19 @@ class SyncService:
                 raw_commit["_branch_name"] = branch_name
                 raw_commits.append(raw_commit)
 
-        raw_pull_requests = await client.list_pull_requests(
-            owner,
-            repo,
-            state="all",
-            since=since,
+        raw_pull_requests = await run_step(
+            "pull_requests",
+            client.list_pull_requests(
+                owner,
+                repo,
+                state="all",
+                since=since,
+            )
         )
-        raw_issues = await client.list_issues(owner, repo, state="all", since=since)
+        raw_issues = await run_step(
+            "issues",
+            client.list_issues(owner, repo, state="all", since=since)
+        )
 
         contributors_by_key: dict[tuple[str, str], Contributor] = {}
         for raw_contributor in raw_contributors:
@@ -454,7 +485,17 @@ class SyncService:
         list_branches = getattr(client, "list_branches", None)
         if list_branches is None:
             return self._default_branch_payload(repository)
-        branches = await list_branches(repository.owner, repository.name)
+        
+        # Branch sync timeout: e.g. 30 seconds
+        try:
+            branches = await asyncio.wait_for(
+                list_branches(repository.owner, repository.name),
+                timeout=30.0
+            )
+        except asyncio.TimeoutError as exc:
+            logger.error("Repo %s: Branch listing timed out", repository.id)
+            raise TimeoutError("Branch listing timed out after 30 seconds") from exc
+
         if branches:
             return branches
         return self._default_branch_payload(repository)
@@ -465,6 +506,24 @@ class SyncService:
         owner: str,
         repo: str,
         *,
+        since: datetime | None,
+        branch_name: str,
+    ) -> list[dict[str, Any]]:
+        # Commit pagination timeout: e.g. 60 seconds
+        try:
+            return await asyncio.wait_for(
+                self._list_commits_helper(client, owner, repo, since, branch_name),
+                timeout=60.0
+            )
+        except asyncio.TimeoutError as exc:
+            logger.error("Repo %s: Commit listing timed out for branch '%s'", getattr(client, "repo_id", None), branch_name)
+            raise TimeoutError(f"Commit listing timed out for branch {branch_name} after 60 seconds") from exc
+
+    async def _list_commits_helper(
+        self,
+        client: GitHubClientProtocol,
+        owner: str,
+        repo: str,
         since: datetime | None,
         branch_name: str,
     ) -> list[dict[str, Any]]:
@@ -523,7 +582,7 @@ class SyncService:
         prefix, _, suffix = pattern.partition("*")
         return name.startswith(prefix) and name.endswith(suffix)
 
-    def _mark_failed(self, repo_id: int, exc: Exception) -> None:
+    def _mark_failed(self, repo_id: int, exc: BaseException) -> None:
         try:
             repository = self.repository_repo.get_by_id(repo_id)
             if repository is None:
@@ -535,7 +594,7 @@ class SyncService:
                 sync_started_at=None,
             )
             self.db.commit()
-        except Exception:
+        except BaseException:
             self.db.rollback()
 
     def _label_names(self, labels: list[Any]) -> list[str]:

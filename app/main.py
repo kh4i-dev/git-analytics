@@ -14,8 +14,12 @@ from app.routes.api_sync import router as api_sync_router
 from app.routes.auth import router as auth_router
 from app.routes.dashboard import router as dashboard_router
 from app.routes.explore import router as explore_router
+from app.routes.engineering_reports import router as engineering_reports_router
 from app.routes.health import router as health_router
 from app.routes.repositories import router as repositories_router
+from app.routes.tools_release_notes import router as tools_release_notes_router
+from app.routes.tools_changelog import router as tools_changelog_router
+from app.routes.tools_risks import router as tools_risks_router
 from app.services.sync_queue import sync_queue
 
 
@@ -60,7 +64,11 @@ def create_app() -> FastAPI:
     app.include_router(api_insights_router)
     app.include_router(api_sync_router)
     app.include_router(explore_router)
+    app.include_router(engineering_reports_router)
     app.include_router(health_router)
+    app.include_router(tools_release_notes_router)
+    app.include_router(tools_changelog_router)
+    app.include_router(tools_risks_router)
     return app
 
 
