@@ -5,10 +5,11 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.exceptions import AuthenticationException
+from app.core.exceptions import AuthenticationException, ValidationException
 from app.core.session import parse_session_cookie
 from app.repositories import UserRepository
 from app.schemas.response import error_response, success_response
+from app.services.ai_settings_service import AiSettingsService
 from app.utils.deps import get_db
 
 router = APIRouter(prefix="/api/v1/ai", tags=["AI"])
@@ -16,7 +17,7 @@ router = APIRouter(prefix="/api/v1/ai", tags=["AI"])
 
 @router.post("/commit-message")
 async def ai_commit_message(request: Request, db: Session = Depends(get_db)) -> JSONResponse:
-    blocked = _require_local_workspace(request, db)
+    blocked = _require_ai_provider_config(request, db)
     if blocked is not None:
         return blocked
     payload = await request.json()
@@ -31,7 +32,7 @@ async def ai_commit_message(request: Request, db: Session = Depends(get_db)) -> 
 
 @router.post("/review")
 async def ai_review(request: Request, db: Session = Depends(get_db)) -> JSONResponse:
-    blocked = _require_local_workspace(request, db)
+    blocked = _require_ai_provider_config(request, db)
     if blocked is not None:
         return blocked
     payload = await request.json()
@@ -45,22 +46,22 @@ async def ai_review(request: Request, db: Session = Depends(get_db)) -> JSONResp
     if "select(" in lowered and ".limit(" not in lowered and "all()" in lowered:
         findings.append({"type": "performance", "title": "Unbounded query", "detail": "Query có thể trả quá nhiều bản ghi. Cân nhắc phân trang hoặc giới hạn rõ ràng."})
     if not findings:
-        findings.append({"type": "architecture", "title": "Chưa thấy rủi ro nổi bật", "detail": "Local Mode chưa phát hiện pattern nguy hiểm. Vẫn nên review logic nghiệp vụ và test coverage."})
+        findings.append({"type": "architecture", "title": "Chưa thấy rủi ro nổi bật", "detail": "AI review chưa phát hiện pattern nguy hiểm. Vẫn nên review logic nghiệp vụ và test coverage."})
     return JSONResponse(success_response(request, {"findings": findings, "files": _changed_files(diff)[:12]}))
 
 
 @router.post("/assistant")
 async def ai_assistant(request: Request, db: Session = Depends(get_db)) -> JSONResponse:
-    blocked = _require_local_workspace(request, db)
+    blocked = _require_ai_provider_config(request, db)
     if blocked is not None:
         return blocked
     payload = await request.json()
     question = str(payload.get("question") or "").strip()
     answer = _answer_from_repo_context(question)
-    return JSONResponse(success_response(request, {"answer": answer, "mode": "local_workspace"}))
+    return JSONResponse(success_response(request, {"answer": answer, "mode": "configured_provider"}))
 
 
-def _require_local_workspace(request: Request, db: Session) -> JSONResponse | None:
+def _require_ai_provider_config(request: Request, db: Session) -> JSONResponse | None:
     cookie = request.cookies.get(settings.session_cookie_name)
     if not cookie:
         return JSONResponse(
@@ -91,25 +92,18 @@ def _require_local_workspace(request: Request, db: Session) -> JSONResponse | No
             ),
             status_code=401,
         )
-    if not settings.is_local_workspace:
+    try:
+        AiSettingsService(db).get_execution_api_key(user_id)
+    except ValidationException as exc:
         return JSONResponse(
             error_response(
                 request,
-                code="LOCAL_WORKSPACE_REQUIRED",
-                message="Tính năng này chỉ khả dụng khi chạy Git Analytics ở chế độ Local Workspace.",
+                code="AI_PROVIDER_NOT_CONFIGURED",
+                message=exc.message,
             ),
-            status_code=403,
+            status_code=400,
         )
-    if settings.is_local_workspace:
-        return None
-    return JSONResponse(
-        error_response(
-            request,
-            code="LOCAL_WORKSPACE_REQUIRED",
-            message="Tính năng này chỉ khả dụng khi chạy Git Analytics ở chế độ Local Workspace.",
-        ),
-        status_code=403,
-    )
+    return None
 
 
 def _changed_files(diff: str) -> list[str]:
@@ -170,4 +164,4 @@ def _answer_from_repo_context(question: str) -> str:
         return "Sync pipeline chạy qua `SyncService`: kiểm tra rate limit, lấy branches/contributors/commits/PR/issues từ GitHub, upsert vào repository layer, rồi cập nhật trạng thái sync. Queue nền nằm ở `app/services/sync_queue.py`."
     if "architecture" in lowered or "kiến trúc" in lowered:
         return "Kiến trúc hiện tại là FastAPI + Jinja + SQLAlchemy. Routes xử lý HTTP, services giữ nghiệp vụ, repositories bọc query DB, models định nghĩa schema. Dashboard đọc analytics qua service/API."
-    return "Local Mode trả lời tốt nhất về auth, sync, analytics service, routes và cấu trúc module. Hỏi cụ thể theo flow hoặc file để nhận câu trả lời sát hơn."
+    return "AI review trả lời tốt nhất về auth, sync, analytics service, routes và cấu trúc module. Hỏi cụ thể theo flow hoặc file để nhận câu trả lời sát hơn."

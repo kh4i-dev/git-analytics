@@ -9,13 +9,13 @@
     <div>
       <span class="ai-kicker">AI Tools</span>
       <h1>AI workspace cho engineering team</h1>
-      <p>Soạn commit message, rà soát PR diff và hỏi nhanh về kiến trúc repository khi chạy Git Analytics ở chế độ Local Workspace.</p>
+      <p>Soáº¡n commit message, rÃ  soÃ¡t PR diff vÃ  há»i nhanh vá» kiáº¿n trÃºc repository khi cháº¡y Git Analytics á»Ÿ cháº¿ Ä‘á»™ AI provider.</p>
       <div class="ai-badges">
-        <span>Local Only</span>
+        <span>BYOK or Cloud</span>
         <span>Beta</span>
         <span>Requires Workspace Access</span>
       </div>
-      <a class="btn btn-primary" href="/login">Đăng nhập để sử dụng với repository của bạn</a>
+      <a class="btn btn-primary" href="/login">ÄÄƒng nháº­p Ä‘á»ƒ sá»­ dá»¥ng vá»›i repository cá»§a báº¡n</a>
     </div>
     <div class="ai-preview-card">
       <div class="panel-head">
@@ -24,8 +24,8 @@
       </div>
       <pre>feat(analytics): add branch-aware dashboard filters</pre>
       <div class="preview-list">
-        <div><strong>PR Diff Reviewer</strong><span>Phát hiện rủi ro bảo mật, hiệu năng và kiến trúc.</span></div>
-        <div><strong>Repo Assistant</strong><span>Trả lời dựa trên source context trong workspace local.</span></div>
+        <div><strong>PR Diff Reviewer</strong><span>PhÃ¡t hiá»‡n rá»§i ro báº£o máº­t, hiá»‡u nÄƒng vÃ  kiáº¿n trÃºc.</span></div>
+        <div><strong>Repo Assistant</strong><span>Tráº£ lá»i dá»±a trÃªn source context trong configured provider.</span></div>
       </div>
     </div>
   </section>
@@ -35,54 +35,54 @@
   <section class="ai-header">
     <div>
       <span class="ai-kicker">AI Workspace</span>
-      <h1>Trợ lý kỹ thuật</h1>
-      <p>Viết commit message, rà soát PR diff và hỏi nhanh về kiến trúc repository.</p>
+      <h1>Trá»£ lÃ½ ká»¹ thuáº­t</h1>
+      <p>Viáº¿t commit message, rÃ  soÃ¡t PR diff vÃ  há»i nhanh vá» kiáº¿n trÃºc repository.</p>
     </div>
     <div class="provider-strip">
-      <span class="mode-badge {{ 'enabled' if local_ai_enabled else 'disabled' }}">{{ 'Local Mode' if local_ai_enabled else 'Cloud Mode' }}</span>
-      <span>Local Only</span>
+      <span class="mode-badge {{ 'enabled' if ai_enabled else 'disabled' }}">{{ 'Configured' if ai_enabled else 'Needs setup' }}</span>
+      <span>BYOK or Cloud</span>
       <span>Beta</span>
       <span>Requires Workspace Access</span>
     </div>
   </section>
 
-  {% if not local_ai_enabled %}
+  {% if not ai_enabled %}
   <section class="workspace-lock">
-    <strong>Local Workspace chưa bật</strong>
-    <p>{{ workspace_message }}</p>
+    <strong>AI provider chÆ°a báº­t</strong>
+    <p>{{ ai_message }}</p>
   </section>
   {% endif %}
 
   <section class="ai-grid">
-    <article class="ai-panel {% if not local_ai_enabled %}is-disabled{% endif %}">
+    <article class="ai-panel {% if not ai_enabled %}is-disabled{% endif %}">
       <div class="panel-head">
-        <div><span>Commit</span><h2>Gợi ý commit message</h2></div>
-        <button class="btn btn-primary btn-sm" onclick="generateCommit()" {% if not local_ai_enabled %}disabled{% endif %}>Tạo</button>
+        <div><span>Commit</span><h2>Gá»£i Ã½ commit message</h2></div>
+        <button class="btn btn-primary btn-sm" onclick="generateCommit()" {% if not ai_enabled %}disabled{% endif %}>Táº¡o</button>
       </div>
-      <textarea id="commit-diff" placeholder="Dán git diff vào đây..." {% if not local_ai_enabled %}disabled{% endif %}></textarea>
-      <pre id="commit-output" class="ai-output">{% if local_ai_enabled %}Commit message sẽ xuất hiện tại đây.{% else %}{{ workspace_message }}{% endif %}</pre>
+      <textarea id="commit-diff" placeholder="DÃ¡n git diff vÃ o Ä‘Ã¢y..." {% if not ai_enabled %}disabled{% endif %}></textarea>
+      <pre id="commit-output" class="ai-output">{% if ai_enabled %}Commit message sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.{% else %}{{ ai_message }}{% endif %}</pre>
     </article>
 
-    <article class="ai-panel {% if not local_ai_enabled %}is-disabled{% endif %}">
+    <article class="ai-panel {% if not ai_enabled %}is-disabled{% endif %}">
       <div class="panel-head">
-        <div><span>Review</span><h2>Rà soát PR diff</h2></div>
-        <button class="btn btn-primary btn-sm" onclick="reviewDiff()" {% if not local_ai_enabled %}disabled{% endif %}>Review</button>
+        <div><span>Review</span><h2>RÃ  soÃ¡t PR diff</h2></div>
+        <button class="btn btn-primary btn-sm" onclick="reviewDiff()" {% if not ai_enabled %}disabled{% endif %}>Review</button>
       </div>
-      <textarea id="review-diff" placeholder="Dán PR diff để rà soát rủi ro..." {% if not local_ai_enabled %}disabled{% endif %}></textarea>
-      <div id="review-output" class="review-output">{% if local_ai_enabled %}Nhận xét review sẽ xuất hiện tại đây.{% else %}{{ workspace_message }}{% endif %}</div>
+      <textarea id="review-diff" placeholder="DÃ¡n PR diff Ä‘á»ƒ rÃ  soÃ¡t rá»§i ro..." {% if not ai_enabled %}disabled{% endif %}></textarea>
+      <div id="review-output" class="review-output">{% if ai_enabled %}Nháº­n xÃ©t review sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.{% else %}{{ ai_message }}{% endif %}</div>
     </article>
   </section>
 
-  <section class="ai-panel chat-panel {% if not local_ai_enabled %}is-disabled{% endif %}">
+  <section class="ai-panel chat-panel {% if not ai_enabled %}is-disabled{% endif %}">
     <div class="panel-head">
-      <div><span>Repo Assistant</span><h2>Hỏi về codebase</h2></div>
-      <button class="btn btn-primary btn-sm" onclick="askAssistant()" {% if not local_ai_enabled %}disabled{% endif %}>Gửi</button>
+      <div><span>Repo Assistant</span><h2>Há»i vá» codebase</h2></div>
+      <button class="btn btn-primary btn-sm" onclick="askAssistant()" {% if not ai_enabled %}disabled{% endif %}>Gá»­i</button>
     </div>
     <div id="chat-output" class="chat-output">
-      <div class="assistant-msg">{% if local_ai_enabled %}Hỏi về auth flow, sync pipeline, architecture hoặc module xử lý GitHub.{% else %}{{ workspace_message }}{% endif %}</div>
+      <div class="assistant-msg">{% if ai_enabled %}Há»i vá» auth flow, sync pipeline, architecture hoáº·c module xá»­ lÃ½ GitHub.{% else %}{{ ai_message }}{% endif %}</div>
     </div>
     <div class="chat-input-row">
-      <input id="assistant-question" placeholder="Ví dụ: Các module sync hoạt động thế nào?" {% if not local_ai_enabled %}disabled{% endif %}>
+      <input id="assistant-question" placeholder="VÃ­ dá»¥: CÃ¡c module sync hoáº¡t Ä‘á»™ng tháº¿ nÃ o?" {% if not ai_enabled %}disabled{% endif %}>
     </div>
   </section>
 </div>
@@ -155,12 +155,12 @@
 
 {% if not is_public %}
 <script>
-const LOCAL_AI_ENABLED = {{ 'true' if local_ai_enabled else 'false' }};
-const WORKSPACE_MESSAGE = {{ workspace_message|tojson }};
+const ai_enabled = {{ 'true' if ai_enabled else 'false' }};
+const ai_message = {{ ai_message|tojson }};
 
 async function postAI(path, payload) {
-  if (!LOCAL_AI_ENABLED) {
-    throw new Error(WORKSPACE_MESSAGE);
+  if (!ai_enabled) {
+    throw new Error(ai_message);
   }
   const res = await fetch(path, {
     method: 'POST',
@@ -175,23 +175,23 @@ async function postAI(path, payload) {
 
 async function generateCommit() {
   const output = document.getElementById('commit-output');
-  output.textContent = 'Đang phân tích diff...';
+  output.textContent = 'Äang phÃ¢n tÃ­ch diff...';
   try {
     const data = await postAI('/api/v1/ai/commit-message', {diff: document.getElementById('commit-diff').value});
     output.textContent = data.message;
   } catch (err) {
-    output.textContent = 'Chưa tạo được commit message: ' + err.message;
+    output.textContent = 'ChÆ°a táº¡o Ä‘Æ°á»£c commit message: ' + err.message;
   }
 }
 
 async function reviewDiff() {
   const output = document.getElementById('review-output');
-  output.textContent = 'Đang rà soát diff...';
+  output.textContent = 'Äang rÃ  soÃ¡t diff...';
   try {
     const data = await postAI('/api/v1/ai/review', {diff: document.getElementById('review-diff').value});
     output.innerHTML = data.findings.map(item => `<div class="review-item"><strong>${item.title}</strong><span>${item.detail}</span></div>`).join('');
   } catch (err) {
-    output.textContent = 'Chưa review được diff: ' + err.message;
+    output.textContent = 'ChÆ°a review Ä‘Æ°á»£c diff: ' + err.message;
   }
 }
 
@@ -203,7 +203,7 @@ async function askAssistant() {
     const data = await postAI('/api/v1/ai/assistant', {question});
     output.innerHTML += `<div class="assistant-msg" style="margin-top:8px">${data.answer}</div>`;
   } catch (err) {
-    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--danger-text)">Chưa có câu trả lời: ${err.message}</div>`;
+    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--danger-text)">ChÆ°a cÃ³ cÃ¢u tráº£ lá»i: ${err.message}</div>`;
   }
 }
 </script>

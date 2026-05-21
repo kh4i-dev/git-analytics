@@ -22,6 +22,7 @@ def test_models_create_expected_sqlite_schema() -> None:
         "issues",
         "sync_jobs",
         "repository_engineering_reports",
+        "ai_provider_settings",
     }
 
     unique_constraints = {
@@ -38,6 +39,10 @@ def test_models_create_expected_sqlite_schema() -> None:
     assert "uq_commits_repo_sha" in unique_constraints["commits"]
     assert "uq_pull_requests_repo_number" in unique_constraints["pull_requests"]
     assert "uq_issues_repo_number" in unique_constraints["issues"]
+    assert (
+        "uq_ai_provider_settings_user_mode_provider"
+        in unique_constraints["ai_provider_settings"]
+    )
 
     assert "ix_repositories_user_id" in indexes["repositories"]
     assert "ix_branches_repository_id" in indexes["branches"]
@@ -52,3 +57,5 @@ def test_models_create_expected_sqlite_schema() -> None:
     assert "ix_reports_user_generated" in indexes["repository_engineering_reports"]
     assert "ix_reports_repo_range" in indexes["repository_engineering_reports"]
     assert "ix_reports_public_token" in indexes["repository_engineering_reports"]
+    assert "ix_ai_provider_settings_user_id" in indexes["ai_provider_settings"]
+    assert "ix_ai_provider_settings_user_default" in indexes["ai_provider_settings"]

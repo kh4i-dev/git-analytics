@@ -7,6 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.ai_provider_setting import AiProviderSetting
     from app.models.engineering_report import RepositoryEngineeringReport
     from app.models.repository import Repository
 
@@ -38,6 +39,10 @@ class User(Base):
         cascade="all, delete-orphan",
     )
     engineering_reports: Mapped[list["RepositoryEngineeringReport"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    ai_provider_settings: Mapped[list["AiProviderSetting"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
     )

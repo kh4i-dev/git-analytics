@@ -1,3 +1,4 @@
+from app.models.ai_provider_setting import AiProviderSetting
 from app.models.branch import Branch
 from app.models.commit import Commit
 from app.models.contributor import Contributor
@@ -9,6 +10,7 @@ from app.models.sync_job import SyncJob
 from app.models.user import User
 
 __all__ = [
+    "AiProviderSetting",
     "Branch",
     "Commit",
     "Contributor",

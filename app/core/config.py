@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     github_callback_url: str = "http://localhost:8000/auth/github/callback"
     secret_key: str = Field(default="change-me-in-local-env")
     encryption_key: str | None = None
+    openai_api_key: str | None = None
+    gemini_api_key: str | None = None
+    claude_api_key: str | None = None
 
     session_cookie_name: str = "git_analytics_session"
     oauth_state_cookie_name: str = "git_analytics_oauth_state"

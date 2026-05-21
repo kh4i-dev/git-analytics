@@ -21,66 +21,52 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purple)"><path d="M12 2a8 8 0 0 1 8 8 4 4 0 0 1-4 4H4a4 4 0 0 1-4-4 8 8 0 0 1 8-8z"/><path d="M9 22h6"/><path d="M12 19v3"/></svg>
             AI Settings
           </h3>
-          <p>Configure how Git Analytics powers commit messages, PR review, and the repo assistant.</p>
+          <p>Use your own provider API key for commit messages, PR review, and repo assistant.</p>
         </div>
-        <span class="ai-mode-badge" id="ai-active-mode-label">Local Workspace</span>
+        <span class="ai-mode-badge">BYOK</span>
+      </div>
+
+      <div class="ai-callout ai-callout-provider">
+        <strong>Provider API keys</strong>
+        <span>This works on localhost too. Local runtime only means the app runs on your machine; AI requests still use your selected provider API key.</span>
       </div>
 
       <div class="ai-mode-grid" id="ai-mode-grid" aria-label="AI mode selection">
-        <label class="ai-mode-card" id="mode-local">
-          <input type="radio" name="ai_mode" value="local" onchange="onModeChange('local')">
-          <div class="ai-mode-card-body">
-            <span class="ai-mode-icon" style="color:#58a6ff;background:rgba(88,166,255,.1);border-color:rgba(88,166,255,.22);">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>
-            </span>
-            <div>
-              <div class="ai-mode-name">Local Workspace</div>
-              <div class="ai-mode-desc">Use local repository context, git diff, and Grapuco graph context when available. No provider API key required.</div>
-            </div>
-            <span class="ai-mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg></span>
-          </div>
-        </label>
-
         <label class="ai-mode-card" id="mode-byok">
-          <input type="radio" name="ai_mode" value="byok" onchange="onModeChange('byok')">
+          <input type="radio" name="ai_mode" value="byok" onchange="onModeChange('byok')" checked>
           <div class="ai-mode-card-body">
             <span class="ai-mode-icon" style="color:#a371f7;background:rgba(163,113,247,.1);border-color:rgba(163,113,247,.22);">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
             </span>
             <div>
-              <div class="ai-mode-name">Use my API key <span class="ai-inline-badge">BYOK</span></div>
-              <div class="ai-mode-desc">Use your own OpenAI, Gemini, or Claude API key for commit messages, PR review, and repo assistant.</div>
+              <div class="ai-mode-name">Use my API key</div>
+              <div class="ai-mode-desc">Use your own OpenAI, Gemini, or Claude API key.</div>
             </div>
             <span class="ai-mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg></span>
           </div>
         </label>
 
-        <label class="ai-mode-card ai-mode-card-disabled" id="mode-cloud">
-          <input type="radio" name="ai_mode" value="cloud" onchange="onModeChange('cloud')" aria-describedby="cloud-preview-note">
+        <label class="ai-mode-card" id="mode-cloud">
+          <input type="radio" name="ai_mode" value="cloud" onchange="onModeChange('cloud')">
           <div class="ai-mode-card-body">
             <span class="ai-mode-icon" style="color:#3fb950;background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.22);">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
             </span>
             <div>
-              <div class="ai-mode-name">Git Analytics Cloud AI <span class="ai-inline-badge ai-preview-badge">Preview</span></div>
-              <div class="ai-mode-desc">Managed AI mode for hosted workflows. Preview only while billing and hosted inference are not production-ready.</div>
+              <div class="ai-mode-name">Git Analytics Cloud AI <span class="ai-mode-badge">Preview</span></div>
+              <div class="ai-mode-desc" id="cloud-mode-copy">Uses Git Analytics server-side provider configuration. No personal API key required.</div>
             </div>
             <span class="ai-mode-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m20 6-11 11-5-5"/></svg></span>
           </div>
         </label>
       </div>
 
-      <div class="ai-callout ai-callout-local" id="ai-local-info">
-        <strong>Local Workspace mode</strong>
-        <span>Local mode works best with Grapuco MCP/indexed repo context. No cloud provider request is made unless a provider is selected.</span>
-      </div>
-
       <div class="ai-callout ai-callout-cloud" id="ai-cloud-info" hidden>
-        <strong id="cloud-preview-note">Cloud AI is preview-only</strong>
-        <span>Hosted billing and managed inference are not production-ready in this build. Keep this mode for preview workflows only.</span>
+        <strong>Cloud AI</strong>
+        <span>Uses Git Analytics server-side provider configuration. No personal API key required.</span>
       </div>
 
-      <div class="ai-byok-panel" id="ai-byok-panel" hidden>
+      <div class="ai-byok-panel" id="ai-byok-panel">
         <div class="ai-provider-footer ai-provider-footer-single">
           <label>
             Default provider
@@ -291,7 +277,7 @@
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
           <span class="perm-env-dot {% if is_local_dev %}dot-dev{% else %}dot-prod{% endif %}"></span>
           <span class="badge badge-label {% if is_local_dev %}perm-badge-dev{% else %}perm-badge-prod{% endif %}">
-            {% if is_local_dev %}Local Workspace — Active{% else %}Local Workspace — Off{% endif %}
+            {% if is_local_dev %}Local Runtime — Active{% else %}Local Runtime — Off{% endif %}
           </span>
         </div>
       </div>
@@ -299,7 +285,7 @@
       {% if not is_local_dev %}
       <div class="perm-lock-banner">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-        <span>Local Workspace đang tắt. Đặt <code>APP_ENV=development</code> và <code>WORKSPACE_FEATURE_ENABLED=true</code>, sau đó khởi động lại server.</span>
+        <span>Local runtime đang tắt. Đặt <code>APP_ENV=development</code> và <code>WORKSPACE_FEATURE_ENABLED=true</code>, sau đó khởi động lại server.</span>
       </div>
       {% endif %}
 
@@ -517,67 +503,6 @@
   .system-preview i:nth-child(1) { background:#161b22; }
   .system-preview i:nth-child(2) { background:#4c566a; }
   .system-preview i:nth-child(3) { background:#81a1c1; }
-  .ai-mode-grid {
-    display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:10px;
-    margin-bottom:14px;
-  }
-  .ai-mode-card {
-    display:flex;
-    gap:10px;
-    align-items:flex-start;
-    min-height:116px;
-    padding:12px;
-    border:1px solid var(--border);
-    border-radius:var(--radius);
-    background:var(--surface-2);
-    cursor:pointer;
-    transition:border-color .16s, background .16s, transform .16s;
-  }
-  .ai-mode-card:hover {
-    border-color:var(--text-link);
-    background:var(--surface-hover);
-    transform:translateY(-1px);
-  }
-  .ai-mode-card input {
-    margin-top:3px;
-    accent-color:var(--text-link);
-  }
-  .ai-mode-card strong {
-    display:block;
-    color:var(--text);
-    font-size:13px;
-    margin-bottom:5px;
-  }
-  .ai-mode-card small {
-    display:block;
-    color:var(--text-muted);
-    font-size:12px;
-    line-height:1.45;
-  }
-  .ai-cloud-limits {
-    display:grid;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
-    gap:10px;
-    margin-bottom:14px;
-  }
-  .ai-cloud-limits div {
-    padding:10px 12px;
-    border:1px solid var(--border-sub);
-    border-radius:var(--radius);
-    background:rgba(88,166,255,.05);
-  }
-  .ai-cloud-limits strong {
-    display:block;
-    color:var(--text);
-    font-size:12px;
-    margin-bottom:4px;
-  }
-  .ai-cloud-limits span {
-    color:var(--text-muted);
-    font-size:12px;
-  }
   .ai-key-grid {
     display:grid;
     grid-template-columns:repeat(3, minmax(0, 1fr));
@@ -758,7 +683,6 @@
   @media (max-width: 860px) {
     .theme-grid,
     .ai-mode-grid,
-    .ai-cloud-limits,
     .ai-key-grid { grid-template-columns:1fr; }
     .settings-section-head { flex-direction:column; }
     .ai-provider-footer {
@@ -792,11 +716,15 @@
     margin-bottom: 10px;
   }
 
-  /* Mode grid */
+  .ai-settings-head {
+    align-items: flex-start;
+    gap: 16px;
+  }
   .ai-mode-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0,1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
+    margin-top: 14px;
   }
   .ai-mode-card {
     position: relative;
@@ -817,13 +745,22 @@
     background: rgba(88,166,255,.06);
     box-shadow: inset 0 0 0 1px rgba(88,166,255,.28), 0 4px 18px rgba(0,0,0,.14);
   }
+  .ai-mode-card.disabled {
+    cursor: not-allowed;
+    opacity: .58;
+  }
+  .ai-mode-card.disabled:hover {
+    border-color: var(--border);
+    background: var(--surface-2);
+    transform: none;
+  }
   .ai-mode-card input[type=radio] { display: none; }
   .ai-mode-card-body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 14px;
     height: 100%;
+    padding: 14px;
   }
   .ai-mode-icon {
     width: 34px;
@@ -835,16 +772,15 @@
     flex-shrink: 0;
   }
   .ai-mode-name {
+    color: var(--text);
     font-size: 13px;
     font-weight: 700;
-    color: var(--text);
     margin-bottom: 2px;
   }
   .ai-mode-desc {
-    font-size: 12px;
     color: var(--text-muted);
+    font-size: 12px;
     line-height: 1.45;
-    flex: 1;
   }
   .ai-mode-check {
     display: none;
@@ -859,31 +795,6 @@
     right: 10px;
   }
   .ai-mode-card.selected .ai-mode-check { display: grid; }
-
-  .ai-settings-head {
-    align-items: flex-start;
-    gap: 16px;
-  }
-  .ai-inline-badge {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 6px;
-    padding: 1px 6px;
-    border-radius: 999px;
-    background: rgba(163,113,247,.15);
-    color: #a371f7;
-    font-size: 10px;
-    font-weight: 800;
-    letter-spacing: .04em;
-    vertical-align: middle;
-  }
-  .ai-preview-badge {
-    background: rgba(63,185,80,.12);
-    color: #3fb950;
-  }
-  .ai-mode-card-disabled {
-    opacity: .9;
-  }
   .ai-callout {
     display: grid;
     gap: 4px;
@@ -906,7 +817,7 @@
     font-size: 12px;
     line-height: 1.5;
   }
-  .ai-callout-local {
+  .ai-callout-provider {
     border-color: rgba(88,166,255,.24);
     background: rgba(88,166,255,.07);
   }
@@ -1252,31 +1163,14 @@
 <script>
 const IS_LOCAL_DEV = {{ 'true' if is_local_dev else 'false' }};
 const PERM_KEY = 'ga_permissions';
-const AI_SETTINGS_KEY = 'ga_ai_settings';
-// Dev-only browser storage fallback until a server-side settings flow exists.
-// Saved keys stay masked in the UI and are never written back into inputs.
 
 /* ── AI Settings ─────────────────────────────────────────── */
-const AI_MODE_VALUES = new Set(['local', 'byok', 'cloud']);
+const AI_MODE_VALUES = new Set(['byok', 'cloud']);
 const AI_PROVIDER_VALUES = new Set(['openai', 'gemini', 'claude']);
-const AI_MODE_LABELS = { local: 'Local Workspace', byok: 'BYOK API Keys', cloud: 'Cloud AI Preview' };
-let aiDraftSettings = { mode: 'local', provider: 'openai' };
-
-function readAiSettings() {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(AI_SETTINGS_KEY) || '{}');
-    return parsed && typeof parsed === 'object' ? parsed : {};
-  } catch (_) {
-    return {};
-  }
-}
-
-function writeAiSettings(settings) {
-  localStorage.setItem(AI_SETTINGS_KEY, JSON.stringify(settings));
-}
+let aiSettingsState = null;
 
 function validateAiMode(mode) {
-  return AI_MODE_VALUES.has(mode) ? mode : 'local';
+  return AI_MODE_VALUES.has(mode) ? mode : 'byok';
 }
 
 function validateAiProvider(provider) {
@@ -1300,6 +1194,15 @@ function setAiSaving(isSaving) {
   if (deleteButton) deleteButton.disabled = isSaving;
 }
 
+function setAiModeSavingState() {
+  const modeInput = document.querySelector('input[name="ai_mode"]:checked');
+  const mode = validateAiMode(modeInput ? modeInput.value : 'byok');
+  const saveButton = document.getElementById('save-ai-config-btn');
+  if (saveButton && mode === 'cloud' && (!aiSettingsState || !aiSettingsState.cloud_available)) {
+    saveButton.disabled = true;
+  }
+}
+
 function onModeChange(mode) {
   const nextMode = validateAiMode(mode);
   document.querySelectorAll('input[name="ai_mode"]').forEach(input => {
@@ -1309,31 +1212,71 @@ function onModeChange(mode) {
   const selectedCard = document.getElementById('mode-' + nextMode);
   if (selectedCard) selectedCard.classList.add('selected');
   const byokPanel = document.getElementById('ai-byok-panel');
-  const localInfo = document.getElementById('ai-local-info');
   const cloudInfo = document.getElementById('ai-cloud-info');
   if (byokPanel) byokPanel.hidden = nextMode !== 'byok';
-  if (localInfo) localInfo.hidden = nextMode !== 'local';
   if (cloudInfo) cloudInfo.hidden = nextMode !== 'cloud';
-  const modeLabel = document.getElementById('ai-active-mode-label');
-  if (modeLabel) modeLabel.textContent = AI_MODE_LABELS[nextMode] || AI_MODE_LABELS.local;
-  aiDraftSettings = Object.assign({}, aiDraftSettings, { mode: nextMode });
-  setAiStatus('Configuration changed. Save to keep this browser configuration.', 'muted');
+  updateProviderOptions(nextMode);
+  setAiModeSavingState();
+  setAiStatus('Configuration changed. Save to keep this server configuration.', 'muted');
 }
 
 function onProviderChange(provider) {
   const nextProvider = validateAiProvider(provider);
   const select = document.getElementById('ai-provider-select');
   if (select) select.value = nextProvider;
-  aiDraftSettings = Object.assign({}, aiDraftSettings, { provider: nextProvider });
-  setAiStatus('Provider changed. Save to keep this browser configuration.', 'muted');
+  setAiStatus('Provider changed. Save to keep this server configuration.', 'muted');
 }
 
 function updateSavedKeyStatus(settings) {
+  const providers = settings && Array.isArray(settings.providers) ? settings.providers : [];
+  const byProvider = Object.fromEntries(providers.map(item => [item.provider, item]));
   AI_PROVIDER_VALUES.forEach(provider => {
     const status = document.querySelector('[data-key-status="' + provider + '"]');
     if (!status) return;
-    status.textContent = settings.keys && settings.keys[provider] ? 'Saved key: ********' : 'No saved key in this browser.';
+    const item = byProvider[provider] || {};
+    status.textContent = item.has_key ? 'Saved key: ' + (item.masked_key || '********') : 'No saved key.';
   });
+}
+
+function updateCloudMode(settings) {
+  const cloudCard = document.getElementById('mode-cloud');
+  const cloudInput = document.querySelector('input[name="ai_mode"][value="cloud"]');
+  const cloudCopy = document.getElementById('cloud-mode-copy');
+  if (!cloudCard || !cloudInput) return;
+  const available = Boolean(settings && settings.cloud_available);
+  cloudCard.classList.toggle('disabled', !available);
+  cloudInput.disabled = !available;
+  if (cloudCopy) {
+    cloudCopy.textContent = available
+      ? 'Uses Git Analytics server-side provider configuration. No personal API key required.'
+      : 'Preview only. Server-side provider configuration is not available yet.';
+  }
+}
+
+function updateProviderOptions(mode) {
+  const select = document.getElementById('ai-provider-select');
+  if (!select) return;
+  const current = validateAiProvider(select.value || 'openai');
+  const providers = aiSettingsState && Array.isArray(aiSettingsState.providers) ? aiSettingsState.providers : [];
+  const byProvider = Object.fromEntries(providers.map(item => [item.provider, item]));
+  select.innerHTML = '';
+  AI_PROVIDER_VALUES.forEach(provider => {
+    const item = byProvider[provider] || {};
+    if (mode === 'cloud' && !item.cloud_available) return;
+    const option = document.createElement('option');
+    option.value = provider;
+    option.textContent = provider === 'openai' ? 'OpenAI' : provider === 'gemini' ? 'Gemini' : 'Claude';
+    select.appendChild(option);
+  });
+  if (!select.options.length) {
+    const option = document.createElement('option');
+    option.value = current;
+    option.textContent = 'Cloud provider not configured';
+    select.appendChild(option);
+  }
+  select.value = Array.from(select.options).some(option => option.value === current)
+    ? current
+    : select.options[0].value;
 }
 
 function clearKeyInputs() {
@@ -1343,63 +1286,86 @@ function clearKeyInputs() {
   });
 }
 
-function loadAiSettings() {
-  const stored = readAiSettings();
-  const mode = validateAiMode(stored.mode || 'local');
-  const provider = validateAiProvider(stored.provider || 'openai');
+function applyAiSettings(settings) {
+  aiSettingsState = settings || {};
+  updateCloudMode(aiSettingsState);
+  const mode = validateAiMode(aiSettingsState.mode || 'byok');
+  const provider = validateAiProvider(aiSettingsState.default_provider || 'openai');
   const providerSelect = document.getElementById('ai-provider-select');
   if (providerSelect) providerSelect.value = provider;
-  aiDraftSettings = { mode, provider };
+  updateSavedKeyStatus(aiSettingsState);
   onModeChange(mode);
-  onProviderChange(provider);
-  updateSavedKeyStatus(stored);
+  if (providerSelect) providerSelect.value = provider;
   clearKeyInputs();
-  setAiStatus('Loaded saved browser configuration. Saved keys remain masked.', 'muted');
+  setAiStatus('Loaded saved server configuration. Saved keys remain masked.', 'muted');
 }
 
-function saveAIConfiguration() {
-  setAiSaving(true);
+async function loadAiSettings() {
+  setAiStatus('Loading AI configuration...', 'muted');
   try {
-    const modeInput = document.querySelector('input[name="ai_mode"]:checked');
-    const providerSelect = document.getElementById('ai-provider-select');
-    const mode = validateAiMode(modeInput ? modeInput.value : 'local');
-    const provider = validateAiProvider(providerSelect ? providerSelect.value : 'openai');
-    const stored = readAiSettings();
-    const keys = Object.assign({}, stored.keys || {});
-    if (mode === 'byok') {
-      document.querySelectorAll('[data-provider-key]').forEach(input => {
-        const keyProvider = validateAiProvider(input.dataset.providerKey || 'openai');
-        const value = input.value.trim();
-        if (value) keys[keyProvider] = value;
-      });
+    const response = await fetch('/api/settings/ai', { headers: { 'Accept': 'application/json' } });
+    const payload = await response.json();
+    if (!response.ok || payload.error) {
+      throw new Error(payload.error ? payload.error.message : 'Could not load AI settings.');
     }
-    const payload = { mode, provider, keys, updated_at: new Date().toISOString() };
-    writeAiSettings(payload);
-    updateSavedKeyStatus(payload);
-    clearKeyInputs();
-    setAiStatus('AI configuration saved. Keys are masked and are not rendered back into inputs.', 'success');
-    if (window.showToast) window.showToast('AI configuration saved.');
+    applyAiSettings(payload.data);
   } catch (_) {
-    setAiStatus('Could not save AI configuration. Check browser storage permissions.', 'error');
-  } finally {
-    setAiSaving(false);
+    setAiStatus('Could not load AI configuration.', 'error');
   }
 }
 
-function deleteAIConfiguration() {
+async function saveAIConfiguration() {
   setAiSaving(true);
   try {
-    localStorage.removeItem(AI_SETTINGS_KEY);
-    clearKeyInputs();
-    updateSavedKeyStatus({});
-    onModeChange('local');
-    onProviderChange('openai');
-    setAiStatus('Saved AI keys deleted from this browser.', 'success');
+    const modeInput = document.querySelector('input[name="ai_mode"]:checked');
+    const mode = validateAiMode(modeInput ? modeInput.value : 'byok');
+    const providerSelect = document.getElementById('ai-provider-select');
+    const provider = validateAiProvider(providerSelect ? providerSelect.value : 'openai');
+    const keys = {};
+    document.querySelectorAll('[data-provider-key]').forEach(input => {
+      const keyProvider = validateAiProvider(input.dataset.providerKey || 'openai');
+      const value = input.value.trim();
+      if (value) keys[keyProvider] = value;
+    });
+    const response = await fetch('/api/settings/ai', {
+      method: 'PUT',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode, default_provider: provider, keys }),
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.error) {
+      throw new Error(payload.error ? payload.error.message : 'Could not save AI settings.');
+    }
+    applyAiSettings(payload.data);
+    setAiStatus('AI configuration saved. Keys are encrypted server-side and remain masked.', 'success');
+    if (window.showToast) window.showToast('AI configuration saved.');
+  } catch (_) {
+    setAiStatus('Could not save AI configuration. Check provider keys and cloud availability.', 'error');
+  } finally {
+    setAiSaving(false);
+    setAiModeSavingState();
+  }
+}
+
+async function deleteAIConfiguration() {
+  setAiSaving(true);
+  try {
+    const response = await fetch('/api/settings/ai/keys', {
+      method: 'DELETE',
+      headers: { 'Accept': 'application/json' },
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.error) {
+      throw new Error(payload.error ? payload.error.message : 'Could not delete saved keys.');
+    }
+    applyAiSettings(payload.data);
+    setAiStatus('Saved BYOK keys deleted from the server.', 'success');
     if (window.showToast) window.showToast('Saved AI keys deleted.');
   } catch (_) {
     setAiStatus('Could not delete saved AI settings.', 'error');
   } finally {
     setAiSaving(false);
+    setAiModeSavingState();
   }
 }
 

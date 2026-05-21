@@ -12,6 +12,7 @@ from app.core.security import decrypt_token
 from app.core.session import parse_session_cookie
 from app.models.user import User
 from app.repositories import RepositoryRepository, SyncJobRepository, UserRepository
+from app.services.ai_settings_service import AiSettingsService
 from app.services.analytics_service import AnalyticsService
 from app.services.insights_service import InsightsService
 from app.utils.deps import get_db
@@ -271,7 +272,15 @@ async def ai_tools_page(
 ) -> Response:
     user = _authenticate(request, db)
     repos = RepositoryRepository(db).list_by_user(user.id, page=1, per_page=100) if user else []
-    local_ai_enabled = bool(user and settings.is_local_workspace)
+    ai_settings = AiSettingsService(db).get_settings(user.id) if user else None
+    ai_enabled = bool(
+        user
+        and ai_settings
+        and (
+            (ai_settings["mode"] == "cloud" and ai_settings["cloud_available"])
+            or any(item["has_key"] for item in ai_settings["providers"])
+        )
+    )
     return templates.TemplateResponse(
         request=request,
         name="ai_tools.html",
@@ -282,8 +291,8 @@ async def ai_tools_page(
             "active_page": "ai_tools",
             "base_template": "layouts/dashboard_base.html" if user else "layouts/public_base.html",
             "is_public": user is None,
-            "local_ai_enabled": local_ai_enabled,
-            "workspace_message": "Tính năng này chỉ khả dụng khi chạy Git Analytics ở chế độ Local Workspace.",
+            "ai_enabled": ai_enabled,
+            "ai_message": "Configure BYOK or Cloud AI in Settings before using AI tools.",
         },
     )
 

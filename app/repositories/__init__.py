@@ -1,3 +1,4 @@
+from app.repositories.ai_settings_repository import AiSettingsRepository
 from app.repositories.branch_repo import BranchRepository
 from app.repositories.commit_repo import CommitRepository
 from app.repositories.contributor_repo import ContributorRepository
@@ -12,6 +13,7 @@ from app.repositories.changelog_repository import ChangelogRepository
 from app.repositories.risk_repository import RiskRepository
 
 __all__ = [
+    "AiSettingsRepository",
     "BranchRepository",
     "CommitRepository",
     "ContributorRepository",

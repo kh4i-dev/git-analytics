@@ -10,6 +10,7 @@ from app.core.logging import configure_logging, set_trace_id
 from app.routes.api_analytics import router as api_analytics_router
 from app.routes.api_ai import router as api_ai_router
 from app.routes.api_insights import router as api_insights_router
+from app.routes.api_settings import router as api_settings_router
 from app.routes.api_sync import router as api_sync_router
 from app.routes.auth import router as auth_router
 from app.routes.dashboard import router as dashboard_router
@@ -62,6 +63,7 @@ def create_app() -> FastAPI:
     app.include_router(api_analytics_router)
     app.include_router(api_ai_router)
     app.include_router(api_insights_router)
+    app.include_router(api_settings_router)
     app.include_router(api_sync_router)
     app.include_router(explore_router)
     app.include_router(engineering_reports_router)
