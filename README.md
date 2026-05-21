@@ -196,29 +196,28 @@ sequenceDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Pending: Repository connected
-    Pending --> Syncing: User clicks Sync
+    direction LR
+    [*] --> pending: Repository connected
+    pending --> syncing: User clicks Sync
     
-    state Syncing {
-        [*] --> RateLimitCheck
-        RateLimitCheck --> FetchData: Quota sufficient
-        RateLimitCheck --> Failed: Quota exceeded
-        
-        FetchData --> FetchCommits
-        FetchCommits --> FetchPullRequests
-        FetchPullRequests --> FetchIssues
-        FetchIssues --> PersistData
-        PersistData --> [*]
-    end
+    state syncing {
+        [*] --> checking_rate_limit
+        checking_rate_limit --> fetching_commits: Quota sufficient
+        checking_rate_limit --> sync_error: Quota exceeded
+        fetching_commits --> fetching_pull_requests
+        fetching_pull_requests --> fetching_issues
+        fetching_issues --> persisting_data
+        persisting_data --> [*]
+    }
     
-    Syncing --> Success: All data persisted
-    Syncing --> Failed: Error at any step
+    syncing --> success: All data persisted
+    syncing --> sync_error: Error at any step
     
-    Success --> Syncing: User clicks Sync (incremental)
-    Failed --> Syncing: User clicks Sync (retry)
+    success --> syncing: Incremental sync
+    sync_error --> syncing: Retry
     
-    Success --> [*]
-    Failed --> [*]
+    success --> [*]
+    sync_error --> [*]
 ```
 
 ---
