@@ -22,11 +22,21 @@
 
 ## Product Direction
 
+- **Engineering Intelligence Platform**: Git Analytics is positioned as a Dev Analytics SaaS and Repository Intelligence Workspace — not a GitHub dashboard clone or basic commit viewer.
+
+- **Single-Repo Intelligence First**: All Phase 1 features operate within single-repository scope. Multi-repo analytics belong to the Future Operating System Update.
+
+- **Report Snapshot + Sharing**: Engineering Reports are immutable snapshots shareable via capability URL. This is the core distribution mechanism in Phase 1.
+
+- **AI Engineering Utilities**: AI Workspace provides commit message generation, PR diff review, and repo Q&A. Local fallback mode ships in Phase 1; hosted AI providers are Phase 2.
+
+- **SaaS-Grade UI/UX**: Dark theme, compact analytics layout, typography-first design inspired by GitHub/Vercel/Linear.
+
 - **Personal Developer Utility**: The primary product direction for the current roadmap; a tool for an Individual Developer to turn repository activity into useful personal outputs.
 
 - **Team Engineering Intelligence**: A later product direction for team and organization workflows. Avoid treating "workspace", "team", or "org" as current-domain concepts until Team, Organization, and Membership / Role are introduced.
 
-- **Active Product Phases**: The current implementation roadmap covers Phase 1 Engineering Toolkit, Phase 2 Single-Repo AI Insight Engine, and Phase 3 Hosted/SaaS Foundation.
+- **Active Product Phases**: The current implementation roadmap covers Phase 1 Engineering Toolkit, Phase 2 Single-Repo AI Insight Engine, Phase 3 Hosted/SaaS Foundation, and Phase 4 Multi-Repo Intelligence.
 
 - **Future Operating System Update**: The deferred roadmap update for multi-repo intelligence, workspace-level reports, cross-repo contributor ranking, executive overview, and identity resolution.
 
@@ -132,3 +142,176 @@
 - **API Response Format**: Standardized JSON structure: `{ data, error: { code, message }, meta: { trace_id, timestamp } }`. All responses — success and error — follow this format for consistency.
 
 - **Hybrid Routing**: Two sets of routes coexist. Page routes (`/dashboard/*`) return Jinja2 HTML (layout + skeleton). API routes (`/api/v1/*`) return JSON data. Frontend JS calls API routes via fetch to populate Chart.js. Pages show loading → data → or error state.
+
+---
+
+## Implemented Systems
+
+### Analytics
+- **Repository Analytics**: Full per-repo analytics with commits, PRs, issues breakdown.
+- **Contributor Analytics**: Per-contributor profile with commit activity, PRs, issues.
+- **Branch Analytics**: Multi-branch sync support with branch selector and analytics mode.
+- **Commit Heatmap**: GitHub-style contribution grid (365-day) with CSS grid layout, responsive overflow, tooltips.
+- **KPI Scoring**: Activity scoring with health gauge (0-100).
+- **Repository Health Score**: Composite health metric based on commit frequency, PR merge rate, issue closure.
+- **PR / Issue Metrics**: Merge time, closure rate, status distribution, label analytics.
+- **Activity Insights**: Time-of-day, weekday distribution, streak tracking.
+- **Engineering Dashboard**: Full dashboard with Overview, Commits, PRs, Issues, Insights pages.
+- **Executive Overview**: High-level cards for health, velocity, contributors, trends.
+
+### Repository Management
+- **Multi-branch sync support**: Sync all branches or selected branches.
+- **Branch Selector**: UI control to switch between branches.
+- **Branch Analytics Mode**: Per-branch analytics view.
+- **Repository Status**: Sync state badges (pending, syncing, success, failed).
+- **Sync Timestamps**: `last_synced_at`, `sync_started_at` tracking.
+- **Sync States**: State machine with pending → syncing → success/failed.
+
+### AI Workspace
+- **Commit Message Generator**: Generate commit messages from staged changes.
+- **PR Diff Reviewer**: AI-powered PR diff review and suggestions.
+- **Repo Assistant**: Q&A over repository data.
+- **Local Fallback AI Mode**: Offline-capable AI using local models.
+- **Future Hosted AI Architecture**: Documented provider model (OpenAI/Gemini/BYOK).
+
+### Export & Reports
+- **PDF Export**: Engineering report export with typography and layout.
+- **Excel Export**: Data export in spreadsheet format.
+- **Immutable Engineering Reports**: Snapshot-based report system.
+- **Snapshot Architecture**: Point-in-time capture of analytics state.
+
+---
+
+## Architecture Decisions
+
+### Current Architecture
+- **Single-user oriented**: One user per deployment, no workspace/team abstraction.
+- **Manual sync driven**: User initiates sync via button press.
+- **Repository-scoped analytics**: All analytics computed within single repo boundary.
+- **Synchronous/per-repo sync**: Sequential per-repository data fetching.
+- **DB snapshot based reports**: Reports serialize analytics state at generation time.
+
+### Engineering Operating System
+- Remains a **roadmap vision**.
+- **NOT a current implementation target**.
+- Architecture deliberately avoids premature enterprise complexity.
+
+---
+
+## Sync Layer Limitations
+
+### Current
+- Per-repository sync, mostly synchronous/manual.
+- Not event-driven yet.
+- Not queue-based yet.
+
+### Known Future Requirements
+- Worker pool for concurrent sync
+- Retry strategy with exponential backoff
+- Stale sync recovery detection
+- `sync_jobs` table for job tracking
+- Idempotent sync guarantees
+- Rate-limit aware scheduling
+
+---
+
+## Contributor Limitations
+
+### Current Mapping
+- Simple identity resolution: `github_login` (preferred) → `email` (fallback).
+- Same person with multiple emails appears as separate Contributors.
+
+### Do NOT Use Current Mapping For
+- High-stakes KPI
+- Organization-level ranking
+- Accurate cross-repo identity correlation
+
+### Future Contributor Identity Layer
+- `contributor_identities` table
+- Aliases and email mapping
+- Confidence scoring
+- Merge/split identity management
+
+---
+
+## UI/UX Design System
+
+### Design Direction
+- GitHub/Vercel/Linear inspired dark SaaS UI.
+- Compact analytics layout.
+- Typography-first with responsive dashboard.
+- Engineering-grade cards and data tables.
+
+### Implemented
+- Branch selector and analytics controls.
+- Responsive tables with horizontal scroll.
+- Contributor profile navigation.
+- Executive overview cards with health score widgets.
+- Sync status badges with color coding.
+- AI Workspace UI with conversation layout.
+- Improved login landing page.
+
+### Heatmap Layout Rules
+- CSS grid with fixed cell sizing.
+- `overflow-x: auto` for horizontal scroll.
+- `fit-content` inner grid (no flex-wrap hacks).
+- No infinite canvas expansion.
+- Aligned month labels and responsive cell spacing.
+- Loading/skeleton state and tooltip improvements.
+
+---
+
+## PDF / Export System
+
+### Current Export Capabilities
+- PDF export with basic typography.
+- Excel export for raw data.
+
+### Documented Improvements Needed
+- Proper typography and spacing in PDF.
+- Visual hierarchy for report readability.
+- Charts/images support in exports.
+- Branded SaaS report layout.
+- Printable dashboard snapshot.
+- Executive summary formatting.
+- Current export limitations are clearly documented.
+
+---
+
+## AI Tools
+
+### Current AI Workspace
+- **Local fallback mode**: Runs AI tasks without external API calls.
+- **Future hosted provider mode**: Architecture for OpenAI/Gemini/etc.
+- **BYOK concept**: Bring-your-own-key documented.
+- **No fake AI responses**: When AI is unavailable, clear error states shown.
+- **Provider/TODO states**: Each tool shows its current provider readiness.
+
+### Future
+- OpenAI provider support.
+- Gemini provider support.
+- Cloud inference pipeline.
+- Hybrid local/cloud execution strategy.
+
+---
+
+## Product Principles
+
+### Key Principles
+- **Trust > fake intelligence**: Never fabricate AI results.
+- **Immutable snapshots**: Reports are point-in-time captures.
+- **Stable analytics over flashy features**: Foundation before embellishment.
+- **Document limitations honestly**: Known limitations are explicitly documented.
+- **Avoid premature enterprise complexity**: No enterprise features until Phase 3+.
+- **Avoid scope creep**: Each phase has hard boundaries.
+- **Vision != implementation target**: Engineering Operating System is vision, not current target.
+
+---
+
+## Project Status
+
+- Strong Phase 1 foundation established.
+- SaaS-grade UI direction established and documented.
+- Architecture direction stabilized with clear layering.
+- Roadmap clarified through Phase 4 with explicit scope boundaries.
+- Scope boundaries documented with specific "NOT in scope" items per phase.
