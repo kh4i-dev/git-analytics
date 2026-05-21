@@ -1,104 +1,158 @@
-# Git Analytics — Engineering Intelligence Platform
+# Git Analytics
 
-Git Analytics is an Engineering Intelligence Platform — a self-hosted Dev Analytics SaaS and Repository Intelligence Workspace. Built with FastAPI, SQLAlchemy 2.0, Jinja2, and Vanilla CSS, it connects to GitHub via secure OAuth, synchronizes repository data, and delivers engineering-grade analytics, AI-powered insights, immutable reports, and public sharing via capability URL.
+Engineering Intelligence Platform for repository analytics, contributor insights, branch intelligence, and AI-powered engineering reports.
+
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/fastapi-latest-009688)](https://fastapi.tiangolo.com)
+
+---
+
+## Product Positioning
+
+Git Analytics is an Engineering Intelligence Workspace focused on:
+
+- repository health scoring
+- contributor insights and KPI tracking
+- branch-aware analytics
+- engineering KPIs and trends
+- immutable engineering reports with public sharing
+- AI-powered developer tooling (commit generation, PR review, repo Q&A)
+
+Built as a self-hosted platform connecting to GitHub via secure OAuth. Designed for individual developers who want to understand their repository activity beyond what GitHub Insights provides.
+
+---
+
+## Screenshots
+
+_Add screenshots here for maximum impact._
+
+| Dashboard Overview | Contribution Heatmap |
+|---|---|
+| `![dashboard](screenshots/dashboard.png)` | `![heatmap](screenshots/heatmap.png)` |
+
+| Repository Analytics | AI Workspace |
+|---|---|
+| `![analytics](screenshots/analytics.png)` | `![ai-tools](screenshots/ai-tools.png)` |
+
+| Report Export | Branch Analytics |
+|---|---|
+| `![export](screenshots/export.png)` | `![branch](screenshots/branch.png)` |
 
 ---
 
 ## Features
 
-### Security & Authentication
-- **Secure GitHub OAuth**: Login/logout using GitHub App scopes (`repo` + `read:user`), granting access to public and private repositories.
-- **Fernet Token Encryption**: GitHub access tokens are symmetrically encrypted in the database and decrypted strictly in memory.
-- **Signed Session Cookies**: `httpOnly`, `secure`, and `sameSite` cookie sessions.
-
-### Repository Data Synchronization
-- **Pre-sync Rate Limit Guard**: Checks GitHub API quota before syncing.
-- **Incremental Sync Engine**: Full first sync, subsequent syncs fetch only new data via `since` parameter.
-- **Multi-Branch Sync**: Sync all branches or select individual branches.
-- **Fault-Tolerant Upserts**: Interruptions do not destroy previously synced data.
-- **Sync States**: pending, syncing, success, failed — with color-coded badges.
-
-### Engineering Analytics
-- **Repository Analytics**: Full per-repo breakdown of commits, PRs, issues.
-- **Branch Analytics**: Per-branch analytics with branch selector.
-- **Contributor Analytics**: Per-contributor profiles with activity breakdown.
-- **Executive Overview**: Health score, velocity, contributor trends.
-- **Commit Heatmap**: 365-day GitHub-style contribution grid (CSS grid, responsive).
-- **KPI Scoring**: Activity score with health gauge (0-100).
-- **PR Intelligence**: Merge time, closure rate, status distribution.
-- **Issue Intelligence**: Open/closed rate, label analytics, time to close.
-- **Activity Insights**: Streaks, time-of-day, weekday distribution.
-
-### Engineering Reports
-- **Immutable Snapshots**: Point-in-time capture of repository analytics.
-- **Release Notes**: Auto-generated from commit and PR data.
-- **Changelog**: Structured changelog generation.
-- **Risk Insights**: Automated risk analysis based on repository activity.
-- **Public Sharing**: Capability URL access with revoke and token rotation.
-- **Report Anonymization**: Hide repository name in public view.
-- **PDF and Excel Export**: Download reports as PDF or spreadsheet.
-
-### AI Workspace
-- **Commit Message Generator**: Generate conventional commits from staged changes.
-- **PR Diff Reviewer**: AI-powered code review and suggestions.
-- **Repo Assistant**: Natural language Q&A over repository data.
-- **Local Fallback Mode**: Runs on-device, no API key required.
-- **Future Hosted Providers**: OpenAI, Gemini, BYOK architecture ready.
-
-### Ecosystem Explore Feed
-- **Cached Trending Repositories**: Parallel background fetchers loading trending GitHub repos with language filtering.
-- **Hacker News and AI Dev Tools**: Aggregated Hacker News stories and curated developer tools.
-- **In-Memory TTL Caching**: Custom asyncio-based cache layer preventing API rate limits.
+- Multi-branch analytics with branch selector
+- Contributor KPI tracking and profiles
+- Engineering health scoring (0-100 gauge)
+- GitHub OAuth integration with encrypted token storage
+- AI commit message generator and PR diff reviewer
+- AI repository assistant for natural language Q&A
+- Export PDF and Excel engineering reports
+- Immutable engineering snapshots with capability URL sharing
+- Public report revoke and token rotation
+- Report anonymization for public viewers
+- GitHub / Vercel-inspired dark SaaS UI
+- Contribution heatmap (365-day GitHub-style grid)
+- Activity insights (streaks, time-of-day, weekday distribution)
+- Pre-sync rate limit guard
+- Incremental sync engine (full first, then since)
 
 ---
 
-## Architecture and Tech Stack
-
-- **Framework**: FastAPI (async ASGI app factory with Swagger UI)
-- **ORM / Database**: SQLAlchemy 2.0 + Alembic migrations. SQLite (dev), PostgreSQL (prod)
-- **View Engine**: Jinja2 + Chart.js for dynamic client rendering
-- **Styling**: Custom Vanilla CSS (dark theme)
-- **Testing**: pytest (integration and service contract testing)
-- **AI**: Local fallback mode (Phase 1), hosted providers ready (Phase 2)
-
-### Layered Architecture
+## Architecture
 
 ```
-Routes -> Services -> Repositories / Clients -> Database / GitHub API
+┌─────────────────────────────────────────────────────────┐
+│                    CLIENT (Browser)                       │
+├─────────────────────────────────────────────────────────┤
+│  Jinja2 Templates        │  Chart.js                    │
+│  Dark SaaS UI            │  Async data fetching          │
+└──────────────────┬───────┴──────────┬────────────────────┘
+                   │ page routes       │ API routes
+                   ▼                   ▼
+┌─────────────────────────────────────────────────────────┐
+│                    FASTAPI APPLICATION                    │
+├─────────────────────────────────────────────────────────┤
+│  Routes: /dashboard/*  /api/v1/*  /auth/*  /reports/*   │
+│  Services: Sync, Analytics, Reports, AI, Export          │
+│  Clients: GitHub REST API (paginated, rate-limited)       │
+│  ORM: SQLAlchemy 2.0 + Alembic migrations                │
+└─────────────────────────────────────────────────────────┘
 ```
 
-Each layer has a single responsibility: routes handle HTTP, services orchestrate business logic, repositories persist data, clients communicate with external APIs.
+### Frontend
+- Jinja2 templates with server-rendered pages
+- Chart.js for interactive charts and heatmaps
+- Dark SaaS UI (GitHub / Vercel / Linear inspired)
+- Responsive layout with compact analytics cards
 
-See full architecture details in [docs/architecture.md](docs/architecture.md).
+### Backend
+- FastAPI async application with Swagger UI
+- SQLAlchemy 2.0 ORM (SQLite dev, PostgreSQL prod)
+- GitHub REST API client with pagination and rate limit handling
+- Repository sync services (full and incremental)
+
+### Analytics Engine
+- Branch-aware data sync and aggregation
+- Contributor identity resolution (github_login with email fallback)
+- Repository health scoring (commit frequency, PR merge rate, issue closure)
+- Snapshot-based immutable engineering reports
 
 ---
 
-## Setup and Installation
+## Current Scope
 
-### Prerequisites
+### Phase 1 (Active)
+- Single repository intelligence
+- Immutable engineering reports with public sharing (capability URL)
+- Manual sync architecture (button press, no background worker)
+- AI workspace with local fallback mode
+- PDF and Excel export
+- GitHub OAuth authentication
 
-- Python 3.11+
-- GitHub OAuth App (register at GitHub Settings > Developer Settings > OAuth Apps)
+### Phase 2 (Planned)
+- Hosted AI providers (OpenAI, Gemini, BYOK)
+- Scheduled report generation groundwork
+- AI insight layer across all analytics
 
-### 1. Clone and Configure
+### Phase 3 (Planned)
+- Background workers and queue system
+- Async sync engine with retry and recovery
+- Tenant isolation
+
+### Phase 4 (Planned)
+- Multi-repo intelligence
+- Contributor identity resolution (aliases, email mapping, confidence scoring)
+- Cross-repo analytics and ranking
+
+---
+
+## Not in Scope (Phase 1)
+
+- Background sync worker — sync is manual
+- Cross-repo aggregation — single-repo only
+- Contributor identity resolution — simple mapping only
+- Scheduled report generation — manual generation only
+- Multi-user workspace — single-user deployment
+- Password-protected reports — capability URL only
+- Expiring public links — non-expiring by default
+- Enterprise RBAC — no role system
+- High-stakes cross-repo KPI — not accurate with current identity mapping
+
+---
+
+## Quick Start
+
+### 1. Clone repository
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/kh4i-dev/git-analytics.git
 cd git-analytics
-copy .env.example .env
 ```
 
-Fill in the following fields in `.env`:
-
-| Variable | Description |
-|---|---|
-| `GITHUB_CLIENT_ID` | Your GitHub OAuth App client ID |
-| `GITHUB_CLIENT_SECRET` | Your GitHub OAuth App client secret |
-| `SECRET_KEY` | Used for session signing |
-| `ENCRYPTION_KEY` | 32-byte url-safe base64 string for token encryption |
-| `DATABASE_URL` | SQLite path (e.g. `sqlite:///./git_analytics.db`) or PostgreSQL URL |
-
-### 2. Install Dependencies
+### 2. Setup environment
 
 ```bash
 python -m venv .venv
@@ -106,23 +160,41 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 3. Run Database Migrations
+### 3. Configure GitHub OAuth
+
+Register an OAuth App at GitHub Settings > Developer Settings > OAuth Apps.
+
+Copy the configuration file:
+
+```bash
+copy .env.example .env
+```
+
+### 4. Configure environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GITHUB_CLIENT_ID` | Yes | Your GitHub OAuth App client ID |
+| `GITHUB_CLIENT_SECRET` | Yes | Your GitHub OAuth App client secret |
+| `SECRET_KEY` | Yes | Session signing key (generate with `os.urandom(24)`) |
+| `ENCRYPTION_KEY` | Yes | 32-byte url-safe base64 Fernet key |
+| `DATABASE_URL` | No | Default: `sqlite:///./git_analytics.db`. Use PostgreSQL for production |
+
+### 5. Run database migrations
 
 ```bash
 alembic upgrade head
 ```
 
----
-
-## Running the Application
+### 6. Start server
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
 - Application: `http://localhost:8000`
-- API Documentation (Swagger): `http://localhost:8000/docs`
-- Health Check: `http://localhost:8000/health`
+- API documentation: `http://localhost:8000/docs`
+- Health check: `http://localhost:8000/health`
 
 ---
 
@@ -135,27 +207,26 @@ python -m compileall app tests
 
 ---
 
+## Known Limitations
+
+- Sync is manual (button press) — no background worker yet
+- Contributor identity resolution is simple (github_login with email fallback); the same person using multiple emails may appear as separate contributors
+- Multi-repo intelligence is planned for a later phase
+- Reports are single-repository scoped in Phase 1
+- Public reports do not support password protection or expiring links in Phase 1
+- Token encryption uses Fernet (symmetric); key rotation requires re-encryption
+
+---
+
 ## Documentation
 
 | File | Description |
 |---|---|
-| [CONTEXT.md](CONTEXT.md) | Domain glossary, architecture decisions, product principles |
-| [docs/architecture.md](docs/architecture.md) | System architecture, data flows, error handling |
-| [docs/walkthrough.md](docs/walkthrough.md) | End-to-end user flow walkthrough |
-| [docs/roadmap.md](docs/roadmap.md) | Phase roadmap (1-4) with scope boundaries |
-| [docs/changelog.md](docs/changelog.md) | Full release history |
-| [docs/release-notes.md](docs/release-notes.md) | Versioned release notes |
-| [docs/report-system.md](docs/report-system.md) | Engineering report system details |
+| [CONTEXT.md](CONTEXT.md) | Domain glossary and product principles |
+| [docs/architecture.md](docs/architecture.md) | System architecture and data flows |
+| [docs/walkthrough.md](docs/walkthrough.md) | End-to-end user flow |
+| [docs/roadmap.md](docs/roadmap.md) | Phase roadmap with scope boundaries |
+| [docs/report-system.md](docs/report-system.md) | Engineering report system |
 | [docs/ai-tools.md](docs/ai-tools.md) | AI workspace documentation |
 | [docs/ui-guidelines.md](docs/ui-guidelines.md) | Design system and UI patterns |
-| [docs/phase1-product-discovery.md](docs/phase1-product-discovery.md) | Product discovery |
-| [docs/phase2-system-design.md](docs/phase2-system-design.md) | System design |
-| [docs/phase3-database-design.md](docs/phase3-database-design.md) | Database schema design |
-| [docs/phase4-api-design.md](docs/phase4-api-design.md) | API design specifications |
-| [docs/phase5-uml-and-report.md](docs/phase5-uml-and-report.md) | UML diagrams and report mapping |
-
----
-
-## Project Status
-
-Strong Phase 1 foundation established: engineering analytics, AI workspace (local fallback), immutable reports with public sharing, SaaS-grade UI. Roadmap extends through Phase 4 (multi-repo intelligence). See [docs/roadmap.md](docs/roadmap.md) for details.
+| [docs/changelog.md](docs/changelog.md) | Full release history |
