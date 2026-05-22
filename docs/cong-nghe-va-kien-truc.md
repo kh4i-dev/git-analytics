@@ -278,12 +278,12 @@ sequenceDiagram
     Service-->>API: Commit stats
     API-->>Client: { data: { commits_by_date: [...] }, meta: { ... } }
 
-    Note over Client,DB: Standard response format
+    Note over Client,DB: Response: { data, error: { code, message }, meta: { trace_id, timestamp } }
 ```
 
 </div>
 
-*Hình 1.8: Mô hình giao tiếp RESTful API — response format: `{ data, error: { code, message }, meta: { trace_id, timestamp } }`*
+*Hình 1.8: Mô hình giao tiếp RESTful API*
 
 ---
 
