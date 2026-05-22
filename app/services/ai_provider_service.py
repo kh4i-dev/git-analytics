@@ -259,6 +259,61 @@ class AiToolService:
         if cache_key in _assistant_cache:
             del _assistant_cache[cache_key]
 
+    def get_repository_index_status(self, repo_id: int) -> dict[str, Any]:
+        from app.repositories.repository_repo import RepositoryRepository
+        repo = RepositoryRepository(self.db).get_by_id(repo_id)
+        if not repo:
+            return {
+                "has_context": False,
+                "chunk_count": 0,
+                "file_count": 0,
+                "last_indexed_at": None,
+            }
+        
+        # Determine is_indexed using the same logic as answer_question
+        is_indexed = (repo.name.lower() == "git-analytics" or "git-analytics" in repo.full_name.lower())
+        
+        if not is_indexed or repo.last_sync_status != "success":
+            return {
+                "has_context": False,
+                "chunk_count": 0,
+                "file_count": 0,
+                "last_indexed_at": None,
+            }
+        
+        # Count actual files and chunks existing on disk
+        import os
+        from app.utils.timezone import isoformat_vn
+        all_possible_files = [
+            "docs/grapuco-architecture-summary.md",
+            "app/services/sync_service.py",
+            "app/routes/api_sync.py",
+            "app/models/sync_job.py",
+            "app/routes/auth.py",
+            "app/services/auth_service.py",
+            "app/core/session.py",
+            "app/services/analytics_service.py",
+            "app/routes/api_analytics.py",
+            "app/services/engineering_report_service.py",
+            "app/routes/engineering_reports.py",
+            "app/models/repository.py",
+            "app/models/user.py",
+            "app/models/commit.py"
+        ]
+        
+        existing_files = [f for f in all_possible_files if os.path.exists(f)]
+        file_count = len(existing_files)
+        chunk_count = file_count
+        
+        has_context = chunk_count > 0 and file_count > 0
+        
+        return {
+            "has_context": has_context,
+            "chunk_count": chunk_count,
+            "file_count": file_count,
+            "last_indexed_at": isoformat_vn(repo.last_synced_at),
+        }
+
     async def generate_commit_message(self, *, user_id: int, diff: str) -> dict[str, Any]:
         clean_diff = self._validate_input(diff, "diff")
         self._validate_git_diff(clean_diff)
@@ -321,7 +376,10 @@ class AiToolService:
             "branch": None,
             "retrieved_files": [],
             "repository_source": None,
-            "retrieved_chunk_count": 0
+            "retrieved_chunk_count": 0,
+            "repository_id": None,
+            "last_indexed_at": None,
+            "indexing_status": None,
         }
         
         # 1. Load repository context if repo_id is supplied
@@ -329,7 +387,11 @@ class AiToolService:
             from app.repositories.repository_repo import RepositoryRepository
             repo = RepositoryRepository(self.db).get_by_user_and_id(user_id, repo_id)
             if repo:
+                from app.utils.timezone import isoformat_vn
                 context_metadata["repo_name"] = repo.full_name
+                context_metadata["repository_id"] = repo.id
+                context_metadata["last_indexed_at"] = isoformat_vn(repo.last_synced_at)
+                context_metadata["indexing_status"] = repo.last_sync_status
                 active_branch = branch or repo.default_branch or "main"
                 context_metadata["branch"] = active_branch
                 

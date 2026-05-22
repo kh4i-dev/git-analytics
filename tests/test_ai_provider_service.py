@@ -369,3 +369,78 @@ def test_context_cache_invalidation(db_session: Session) -> None:
     
     # Cache key must be deleted
     assert cache_key not in _assistant_cache
+
+
+def test_get_repository_index_status(db_session: Session) -> None:
+    user = _make_user(db_session)
+    from app.repositories import RepositoryRepository
+    from datetime import datetime, timezone
+    
+    synced_at = datetime.now(timezone.utc)
+    local_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 11001,
+        "owner": "kh4i-dev",
+        "name": "git-analytics",
+        "full_name": "kh4i-dev/git-analytics",
+        "html_url": "https://github.com/kh4i-dev/git-analytics",
+        "default_branch": "main",
+        "last_sync_status": "success",
+        "last_synced_at": synced_at,
+    })
+    
+    failed_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 11002,
+        "owner": "kh4i-dev",
+        "name": "git-analytics",
+        "full_name": "kh4i-dev/git-analytics",
+        "html_url": "https://github.com/kh4i-dev/git-analytics",
+        "default_branch": "main",
+        "last_sync_status": "failed",
+        "last_synced_at": synced_at,
+    })
+    
+    foreign_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 11003,
+        "owner": "kh4i-dev",
+        "name": "foreign-repo",
+        "full_name": "kh4i-dev/foreign-repo",
+        "html_url": "https://github.com/kh4i-dev/foreign-repo",
+        "default_branch": "main",
+        "last_sync_status": "success",
+        "last_synced_at": synced_at,
+    })
+    
+    db_session.commit()
+    
+    tool = AiToolService(db_session)
+    
+    # Test valid/active repo
+    status_local = tool.get_repository_index_status(local_repo.id)
+    assert status_local["has_context"] is True
+    assert status_local["file_count"] > 0
+    assert status_local["chunk_count"] > 0
+    assert status_local["last_indexed_at"] is not None
+    
+    # Test failed sync status
+    status_failed = tool.get_repository_index_status(failed_repo.id)
+    assert status_failed["has_context"] is False
+    assert status_failed["file_count"] == 0
+    assert status_failed["chunk_count"] == 0
+    assert status_failed["last_indexed_at"] is None
+    
+    # Test foreign repo
+    status_foreign = tool.get_repository_index_status(foreign_repo.id)
+    assert status_foreign["has_context"] is False
+    assert status_foreign["file_count"] == 0
+    assert status_foreign["chunk_count"] == 0
+    assert status_foreign["last_indexed_at"] is None
+    
+    # Test non-existent repo id
+    status_none = tool.get_repository_index_status(99999)
+    assert status_none["has_context"] is False
+    assert status_none["file_count"] == 0
+    assert status_none["chunk_count"] == 0
+    assert status_none["last_indexed_at"] is None

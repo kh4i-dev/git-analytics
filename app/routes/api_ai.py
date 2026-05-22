@@ -76,3 +76,28 @@ async def clear_ai_context(
     user_id = require_user_id(request, db)
     AiToolService(db).clear_context_cache(repo_id=body.repo_id, branch=body.branch)
     return JSONResponse(success_response(request, {"status": "success"}))
+
+
+@router.get("/repository/{repo_id}/index-status")
+async def get_repo_index_status(
+    repo_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    user_id = require_user_id(request, db)
+    from app.repositories.repository_repo import RepositoryRepository
+    repo = RepositoryRepository(db).get_by_user_and_id(user_id, repo_id)
+    if repo is None:
+        return JSONResponse(
+            success_response(
+                request,
+                {
+                    "has_context": False,
+                    "chunk_count": 0,
+                    "file_count": 0,
+                    "last_indexed_at": None,
+                },
+            )
+        )
+    data = AiToolService(db).get_repository_index_status(repo_id)
+    return JSONResponse(success_response(request, data))

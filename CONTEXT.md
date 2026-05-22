@@ -111,7 +111,7 @@
 
 ## Key Distinctions
 
-- **Sync**: Pulling data from GitHub REST API into the local database. User-initiated (button press), not a background process (in MVP). Uses **Incremental Sync** strategy: first sync is full, subsequent syncs use `since=last_synced_at` to fetch only new data.
+- **Sync**: Pulling data from GitHub REST API into the local database. User-initiated or auto-scheduled, executed asynchronously via a decoupled background worker queue (`sync_queue.py`) using a dedicated database tracking layer (`sync_jobs` table). Uses **Incremental Sync** strategy: first sync is full, subsequent syncs use `since=last_synced_at` to fetch only new data.
 
 - **Full Sync**: Fetching all historical data for a Repository. Triggered when `last_synced_at` is null (first time).
 
@@ -198,20 +198,15 @@
 
 ---
 
-## Sync Layer Limitations
+## Sync Layer Architecture & Resilience
 
-### Current
-- Per-repository sync, mostly synchronous/manual.
-- Not event-driven yet.
-- Not queue-based yet.
-
-### Known Future Requirements
-- Worker pool for concurrent sync
-- Retry strategy with exponential backoff
-- Stale sync recovery detection
-- `sync_jobs` table for job tracking
-- Idempotent sync guarantees
-- Rate-limit aware scheduling
+### Implemented Systems
+- **Asynchronous Sync Worker Queue**: Decoupled single-process background queue driven by Python's `asyncio.Queue` (`sync_queue.py`), executing sequential and parallel non-blocking background sync jobs.
+- **Sync Jobs Tracking Layer**: A dedicated database schema (`sync_jobs` table) recording job `status` (queued, running, success, failed), `kind` (manual, auto), and execution timestamps.
+- **Automated Retry with Backoff**: Automatically schedules job retries upon temporary request errors or rate limit issues.
+- **Stale Sync Recovery**: Detects and recovers stale or interrupted "running" sync jobs on server boot, re-queueing them cleanly.
+- **Rate-Limit Proactive Checking**: Proactively checks GitHub API quota before enqueueing, preventing rate-limit exhaustion.
+- **Incremental & Idempotent Sync**: Upserts database entities uniquely to guarantee idempotent sync runs.
 
 ---
 
@@ -278,9 +273,15 @@
 
 ---
 
-## AI Tools
+## AI Tools & Modular Workspace
 
-### Current AI Workspace
+### Modular Workspace Architecture
+- **Refactored Modular Templates**: Monolithic layout split into decoupled sub-components (header, selectors, badges, tab layouts) under `templates/ai_tools/`.
+- **Decoupled JS & CSS Modules**: Frontend logic moved into static modules (`static/js/ai_tools.js`, `repo_context.js`, `ai_assistant.js`, `markdown_renderer.js`) with isolated vanilla CSS under `static/css/ai_tools.css`.
+- **Absolute Static Routing**: Avoids Jinja sub-path resolution mismatches by utilizing direct absolute path mappings (e.g. `/static/js/ai_tools.js`).
+- **Context-Purging Endpoint**: Resets in-memory/session chat histories server-side via `POST /api/v1/ai/clear-context` when swapping repositories or branches, avoiding query contamination.
+
+### Core Capabilities & Invariants
 - **BYOK provider mode**: Uses encrypted OpenAI, Gemini, or Claude user keys.
 - **Git Analytics Cloud AI**: Uses server-side provider configuration in hosted preview.
 - **OpenAI-compatible gateway**: Server-side Cloud adapter option, not a browser-entered provider.

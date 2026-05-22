@@ -1,0 +1,75 @@
+{% if not is_public and ai_enabled %}
+<!-- Repository and Branch Selection Context Toolbar -->
+<div class="chat-context-toolbar">
+  <div class="selector-row">
+    <!-- Repository Searchable Selector Dropdown -->
+    <div class="custom-dropdown repo-dropdown" id="repo-dropdown-wrapper">
+      <button type="button" class="dropdown-trigger" id="repo-trigger" onclick="toggleDropdown('repo-menu'); event.stopPropagation();">
+        <i data-lucide="folder-git-2" class="trigger-icon"></i>
+        <span id="selected-repo-label" class="mono-font">Choose Repository</span>
+        <i data-lucide="chevron-down" class="chevron-icon"></i>
+      </button>
+      <div class="dropdown-menu" id="repo-menu">
+        <div class="dropdown-search-wrapper" onclick="event.stopPropagation();">
+          <i data-lucide="search" class="search-icon"></i>
+          <input type="text" placeholder="Tìm repository..." id="repo-search-input" oninput="filterRepositories(event)">
+        </div>
+        <div class="dropdown-items" id="repo-list">
+          {% for r in repos %}
+            <div class="dropdown-item mono-font" data-repo-id="{{ r.id }}" data-repo-fullname="{{ r.full_name }}" onclick="selectRepository({{ r.id }}); event.stopPropagation();">
+              <i data-lucide="folder-git-2" class="item-icon"></i>
+              <span>{{ r.full_name }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Branch Selection Dropdown -->
+    <div class="custom-dropdown branch-dropdown" id="branch-dropdown-wrapper">
+      <button type="button" class="dropdown-trigger" id="branch-trigger" onclick="toggleDropdown('branch-menu'); event.stopPropagation();">
+        <i data-lucide="git-branch" class="trigger-icon"></i>
+        <span id="selected-branch-label" class="mono-font">Choose Branch</span>
+        <i data-lucide="chevron-down" class="chevron-icon"></i>
+      </button>
+      <div class="dropdown-menu" id="branch-menu">
+        <div class="dropdown-items" id="branch-list">
+          <!-- Dynamically loaded branches -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Subtle AI Context Active Badge -->
+    <span class="scope-badge" id="ai-scope-badge" style="display: none;">
+      <span class="badge-dot"></span>
+      <span class="badge-text">Repository Context Active</span>
+    </span>
+  </div>
+
+  <!-- Monospace Context Detail Bar -->
+  <div class="context-info-row" id="active-context-info" style="display: none;">
+    <span class="info-item">
+      <span class="info-label">Analyzing:</span>
+      <span class="mono-font info-value" id="info-repo-name">—</span>
+    </span>
+    <span class="info-divider"></span>
+    <span class="info-item">
+      <i data-lucide="git-branch" class="info-icon"></i>
+      <span class="info-label">Branch:</span>
+      <span class="mono-font info-value" id="info-branch-name">—</span>
+    </span>
+    <span class="info-divider"></span>
+    <span class="info-item">
+      <i data-lucide="git-commit" class="info-icon"></i>
+      <span class="info-label">Indexed commits:</span>
+      <span class="info-value" id="info-commits-count">—</span>
+    </span>
+    <span class="info-divider"></span>
+    <span class="info-item">
+      <i data-lucide="users" class="info-icon"></i>
+      <span class="info-label">Contributors:</span>
+      <span class="info-value" id="info-contributors-count">—</span>
+    </span>
+  </div>
+</div>
+{% endif %}

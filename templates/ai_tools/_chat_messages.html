@@ -1,0 +1,37 @@
+<div class="chat-viewport" id="chat-viewport">
+  <!-- Onboarding Empty State Overlay -->
+  <div class="chat-onboarding-state" id="chat-onboarding-state" style="display: none;">
+    <div class="onboarding-icon">
+      <i data-lucide="folder-git-2"></i>
+    </div>
+    <h3>Select a repository to start repository-aware AI assistance.</h3>
+    <p>Choose an active repository and a branch to scope your engineering copilot queries to indexed codebases.</p>
+    <button class="btn btn-primary btn-sm" onclick="toggleDropdown('repo-menu'); event.stopPropagation();">
+      <i data-lucide="plus" style="width: 14px; height: 14px; margin-right: 4px;"></i> Choose Repository
+    </button>
+  </div>
+
+  <div id="chat-messages" class="chat-messages">
+    <!-- Assistant Welcome Card -->
+    <div class="assistant-welcome-card" id="assistant-welcome">
+      <div class="welcome-header">
+        <div class="welcome-avatar">
+          <i data-lucide="sparkles"></i>
+        </div>
+        <h3 id="assistant-welcome-title">Engineering AI Copilot</h3>
+      </div>
+      <p class="welcome-desc" id="assistant-welcome-desc">
+        {% if ai_enabled %}
+          Hỏi bất kỳ điều gì về repository đã đồng bộ của bạn. Tôi có thể giải thích kiến trúc, rà soát quy trình auth flow, phân tích pipeline sync, hoặc đề xuất test cases.
+        {% else %}
+          {{ ai_message }}
+        {% endif %}
+      </p>
+      
+      {% if ai_enabled %}
+      <div class="welcome-suggestions-label">Gợi ý câu hỏi nhanh:</div>
+      {% include "ai_tools/_quick_actions.html" %}
+      {% endif %}
+    </div>
+  </div>
+</div>

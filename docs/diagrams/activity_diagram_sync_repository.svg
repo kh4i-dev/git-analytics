@@ -1,0 +1,309 @@
+<svg width="100%" viewBox="0 0 680 1120" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title>Activity diagram — Luồng đồng bộ repository</title>
+  <desc>Activity diagram mô tả 4 giai đoạn đồng bộ repository: Pre-sync Check, Sync Process, Persist Data và Finalize với các nhánh success/failed.</desc>
+  <defs>
+    <style>
+      svg {
+        background-color: #ffffff;
+        font-family: "Inter", "Outfit", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+      .start-node {
+        fill: #2b2b2b;
+        stroke: #111111;
+        stroke-width: 1;
+      }
+      .end-node-outer {
+        fill: none;
+        stroke: #2b2b2b;
+        stroke-width: 1.5;
+      }
+      .end-node-inner {
+        fill: #2b2b2b;
+      }
+      .connection-line {
+        fill: none;
+        stroke: #2b2b2b;
+        stroke-width: 1.5;
+      }
+      .connection-line-dashed {
+        fill: none;
+        stroke: #2b2b2b;
+        stroke-width: 1.5;
+        stroke-dasharray: 4 4;
+      }
+      .fork-join-bar {
+        fill: #2b2b2b;
+        stroke: #2b2b2b;
+        stroke-width: 4;
+        stroke-linecap: round;
+      }
+      .label-bg {
+        fill: #ffffff;
+      }
+      .label-text {
+        fill: #2b2b2b;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+      }
+
+      /* Group box styles - Transparent background, solid straight black borders */
+      .group-box-1, .group-box-2, .group-box-3, .group-box-4 {
+        fill: none;
+        stroke: #2b2b2b;
+        stroke-width: 1.25;
+      }
+      .group-title-1, .group-title-2, .group-title-3, .group-title-4 {
+        fill: #2b2b2b;
+        font-size: 12px;
+        font-weight: 600;
+        font-family: inherit;
+      }
+
+      /* Action styles (All white background with black borders and text) */
+      .action-blue, .action-green, .action-red, .action-brown {
+        fill: #ffffff;
+        stroke: #2b2b2b;
+        stroke-width: 1.5;
+      }
+      .action-blue-text-primary, .action-green-text-primary, .action-red-text-primary, .action-brown-text-primary {
+        fill: #2b2b2b;
+        font-size: 14px;
+        font-weight: 600;
+        text-anchor: middle;
+        dominant-baseline: central;
+        font-family: inherit;
+      }
+      .action-green-text-secondary, .action-red-text-secondary, .action-brown-text-secondary {
+        fill: #555555;
+        font-size: 12px;
+        text-anchor: middle;
+        dominant-baseline: central;
+        font-family: inherit;
+      }
+
+      .diamond {
+        fill: #ffffff;
+        stroke: #2b2b2b;
+        stroke-width: 1.5;
+      }
+      .diamond-text {
+        fill: #2b2b2b;
+        font-size: 12px;
+        font-weight: 600;
+        text-anchor: middle;
+        dominant-baseline: central;
+        font-family: inherit;
+      }
+    </style>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="#2b2b2b" stroke="#2b2b2b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Solid White Background -->
+  <rect width="100%" height="100%" fill="#ffffff" />
+
+  <!-- Start Node -->
+  <circle cx="340" cy="28" r="8" class="start-node" />
+  <line x1="340" y1="36" x2="340" y2="96" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- ══════════════════════════════════════
+       GROUP 1 — Pre-sync Check
+  ══════════════════════════════════════ -->
+  <rect x="100" y="62" width="480" height="262" rx="10" class="group-box-1" />
+  <text x="112" y="80" class="group-title-1">1. Pre-sync check</text>
+
+  <!-- A1 -->
+  <g>
+    <rect x="252" y="96" width="176" height="40" rx="7" class="action-blue" />
+    <text x="340" y="116" class="action-blue-text-primary">Kiểm tra auth</text>
+  </g>
+  <line x1="340" y1="136" x2="340" y2="156" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- A2 -->
+  <g>
+    <rect x="252" y="156" width="176" height="40" rx="7" class="action-blue" />
+    <text x="340" y="176" class="action-blue-text-primary">Kiểm tra ownership</text>
+  </g>
+  <line x1="340" y1="196" x2="340" y2="216" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- A3 -->
+  <g>
+    <rect x="252" y="216" width="176" height="40" rx="7" class="action-blue" />
+    <text x="340" y="236" class="action-blue-text-primary">Kiểm tra status</text>
+  </g>
+  <line x1="340" y1="256" x2="340" y2="276" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- A4 -->
+  <g>
+    <rect x="252" y="276" width="176" height="40" rx="7" class="action-blue" />
+    <text x="340" y="296" class="action-blue-text-primary">Kiểm tra rate limit</text>
+  </g>
+
+  <!-- PreCheck → Sync -->
+  <line x1="340" y1="316" x2="340" y2="374" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- ══════════════════════════════════════
+       GROUP 2 — Sync Process
+  ══════════════════════════════════════ -->
+  <rect x="100" y="340" width="480" height="276" rx="10" class="group-box-2" />
+  <text x="112" y="358" class="group-title-2">2. Sync process</text>
+
+  <!-- B1 -->
+  <g>
+    <rect x="252" y="374" width="176" height="40" rx="7" class="action-green" />
+    <text x="340" y="386" class="action-green-text-primary">Set status</text>
+    <text x="340" y="403" class="action-green-text-secondary">= syncing</text>
+  </g>
+  <line x1="340" y1="414" x2="340" y2="434" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- B2 -->
+  <g>
+    <rect x="240" y="434" width="200" height="40" rx="7" class="action-green" />
+    <text x="340" y="446" class="action-green-text-primary">Xác định</text>
+    <text x="340" y="463" class="action-green-text-secondary">full / incremental</text>
+  </g>
+  <line x1="340" y1="474" x2="340" y2="494" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- B3 -->
+  <g>
+    <rect x="240" y="494" width="200" height="40" rx="7" class="action-green" />
+    <text x="340" y="506" class="action-green-text-primary">Fetch commits</text>
+    <text x="340" y="523" class="action-green-text-secondary">paginated</text>
+  </g>
+
+  <!-- Fork Bar (Concurrent paths for PRs and Issues) -->
+  <line x1="214" y1="544" x2="402" y2="544" class="fork-join-bar" />
+  <line x1="340" y1="534" x2="340" y2="544" class="connection-line" />
+
+  <!-- Fork Bar → B4 (Fetch PRs) -->
+  <line x1="214" y1="544" x2="214" y2="554" class="connection-line" marker-end="url(#arrow)" />
+  <!-- B4 -->
+  <g>
+    <rect x="139" y="554" width="150" height="40" rx="7" class="action-green" />
+    <text x="214" y="574" class="action-green-text-primary">Fetch PRs</text>
+  </g>
+
+  <!-- Fork Bar → B5 (Fetch Issues) -->
+  <line x1="402" y1="544" x2="402" y2="554" class="connection-line" marker-end="url(#arrow)" />
+  <!-- B5 -->
+  <g>
+    <rect x="327" y="554" width="150" height="40" rx="7" class="action-green" />
+    <text x="402" y="574" class="action-green-text-primary">Fetch issues</text>
+  </g>
+
+  <!-- Join Bar (Merge concurrent paths) -->
+  <line x1="214" y1="610" x2="402" y2="610" class="fork-join-bar" />
+  <line x1="214" y1="594" x2="214" y2="610" class="connection-line" />
+  <line x1="402" y1="594" x2="402" y2="610" class="connection-line" />
+
+  <!-- Join Bar → Group 3 (C1) -->
+  <line x1="214" y1="610" x2="214" y2="654" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- ══════════════════════════════════════
+       GROUP 3 — Persist Data (S-Shaped flow)
+  ══════════════════════════════════════ -->
+  <rect x="100" y="620" width="480" height="196" rx="10" class="group-box-3" />
+  <text x="112" y="638" class="group-title-3">3. Persist data</text>
+
+  <!-- C1 -->
+  <g>
+    <rect x="126" y="654" width="176" height="40" rx="7" class="action-brown" />
+    <text x="214" y="666" class="action-brown-text-primary">Resolve</text>
+    <text x="214" y="683" class="action-brown-text-secondary">contributors</text>
+  </g>
+  <line x1="302" y1="674" x2="322" y2="674" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- C2 -->
+  <g>
+    <rect x="322" y="654" width="160" height="40" rx="7" class="action-brown" />
+    <text x="402" y="666" class="action-brown-text-primary">Upsert</text>
+    <text x="402" y="683" class="action-brown-text-secondary">contributors</text>
+  </g>
+  <line x1="402" y1="694" x2="402" y2="714" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- C3 -->
+  <g>
+    <rect x="322" y="714" width="160" height="40" rx="7" class="action-brown" />
+    <text x="402" y="734" class="action-brown-text-primary">Upsert commits</text>
+  </g>
+  <line x1="322" y1="734" x2="302" y2="734" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- C4 -->
+  <g>
+    <rect x="126" y="714" width="176" height="40" rx="7" class="action-brown" />
+    <text x="214" y="734" class="action-brown-text-primary">Upsert PRs</text>
+  </g>
+  <line x1="214" y1="754" x2="214" y2="770" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- C5 -->
+  <g>
+    <rect x="126" y="770" width="176" height="40" rx="7" class="action-brown" />
+    <text x="214" y="790" class="action-brown-text-primary">Upsert issues</text>
+  </g>
+
+  <!-- Persist → Final (Group 4) -->
+  <path d="M214 810 L214 828 L320 828 L320 868" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- ══════════════════════════════════════
+       GROUP 4 — Finalize
+  ══════════════════════════════════════ -->
+  <rect x="100" y="840" width="480" height="260" rx="10" class="group-box-4" />
+  <text x="112" y="858" class="group-title-4">4. Finalize</text>
+
+  <!-- D1 diamond -->
+  <polygon points="320,868 396,900 320,932 244,900" class="diamond" />
+  <text x="320" y="900" class="diamond-text">Có lỗi?</text>
+
+  <!-- D1 Không → D2 (left) -->
+  <path d="M244 900 L154 900 L154 934" class="connection-line" marker-end="url(#arrow)" />
+  <rect x="164" y="883" width="50" height="18" rx="3" class="label-bg" />
+  <text x="189" y="896" text-anchor="middle" class="label-text">[Không]</text>
+
+  <!-- D2 -->
+  <g>
+    <rect x="100" y="934" width="108" height="40" rx="7" class="action-green" />
+    <text x="154" y="946" class="action-green-text-primary">status</text>
+    <text x="154" y="963" class="action-green-text-secondary">= success</text>
+  </g>
+  <line x1="154" y1="974" x2="154" y2="990" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- D4 -->
+  <g>
+    <rect x="100" y="990" width="108" height="40" rx="7" class="action-green" />
+    <text x="154" y="1002" class="action-green-text-primary">Update</text>
+    <text x="154" y="1019" class="action-green-text-secondary">last_synced_at</text>
+  </g>
+
+  <!-- D4 → UML Final Node (Success branch) -->
+  <line x1="154" y1="1030" x2="154" y2="1054" class="connection-line" marker-end="url(#arrow)" />
+  <circle cx="154" cy="1076" r="11" class="end-node-outer" />
+  <circle cx="154" cy="1076" r="6" class="end-node-inner" />
+
+  <!-- D1 Có → D3 (right) -->
+  <path d="M396 900 L526 900 L526 934" class="connection-line" marker-end="url(#arrow)" />
+  <rect x="444" y="883" width="32" height="18" rx="3" class="label-bg" />
+  <text x="460" y="896" text-anchor="middle" class="label-text">[Có]</text>
+
+  <!-- D3 -->
+  <g>
+    <rect x="472" y="934" width="108" height="40" rx="7" class="action-red" />
+    <text x="526" y="946" class="action-red-text-primary">status</text>
+    <text x="526" y="963" class="action-red-text-secondary">= failed</text>
+  </g>
+  <line x1="526" y1="974" x2="526" y2="990" class="connection-line" marker-end="url(#arrow)" />
+
+  <!-- D5 -->
+  <g>
+    <rect x="472" y="990" width="108" height="40" rx="7" class="action-red" />
+    <text x="526" y="1002" class="action-red-text-primary">Giữ nguyên</text>
+    <text x="526" y="1019" class="action-red-text-secondary">last_synced_at</text>
+  </g>
+
+  <!-- D5 → UML Final Node (Failed branch) -->
+  <line x1="526" y1="1030" x2="526" y2="1054" class="connection-line" marker-end="url(#arrow)" />
+  <circle cx="526" cy="1076" r="11" class="end-node-outer" />
+  <circle cx="526" cy="1076" r="6" class="end-node-inner" />
+
+</svg>

@@ -230,17 +230,24 @@ Nếu bạn triển khai hệ thống cho cả đội ngũ và muốn cung cấp
 
 Dưới đây là các tài liệu hướng dẫn chuyên sâu được thiết lập chi tiết trong thư mục `docs/`:
 
-| Tài liệu | Mô tả chi tiết nội dung |
+| Thư mục / Tài liệu | Mô tả chi tiết nội dung |
 |---|---|
-| 📘 **[Hướng Dẫn Sử Dụng AI Tools](docs/AI_TOOLS_USER_GUIDE.md)** | Hướng dẫn cho lập trình viên cách lấy mã git diff chuẩn từ terminal, dán vào UI, đọc nhãn trạng thái nhà cung cấp hoạt động thực tế và sử dụng các công cụ AI hiệu quả. |
-| ⚙️ **[Hướng Dẫn Cấu Hình AI](docs/AI_CONFIGURATION.md)** | Chi tiết cách thiết lập các tham số môi trường `.env`, cấu hình cổng tương thích OpenAI (OpenClaw), quản lý Model và hạn ngạch quota sử dụng hàng ngày. |
-| 💡 **[Ví Dụ Thực Tế & Kỹ Năng Prompting](docs/AI_PROMPT_EXAMPLES.md)** | Chứa các mẫu prompt chất lượng cao, các ví dụ Git Diff đầu vào hợp lệ/không hợp lệ, bộ câu hỏi khuyến nghị cho trợ lý ảo Repo Assistant và kỹ năng đặt câu hỏi. |
-| 🛠️ **[Khắc Phục Sự Cố AI (Troubleshooting)](docs/AI_TROUBLESHOOTING.md)** | Hướng dẫn tự kiểm tra và giải quyết các mã lỗi AI thường gặp (Needs setup, Invalid format, 401/403, 429), lỗi font tiếng Việt và cách đọc log server an toàn. |
-| 🔒 **[Bản Đồ Bảo Mật API Keys](docs/SECURITY_AI_KEYS.md)** | Chi tiết cơ chế mã hóa đối xứng Fernet phía server, lý do không dùng localStorage ở Client, vòng đời khóa BYOK và checklist an ninh trước khi lên Production. |
-| 🌐 [CONTEXT.md](CONTEXT.md) | Thuật ngữ chuyên ngành, định hướng sản phẩm và các nguyên lý thiết kế ứng dụng. |
-| 🏗️ [docs/architecture.md](docs/architecture.md) | Phân tích sâu kiến trúc hệ thống, sơ đồ di chuyển dữ liệu và thiết kế database. |
-| 🏃‍♂️ [docs/walkthrough.md](docs/walkthrough.md) | Kịch bản trải nghiệm toàn trình cho người dùng cuối. |
-| 🗺️ [docs/roadmap.md](docs/roadmap.md) | Lộ trình phát triển qua các Phase và ranh giới phạm vi tính năng. |
-| 📑 [docs/report-system.md](docs/report-system.md) | Thiết kế hệ thống báo cáo kỹ thuật bất biến. |
-| 🎨 [docs/ui-guidelines.md](docs/ui-guidelines.md) | Cẩm nang thiết kế giao diện Dark SaaS và các thành phần mẫu UI. |
-| 📜 [docs/changelog.md](docs/changelog.md) | Lịch sử cập nhật phiên bản. |
+| 🌐 **[CONTEXT.md](CONTEXT.md)** | Thuật ngữ chuyên ngành, định hướng sản phẩm và các nguyên lý thiết kế ứng dụng. |
+| 🏗️ **[docs/architecture/architecture.md](docs/architecture/architecture.md)** | Phân tích sâu kiến trúc hệ thống, sơ đồ di chuyển dữ liệu, thiết kế database và hosted production readiness checklist. |
+| 🏃‍♂️ **[docs/setup/setup.md](docs/setup/setup.md)** | Hướng dẫn cài đặt cục bộ nhanh và kịch bản trải nghiệm toàn trình cho người dùng cuối. |
+| 🗺️ **[docs/roadmap/roadmap.md](docs/roadmap/roadmap.md)** | Lộ trình phát triển chi tiết qua các Phase từ hoàn thành đến kế hoạch tương lai. |
+| 📑 **[docs/reports/report-system.md](docs/reports/report-system.md)** | Thiết kế hệ thống báo cáo kỹ thuật bất biến, anonymization và sharing. |
+| 🎨 **[docs/setup/ui-guidelines.md](docs/setup/ui-guidelines.md)** | Cẩm nang thiết kế giao diện Dark SaaS, responsive tables và heatmap. |
+| 🤖 **[docs/ai/ai-tools.md](docs/ai/ai-tools.md)** | Chi tiết kiến trúc AI Tools, modular templates, static assets, APIs và clear-context. |
+| 📘 **[docs/ai/AI_TOOLS_USER_GUIDE.md](docs/ai/AI_TOOLS_USER_GUIDE.md)** | Hướng dẫn sử dụng AI Workspace: dán git diff, đọc badge trạng thái hoạt động. |
+| ⚙️ **[docs/ai/AI_CONFIGURATION.md](docs/ai/AI_CONFIGURATION.md)** | Thiết lập tham số `.env`, cấu hình cổng tương thích OpenAI (OpenClaw) và model AI. |
+| 💡 **[docs/ai/AI_PROMPT_EXAMPLES.md](docs/ai/AI_PROMPT_EXAMPLES.md)** | Chứa các mẫu prompt chất lượng cao, các ví dụ Git Diff đầu vào hợp lệ/không hợp lệ, bộ câu hỏi mẫu cho Repo Assistant. |
+| 🛠️ **[docs/ai/AI_TROUBLESHOOTING.md](docs/ai/AI_TROUBLESHOOTING.md)** | Hướng dẫn giải quyết các lỗi AI thường gặp và xử lý font chữ tiếng Việt. |
+| 🔒 **[docs/ai/SECURITY_AI_KEYS.md](docs/ai/SECURITY_AI_KEYS.md)** | Cơ chế mã hóa đối xứng Fernet phía server bảo mật BYOK keys an toàn. |
+| 📜 **[docs/roadmap/changelog.md](docs/roadmap/changelog.md)** | Lịch sử cập nhật phiên bản (Changelog). |
+| 📜 **[docs/roadmap/release-notes.md](docs/roadmap/release-notes.md)** | Chi tiết các tính năng phát hành (Release Notes). |
+| 📂 **[docs/architecture/](docs/architecture/)** | Chứa các tài liệu khám phá sơ khởi (Phase 1, 2, 3), các báo cáo quyết định thiết kế (ADRs) và bản dịch Vietnamese tech summary. |
+| 📂 **[docs/diagrams/](docs/diagrams/)** | Chứa các sơ đồ UML SVG và hướng dẫn biểu diễn luồng hoạt động đồng bộ. |
+| 📂 **[docs/api/](docs/api/)** | Chứa đặc tả thiết kế REST API chuẩn hóa. |
+| 📂 **[docs/analytics/](docs/analytics/)** | Đặc tả công thức toán học tính streaks, KPIs và health score. |
+

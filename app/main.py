@@ -58,6 +58,11 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
 
+    from fastapi.staticfiles import StaticFiles
+    import os
+    static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "static")
+    app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
     app.include_router(auth_router)
     app.include_router(repositories_router)
     app.include_router(dashboard_router)

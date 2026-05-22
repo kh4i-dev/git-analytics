@@ -145,3 +145,39 @@ def test_save_byok_key_nvidia_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert response.status_code == 400
     assert "validation failed" in response.json()["error"]["message"].lower()
+
+
+def test_repository_index_status_endpoint() -> None:
+    client, db, user_id = _client()
+    from app.repositories import RepositoryRepository
+    from datetime import datetime, timezone
+    
+    synced_at = datetime.now(timezone.utc)
+    repo = RepositoryRepository(db).create({
+        "user_id": user_id,
+        "github_repo_id": 12001,
+        "owner": "kh4i-dev",
+        "name": "git-analytics",
+        "full_name": "kh4i-dev/git-analytics",
+        "html_url": "https://github.com/kh4i-dev/git-analytics",
+        "default_branch": "main",
+        "last_sync_status": "success",
+        "last_synced_at": synced_at,
+    })
+    db.commit()
+    
+    response = client.get(f"/api/v1/ai/repository/{repo.id}/index-status")
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["has_context"] is True
+    assert data["file_count"] > 0
+    assert data["chunk_count"] > 0
+    assert data["last_indexed_at"] is not None
+    
+    response_missing = client.get("/api/v1/ai/repository/99999/index-status")
+    assert response_missing.status_code == 200
+    data_missing = response_missing.json()["data"]
+    assert data_missing["has_context"] is False
+    assert data_missing["file_count"] == 0
+    assert data_missing["chunk_count"] == 0
+    assert data_missing["last_indexed_at"] is None
