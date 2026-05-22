@@ -2,8 +2,9 @@ import logging
 from typing import Any
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 from app.clients.github_client import GitHubClient
 from app.templates import templates
@@ -11,6 +12,7 @@ from app.core.config import settings
 from app.core.exceptions import AppException
 from app.core.security import decrypt_token
 from app.models.user import User
+from app.models.sync_job import SyncJob
 from app.repositories import RepositoryRepository
 from app.services.sync_service import SyncService
 from app.utils.deps import get_db
@@ -211,3 +213,32 @@ async def force_reset_repository(
         "/repositories?reset=1",
         status_code=302,
     )
+
+
+@router.delete("/repositories/{repo_id}")
+async def delete_repository(
+    request: Request,
+    repo_id: int,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    user = _authenticate(request, db)
+    if user is None:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    repo_repo = RepositoryRepository(db)
+    repository = repo_repo.get_by_user_and_id(user.id, repo_id)
+    if repository is None:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    try:
+        # Delete related SyncJobs manually to ensure cascade works even without SQLite PRAGMA
+        db.execute(delete(SyncJob).where(SyncJob.repository_id == repo_id))
+        
+        # SQLAlchemy will cascade delete other relationships defined with cascade="all, delete-orphan"
+        repo_repo.delete(repository)
+        db.commit()
+        return {"success": True}
+    except Exception as exc:
+        db.rollback()
+        logging.error(f"Failed to delete repository {repo_id}: {exc}")
+        raise HTTPException(status_code=500, detail="Failed to delete repository")

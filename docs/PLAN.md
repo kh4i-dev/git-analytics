@@ -4,9 +4,9 @@
 ## 1. Current System Summary
 
 Baseline sources:
-- [grapuco-architecture-summary.md](E:/my-project/git-analytics/docs/grapuco-architecture-summary.md)
-- [CONTEXT.md](E:/my-project/git-analytics/CONTEXT.md)
-- ADRs under [docs/adr](E:/my-project/git-analytics/docs/adr)
+- [architecture.md](architecture/architecture.md)
+- [CONTEXT.md](CONTEXT.md)
+- ADRs under [docs/architecture/adr](architecture/adr)
 - Grapuco targeted `semantic_search`, `search_code`, `check_staleness`, and `blast_radius`
 
 Current architecture:

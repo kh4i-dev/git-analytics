@@ -7,7 +7,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session, sessionmaker
 
 import app.models  # noqa: F401
-from app.core.exceptions import GitHubAPIError, GitHubRateLimitExceeded, SyncFailedException
+from app.core.exceptions import GitHubAPIError, GitHubRateLimitExceeded, SyncFailedException, GitHubNotFound
 from app.core.security import decrypt_token, encrypt_token, generate_encryption_key
 from app.db.base import Base
 from app.models.commit import Commit
@@ -53,6 +53,8 @@ class FakeGitHubClient:
         self.calls.append(("list_commits", since))
         if self.fail_on == "commits":
             raise GitHubAPIError("Commit fetch failed.")
+        if self.fail_on == "not_found":
+            raise GitHubNotFound("Not Found")
         if self.fail_on == "bad_commit_payload":
             return [
                 {
@@ -298,6 +300,30 @@ def test_sync_repository_failure_rolls_back_and_marks_failed(
     assert repository.last_sync_error == "Commit fetch failed."
     assert repository.last_synced_at is None
     assert db_session.scalars(select(Commit).where(Commit.repo_id == repo_id)).all() == []
+    assert fake_client.closed is True
+
+
+def test_sync_repository_handles_github_not_found(
+    db_session: Session,
+) -> None:
+    user_id, repo_id = create_user_and_repo(db_session)
+    fake_client = FakeGitHubClient(fail_on="not_found")
+    service = SyncService(
+        db_session,
+        github_client_factory=lambda _token: fake_client,
+        token_decrypter=lambda _encrypted: "token",
+    )
+
+    with pytest.raises(SyncFailedException) as excinfo:
+        run_async(service.sync_repository(user_id=user_id, repo_id=repo_id))
+
+    assert "Repository not found or access removed" in str(excinfo.value)
+
+    repository = db_session.get(Repository, repo_id)
+    assert repository is not None
+    assert repository.last_sync_status == "failed"
+    assert repository.last_sync_error == "Repository not found or access removed"
+    assert repository.last_synced_at is None
     assert fake_client.closed is True
 
 
