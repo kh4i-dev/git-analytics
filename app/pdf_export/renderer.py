@@ -75,11 +75,11 @@ class PDFRenderer:
         p.section_heading("Repository Health")
         h = self.data.health
         pdf = p.pdf
-        pdf.set_font("Tahoma", "B", p.SUBHEADING_SIZE)
+        pdf.set_font("DejaVu", "B", p.SUBHEADING_SIZE)
         pdf.set_text_color(*TEXT_DARK)
         pdf.cell(0, 7, f"Score: {h.score}/100  —  {h.status}", new_x="LMARGIN", new_y="NEXT")
         if h.recommendation:
-            pdf.set_font("Tahoma", "", p.BODY_SIZE)
+            pdf.set_font("DejaVu", "", p.BODY_SIZE)
             pdf.set_text_color(*TEXT_MUTED)
             pdf.multi_cell(0, 5, h.recommendation)
         if h.breakdown:
@@ -116,7 +116,7 @@ class PDFRenderer:
                 fmts: list[str] | None = ["B"] if i == 0 else None
                 p.table_row(row, team.col_widths, i, formats=fmts)
         else:
-            pdf.set_font("Tahoma", "", p.BODY_SIZE)
+            pdf.set_font("DejaVu", "", p.BODY_SIZE)
             pdf.set_text_color(*TEXT_MUTED)
             pdf.cell(0, 7, "No team data available yet.", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(4)
@@ -127,7 +127,7 @@ class PDFRenderer:
         p.section_heading("Key Insights")
         pdf = p.pdf
         for insight in self.data.insights:
-            pdf.set_font("Tahoma", "", p.BODY_SIZE)
+            pdf.set_font("DejaVu", "", p.BODY_SIZE)
             pdf.set_text_color(*TEXT_DARK)
             pdf.cell(3, 6, chr(8226) + " ", align="C")
             pdf.cell(0, 6, insight, new_x="LMARGIN", new_y="NEXT")
