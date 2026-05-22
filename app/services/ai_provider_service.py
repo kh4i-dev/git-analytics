@@ -267,51 +267,77 @@ class AiToolService:
                 "has_context": False,
                 "chunk_count": 0,
                 "file_count": 0,
+                "indexing_status": "failed",
+                "supported_files_found": 0,
+                "skipped_files": 0,
+                "supported_extensions": [".py", ".ts", ".tsx", ".js"],
+                "index_reason": "Repository not found.",
                 "last_indexed_at": None,
             }
+        
+        from app.utils.timezone import isoformat_vn
+        import os
+        
+        supported_extensions = [".py", ".ts", ".tsx", ".js"]
+        supported_exts_set = {".py", ".ts", ".tsx", ".js"}
         
         # Determine is_indexed using the same logic as answer_question
         is_indexed = (repo.name.lower() == "git-analytics" or "git-analytics" in repo.full_name.lower())
         
-        if not is_indexed or repo.last_sync_status != "success":
-            return {
-                "has_context": False,
-                "chunk_count": 0,
-                "file_count": 0,
-                "last_indexed_at": None,
+        supported_files_found = 0
+        skipped_files_count = 0
+        
+        if is_indexed and repo.last_sync_status == "success":
+            exclude_dirs = {
+                ".git", ".venv", "venv", "__pycache__", "node_modules", 
+                "dist", "build", ".pytest_cache", ".gemini", ".idea", 
+                ".vscode", "tmp", "temp"
             }
+            # Scan current directory as root workspace
+            for root, dirs, files in os.walk("."):
+                # Modify dirs in-place to prevent walking into excluded directories
+                dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
+                for file in files:
+                    if file.startswith("."):
+                        continue
+                    ext = os.path.splitext(file)[1].lower()
+                    if ext in supported_exts_set:
+                        supported_files_found += 1
+                    else:
+                        skipped_files_count += 1
+                        
+        file_count = supported_files_found
+        chunk_count = supported_files_found
         
-        # Count actual files and chunks existing on disk
-        import os
-        from app.utils.timezone import isoformat_vn
-        all_possible_files = [
-            "docs/grapuco-architecture-summary.md",
-            "app/services/sync_service.py",
-            "app/routes/api_sync.py",
-            "app/models/sync_job.py",
-            "app/routes/auth.py",
-            "app/services/auth_service.py",
-            "app/core/session.py",
-            "app/services/analytics_service.py",
-            "app/routes/api_analytics.py",
-            "app/services/engineering_report_service.py",
-            "app/routes/engineering_reports.py",
-            "app/models/repository.py",
-            "app/models/user.py",
-            "app/models/commit.py"
-        ]
-        
-        existing_files = [f for f in all_possible_files if os.path.exists(f)]
-        file_count = len(existing_files)
-        chunk_count = file_count
-        
-        has_context = chunk_count > 0 and file_count > 0
+        if repo.last_sync_status == "failed":
+            indexing_status = "failed"
+            index_reason = f"Clone/parsing/embedding/storage failed: {repo.last_sync_error or 'Unknown error'}"
+        elif repo.last_sync_status == "cancelled":
+            indexing_status = "cancelled"
+            index_reason = "Indexing interrupted manually or stopped by system."
+        elif repo.last_sync_status == "success":
+            if file_count > 0:
+                indexing_status = "success"
+                index_reason = "Semantic indexing completed successfully."
+            else:
+                indexing_status = "empty"
+                index_reason = "No supported source files detected (.py, .ts, .tsx, .js)"
+        else:
+            indexing_status = repo.last_sync_status
+            index_reason = f"Sync status is {repo.last_sync_status}."
+            
+        has_context = (indexing_status == "success" and file_count > 0 and chunk_count > 0)
         
         return {
             "has_context": has_context,
             "chunk_count": chunk_count,
             "file_count": file_count,
-            "last_indexed_at": isoformat_vn(repo.last_synced_at),
+            "indexing_status": indexing_status,
+            "supported_files_found": supported_files_found,
+            "skipped_files": skipped_files_count,
+            "supported_extensions": supported_extensions,
+            "index_reason": index_reason,
+            "last_indexed_at": isoformat_vn(repo.last_synced_at) if (indexing_status == "success" and repo.last_synced_at) else None,
         }
 
     async def generate_commit_message(self, *, user_id: int, diff: str) -> dict[str, Any]:
@@ -380,6 +406,12 @@ class AiToolService:
             "repository_id": None,
             "last_indexed_at": None,
             "indexing_status": None,
+            "supported_files_found": 0,
+            "skipped_files": 0,
+            "supported_extensions": [".py", ".ts", ".tsx", ".js"],
+            "index_reason": None,
+            "files_indexed": 0,
+            "chunks": 0,
         }
         
         # 1. Load repository context if repo_id is supplied
@@ -387,19 +419,26 @@ class AiToolService:
             from app.repositories.repository_repo import RepositoryRepository
             repo = RepositoryRepository(self.db).get_by_user_and_id(user_id, repo_id)
             if repo:
-                from app.utils.timezone import isoformat_vn
                 context_metadata["repo_name"] = repo.full_name
                 context_metadata["repository_id"] = repo.id
-                context_metadata["last_indexed_at"] = isoformat_vn(repo.last_synced_at)
-                context_metadata["indexing_status"] = repo.last_sync_status
+                
+                # Fetch semantic indexing status from service directly
+                index_status = self.get_repository_index_status(repo.id)
+                context_metadata["last_indexed_at"] = index_status["last_indexed_at"]
+                context_metadata["indexing_status"] = index_status["indexing_status"]
+                context_metadata["supported_files_found"] = index_status["supported_files_found"]
+                context_metadata["skipped_files"] = index_status["skipped_files"]
+                context_metadata["supported_extensions"] = index_status["supported_extensions"]
+                context_metadata["index_reason"] = index_status["index_reason"]
+                context_metadata["files_indexed"] = index_status["file_count"]
+                context_metadata["chunks"] = index_status["chunk_count"]
+                
                 active_branch = branch or repo.default_branch or "main"
                 context_metadata["branch"] = active_branch
                 
-                # Check for context isolation boundaries: only the local "git-analytics" codebase is indexed.
-                is_indexed = (repo.name.lower() == "git-analytics" or "git-analytics" in repo.full_name.lower())
                 cache_key = f"repo_assistant:{repo_id}:{active_branch}"
                 
-                if not is_indexed:
+                if not index_status["has_context"]:
                     # Satisfies safety requirements: empty/non-indexed repos return standard message immediately
                     metadata = self.settings_service.get_active_provider_metadata(user_id)
                     context_metadata["repository_source"] = "Empty/Non-indexed"

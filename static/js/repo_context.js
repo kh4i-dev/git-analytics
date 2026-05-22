@@ -105,6 +105,8 @@ function selectRepository(repoId, savedBranch = null) {
   document.getElementById('info-repo-name').textContent = repo.full_name;
   document.getElementById('info-commits-count').textContent = repo.commit_count;
   document.getElementById('info-contributors-count').textContent = repo.contributor_count;
+  const fileCountEl = document.getElementById('info-indexed-files-count');
+  if (fileCountEl) fileCountEl.textContent = '—';
 
   // Toggle layout sections visibility
   document.getElementById('ai-scope-badge').style.display = 'inline-flex';
@@ -218,13 +220,19 @@ async function updateIndexStatusUI(repoId) {
     const json = await response.json();
     const data = json.data || {};
     
-    if (data.has_context) {
-      setBadgingState("active", data);
-    } else {
-      setBadgingState("inactive", data);
+    // Set file count span
+    const indexedFilesCountEl = document.getElementById('info-indexed-files-count');
+    if (indexedFilesCountEl) {
+      indexedFilesCountEl.textContent = data.file_count !== undefined ? data.file_count : '0';
     }
+    
+    setBadgingState(data.indexing_status || "inactive", data);
   } catch (e) {
     console.error("Failed to update index status UI:", e);
+    const indexedFilesCountEl = document.getElementById('info-indexed-files-count');
+    if (indexedFilesCountEl) {
+      indexedFilesCountEl.textContent = '0';
+    }
     setBadgingState("inactive", { chunk_count: 0, file_count: 0 });
   }
 }
@@ -241,7 +249,7 @@ function setBadgingState(state, data = {}) {
   const scopeBadgeDot = scopeBadge.querySelector('.badge-dot');
   const scopeBadgeText = scopeBadge.querySelector('.badge-text');
 
-  if (state === "active") {
+  if (state === "success") {
     // Header Badge: Green Active
     indexBadge.style.color = '#4ade80';
     indexBadge.style.borderColor = 'rgba(74, 222, 128, 0.25)';
@@ -261,6 +269,69 @@ function setBadgingState(state, data = {}) {
     if (scopeBadgeDot) {
       scopeBadgeDot.style.backgroundColor = '#4ade80';
       scopeBadgeDot.style.animation = 'badge-pulse 2s infinite ease-in-out';
+    }
+  } else if (state === "empty") {
+    // Empty State: Orange / Muted
+    indexBadge.style.color = '#fb923c';
+    indexBadge.style.borderColor = 'rgba(251, 146, 60, 0.25)';
+    indexBadge.style.background = 'rgba(251, 146, 60, 0.05)';
+    if (indexBadgeText) indexBadgeText.textContent = 'AI Context: Empty';
+    if (indexBadgeDot) {
+      indexBadgeDot.style.backgroundColor = '#fb923c';
+      indexBadgeDot.style.animation = 'none';
+    }
+
+    // Scope Badge: Orange / Muted
+    scopeBadge.style.color = '#fb923c';
+    scopeBadge.style.borderColor = 'rgba(251, 146, 60, 0.16)';
+    scopeBadge.style.background = 'rgba(251, 146, 60, 0.04)';
+    scopeBadge.style.boxShadow = 'none';
+    if (scopeBadgeText) scopeBadgeText.textContent = 'AI Context: Empty';
+    if (scopeBadgeDot) {
+      scopeBadgeDot.style.backgroundColor = '#fb923c';
+      scopeBadgeDot.style.animation = 'none';
+    }
+  } else if (state === "failed") {
+    // Failed State: Red
+    indexBadge.style.color = '#f87171';
+    indexBadge.style.borderColor = 'rgba(248, 113, 113, 0.25)';
+    indexBadge.style.background = 'rgba(248, 113, 113, 0.05)';
+    if (indexBadgeText) indexBadgeText.textContent = 'AI Context: Failed';
+    if (indexBadgeDot) {
+      indexBadgeDot.style.backgroundColor = '#f87171';
+      indexBadgeDot.style.animation = 'none';
+    }
+
+    // Scope Badge: Red
+    scopeBadge.style.color = '#f87171';
+    scopeBadge.style.borderColor = 'rgba(248, 113, 113, 0.16)';
+    scopeBadge.style.background = 'rgba(248, 113, 113, 0.04)';
+    scopeBadge.style.boxShadow = 'none';
+    if (scopeBadgeText) scopeBadgeText.textContent = 'AI Context: Failed';
+    if (scopeBadgeDot) {
+      scopeBadgeDot.style.backgroundColor = '#f87171';
+      scopeBadgeDot.style.animation = 'none';
+    }
+  } else if (state === "cancelled") {
+    // Cancelled State: Red / Gray
+    indexBadge.style.color = '#94a3b8';
+    indexBadge.style.borderColor = 'rgba(148, 163, 184, 0.25)';
+    indexBadge.style.background = 'rgba(148, 163, 184, 0.05)';
+    if (indexBadgeText) indexBadgeText.textContent = 'AI Context: Cancelled';
+    if (indexBadgeDot) {
+      indexBadgeDot.style.backgroundColor = '#94a3b8';
+      indexBadgeDot.style.animation = 'none';
+    }
+
+    // Scope Badge: Red / Gray
+    scopeBadge.style.color = '#94a3b8';
+    scopeBadge.style.borderColor = 'rgba(148, 163, 184, 0.16)';
+    scopeBadge.style.background = 'rgba(148, 163, 184, 0.04)';
+    scopeBadge.style.boxShadow = 'none';
+    if (scopeBadgeText) scopeBadgeText.textContent = 'AI Context: Cancelled';
+    if (scopeBadgeDot) {
+      scopeBadgeDot.style.backgroundColor = '#94a3b8';
+      scopeBadgeDot.style.animation = 'none';
     }
   } else if (state === "loading") {
     // Header Badge: Neutral / Loading

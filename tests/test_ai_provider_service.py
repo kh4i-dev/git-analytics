@@ -431,6 +431,22 @@ def test_get_repository_index_status(db_session: Session) -> None:
     assert status_failed["chunk_count"] == 0
     assert status_failed["last_indexed_at"] is None
     
+    # Test cancelled sync status using mock patching to avoid DB CheckConstraint and autoflush
+    from unittest.mock import patch, MagicMock
+    mock_repo = MagicMock()
+    mock_repo.id = 99994
+    mock_repo.name = "git-analytics"
+    mock_repo.full_name = "kh4i-dev/git-analytics"
+    mock_repo.last_sync_status = "cancelled"
+    mock_repo.last_synced_at = synced_at
+    
+    with patch.object(RepositoryRepository, "get_by_id", return_value=mock_repo):
+        status_cancelled = tool.get_repository_index_status(mock_repo.id)
+        assert status_cancelled["has_context"] is False
+        assert status_cancelled["file_count"] == 0
+        assert status_cancelled["chunk_count"] == 0
+        assert status_cancelled["last_indexed_at"] is None
+    
     # Test foreign repo
     status_foreign = tool.get_repository_index_status(foreign_repo.id)
     assert status_foreign["has_context"] is False
@@ -444,3 +460,35 @@ def test_get_repository_index_status(db_session: Session) -> None:
     assert status_none["file_count"] == 0
     assert status_none["chunk_count"] == 0
     assert status_none["last_indexed_at"] is None
+
+
+def test_get_repository_index_status_empty(db_session: Session) -> None:
+    from unittest.mock import patch
+    user = _make_user(db_session)
+    from app.repositories import RepositoryRepository
+    from datetime import datetime, timezone
+    
+    synced_at = datetime.now(timezone.utc)
+    local_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 11005,
+        "owner": "kh4i-dev",
+        "name": "git-analytics",
+        "full_name": "kh4i-dev/git-analytics",
+        "html_url": "https://github.com/kh4i-dev/git-analytics",
+        "default_branch": "main",
+        "last_sync_status": "success",
+        "last_synced_at": synced_at,
+    })
+    db_session.commit()
+    
+    tool = AiToolService(db_session)
+    with patch("os.walk") as mock_walk:
+        mock_walk.return_value = [(".", [], ["logo.png", "README.md"])]
+        status = tool.get_repository_index_status(local_repo.id)
+        assert status["indexing_status"] == "empty"
+        assert status["has_context"] is False
+        assert status["file_count"] == 0
+        assert status["chunk_count"] == 0
+        assert status["last_indexed_at"] is None
+

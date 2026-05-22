@@ -92,6 +92,12 @@ function loadScopedChatHistory(repoId, branchName, repoName) {
         const branchVal = msg.context_metadata.branch || 'N/A';
         const lastIndexed = msg.context_metadata.last_indexed_at || 'Never';
         const idxStatus = msg.context_metadata.indexing_status || 'unknown';
+        
+        const supportedFilesFound = msg.context_metadata.supported_files_found !== undefined ? msg.context_metadata.supported_files_found : 'N/A';
+        const skippedFiles = msg.context_metadata.skipped_files !== undefined ? msg.context_metadata.skipped_files : 'N/A';
+        const supportedExtensions = (msg.context_metadata.supported_extensions || []).join(', ') || '.py, .ts, .tsx, .js';
+        const indexReason = msg.context_metadata.index_reason || '';
+        
         const badgeColor = source === 'Local Workspace' ? '#10B981' : '#F59E0B';
         devDebugHtml = `
           <div class="dev-debug-badge" style="display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-family: SFMono-Regular, Consolas, monospace; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); margin-top: 8px; color: var(--text-muted); width: fit-content; line-height: 1.5;">
@@ -110,6 +116,15 @@ function loadScopedChatHistory(repoId, branchName, repoName) {
             <span>Status: <strong>${escapeHtml(idxStatus)}</strong></span>
             <span style="opacity: 0.35;">|</span>
             <span>Indexed At: <strong>${escapeHtml(lastIndexed)}</strong></span>
+            <span style="opacity: 0.35;">|</span>
+            <span>Supported Files: <strong>${supportedFilesFound}</strong></span>
+            <span style="opacity: 0.35;">|</span>
+            <span>Skipped Files: <strong>${skippedFiles}</strong></span>
+            <span style="opacity: 0.35;">|</span>
+            <span>Extensions: <strong>${escapeHtml(supportedExtensions)}</strong></span>
+            ${indexReason ? `
+            <span style="opacity: 0.35;">|</span>
+            <span>Reason: <strong style="color: #fb923c;">${escapeHtml(indexReason)}</strong></span>` : ''}
           </div>
         `;
       }
@@ -252,6 +267,12 @@ async function askAssistant() {
       const branchVal = data.context_metadata.branch || 'N/A';
       const lastIndexed = data.context_metadata.last_indexed_at || 'Never';
       const idxStatus = data.context_metadata.indexing_status || 'unknown';
+      
+      const supportedFilesFound = data.context_metadata.supported_files_found !== undefined ? data.context_metadata.supported_files_found : 'N/A';
+      const skippedFiles = data.context_metadata.skipped_files !== undefined ? data.context_metadata.skipped_files : 'N/A';
+      const supportedExtensions = (data.context_metadata.supported_extensions || []).join(', ') || '.py, .ts, .tsx, .js';
+      const indexReason = data.context_metadata.index_reason || '';
+      
       const badgeColor = source === 'Local Workspace' ? '#10B981' : '#F59E0B';
       devDebugHtml = `
         <div class="dev-debug-badge" style="display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-family: SFMono-Regular, Consolas, monospace; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); margin-top: 8px; color: var(--text-muted); width: fit-content; line-height: 1.5;">
@@ -270,6 +291,15 @@ async function askAssistant() {
           <span>Status: <strong>${escapeHtml(idxStatus)}</strong></span>
           <span style="opacity: 0.35;">|</span>
           <span>Indexed At: <strong>${escapeHtml(lastIndexed)}</strong></span>
+          <span style="opacity: 0.35;">|</span>
+          <span>Supported Files: <strong>${supportedFilesFound}</strong></span>
+          <span style="opacity: 0.35;">|</span>
+          <span>Skipped Files: <strong>${skippedFiles}</strong></span>
+          <span style="opacity: 0.35;">|</span>
+          <span>Extensions: <strong>${escapeHtml(supportedExtensions)}</strong></span>
+          ${indexReason ? `
+          <span style="opacity: 0.35;">|</span>
+          <span>Reason: <strong style="color: #fb923c;">${escapeHtml(indexReason)}</strong></span>` : ''}
         </div>
       `;
     }
