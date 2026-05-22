@@ -6,16 +6,27 @@
 {% if is_public %}
 <div class="ai-public">
   <section class="ai-hero">
-    <div>
-      <span class="ai-kicker">AI Tools</span>
-      <h1>AI workspace cho engineering team</h1>
-      <p>Soáº¡n commit message, rÃ  soÃ¡t PR diff vÃ  há»i nhanh vá» kiáº¿n trÃºc repository khi cháº¡y Git Analytics á»Ÿ cháº¿ Ä‘á»™ AI provider.</p>
-      <div class="ai-badges">
-        <span>BYOK or Cloud</span>
-        <span>Beta</span>
-        <span>Requires Workspace Access</span>
+    <div class="hero-left">
+      <div class="header-icon">
+        <i data-lucide="bot"></i>
       </div>
-      <a class="btn btn-primary" href="/login">ÄÄƒng nháº­p Ä‘á»ƒ sá»­ dá»¥ng vá»›i repository cá»§a báº¡n</a>
+      <div class="header-main">
+        <span class="ai-kicker">AI Tools</span>
+        <h1>AI workspace cho engineering team</h1>
+        <p class="subtitle">Commit generation, PR review, repository intelligence and engineering insights.</p>
+      </div>
+      <div class="provider-strip">
+        <span class="status-badge mode-badge disabled"><i data-lucide="alert-circle"></i> Needs setup</span>
+        <span id="active-provider-badge" class="status-badge provider-badge">
+          <code class="provider-mono"><i data-lucide="bot"></i> BYOK or Cloud</code>
+        </span>
+        <span class="status-badge beta-badge"><i data-lucide="flask-conical"></i> Beta</span>
+        <span class="status-badge access-badge"><i data-lucide="users"></i> Requires Workspace Access</span>
+        <span class="status-badge guide-toggle-badge" onclick="toggleGuide()" style="cursor: pointer;">
+          <i data-lucide="book-open"></i> <span id="guide-badge-text">Xem cẩm nang</span>
+        </span>
+      </div>
+      <a class="btn btn-primary" href="/login" style="margin-top: 20px;">Đăng nhập để sử dụng với repository của bạn</a>
     </div>
     <div class="ai-preview-card">
       <div class="panel-head">
@@ -24,8 +35,75 @@
       </div>
       <pre>feat(analytics): add branch-aware dashboard filters</pre>
       <div class="preview-list">
-        <div><strong>PR Diff Reviewer</strong><span>PhÃ¡t hiá»‡n rá»§i ro báº£o máº­t, hiá»‡u nÄƒng vÃ  kiáº¿n trÃºc.</span></div>
-        <div><strong>Repo Assistant</strong><span>Tráº£ lá»i dá»±a trÃªn source context trong configured provider.</span></div>
+        <div><strong>PR Diff Reviewer</strong><span>Phát hiện rủi ro bảo mật, hiệu năng và kiến trúc.</span></div>
+        <div><strong>Repo Assistant</strong><span>Trả lời dựa trên source context trong configured provider.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Collapsible AI User Guide Panel for Public View -->
+  <section class="ai-panel ai-guide-panel" style="margin-top: 24px;">
+    <div class="panel-head" style="cursor: pointer; user-select: none;" onclick="toggleGuide()">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i data-lucide="book-open" style="color: var(--purple); width: 20px; height: 20px;"></i>
+        <h2>Cẩm nang Hướng dẫn Sử dụng & Mẹo Khai thác AI</h2>
+      </div>
+      <span id="guide-toggle-icon" class="status-badge" style="padding: 4px 12px; font-weight: 600;"><i data-lucide="chevron-down"></i> Xem cẩm nang</span>
+    </div>
+    
+    <div id="guide-content" style="display: none; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;">
+      <div class="guide-grid">
+        <!-- Card 1: Hướng dẫn Git Diff -->
+        <div class="guide-card">
+          <h3><i data-lucide="git-compare"></i> Git Diff Workflow</h3>
+          <p>
+            Để AI gợi ý commit và review chính xác nhất, bạn cần cung cấp mã diff tiêu chuẩn từ terminal của dự án:
+          </p>
+          <ul>
+            <li><strong>Chưa stage (chưa git add):</strong> <code>git diff</code></li>
+            <li><strong>Đã stage (đã chạy git add):</strong> <code>git diff --cached</code></li>
+            <li><strong>Commit gần nhất:</strong> <code>git show HEAD</code></li>
+          </ul>
+        </div>
+
+        <!-- Card 2: Conventional Commits -->
+        <div class="guide-card">
+          <h3><i data-lucide="terminal"></i> Conventional Commits</h3>
+          <p>
+            AI sẽ phân tích code thay đổi và tự động viết commit message theo quy chuẩn chuẩn hóa của các team công nghệ toàn cầu:
+          </p>
+          <div style="background:#080c12; padding:8px; border-radius:4px; font-family:monospace; color:#58a6ff; font-size:12px; margin-bottom:8px; border:1px solid var(--border-sub)">
+            &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;
+          </div>
+          <ul>
+            <li><strong>feat:</strong> Tính năng mới (ví dụ: <code>feat(auth):...</code>)</li>
+            <li><strong>fix:</strong> Sửa lỗi hệ thống</li>
+            <li><strong>refactor:</strong> Cấu trúc lại code</li>
+            <li><strong>docs:</strong> Cập nhật tài liệu</li>
+          </ul>
+        </div>
+
+        <!-- Card 3: Gợi ý câu hỏi Codebase -->
+        <div class="guide-card">
+          <h3><i data-lucide="brain-circuit"></i> Repo Assistant</h3>
+          <p>
+            Hỏi trợ lý AI về cấu trúc mã nguồn, quy trình nghiệp vụ dựa trên codebase đã được đồng bộ hóa của bạn:
+          </p>
+          <ul style="font-style: italic;">
+            <li>"Kiến trúc đồng bộ repository (Sync Service) hoạt động như thế nào?"</li>
+            <li>"Quy trình auth và đăng nhập bằng GitHub được thiết kế ra sao?"</li>
+            <li>"Đề xuất bộ test case cho chức năng chuyển đổi cấu hình BYOK."</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="guide-footer">
+        <span style="font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
+          <i data-lucide="shield-check" style="color: var(--success-text);"></i> <strong>BYOK Security:</strong> Khóa BYOK của bạn được mã hóa an toàn bằng thuật toán Fernet đối xứng trước khi lưu vào DB.
+        </span>
+        <a href="https://github.com/kh4i-dev/git-analytics/blob/main/README.md" target="_blank" style="font-size: 13px; color: var(--text-link); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+          Tài liệu kỹ thuật đầy đủ <i data-lucide="arrow-right"></i>
+        </a>
       </div>
     </div>
   </section>
@@ -33,22 +111,46 @@
 {% else %}
 <div class="ai-workspace">
   <section class="ai-header">
-    <div>
+    <div class="header-icon">
+      <i data-lucide="bot"></i>
+    </div>
+    <div class="header-main">
       <span class="ai-kicker">AI Workspace</span>
-      <h1>Trá»£ lÃ½ ká»¹ thuáº­t</h1>
-      <p>Viáº¿t commit message, rÃ  soÃ¡t PR diff vÃ  há»i nhanh vá» kiáº¿n trÃºc repository.</p>
+      <h1>Trợ lý kỹ thuật</h1>
+      <p class="subtitle">Commit generation, PR review, repository intelligence and engineering insights.</p>
     </div>
     <div class="provider-strip">
-      <span class="mode-badge {{ 'enabled' if ai_enabled else 'disabled' }}">{{ 'Configured' if ai_enabled else 'Needs setup' }}</span>
-      <span>BYOK or Cloud</span>
-      <span>Beta</span>
-      <span>Requires Workspace Access</span>
+      <span class="status-badge mode-badge {{ 'enabled' if ai_enabled else 'disabled' }}">
+        {% if ai_enabled %}
+          <i data-lucide="check-circle-2"></i> Configured
+        {% else %}
+          <i data-lucide="alert-circle"></i> Needs setup
+        {% endif %}
+      </span>
+      <span id="active-provider-badge" class="status-badge provider-badge">
+        {% if ai_label %}
+          {% if ai_label.startswith('BYOK') %}
+            <code class="provider-mono"><i data-lucide="bot"></i> {{ ai_label }}</code>
+          {% elif ai_label.startswith('Cloud') %}
+            <code class="provider-mono"><i data-lucide="sparkles"></i> {{ ai_label }}</code>
+          {% else %}
+            <code class="provider-mono"><i data-lucide="bot"></i> {{ ai_label }}</code>
+          {% endif %}
+        {% else %}
+          <code class="provider-mono"><i data-lucide="bot"></i> BYOK or Cloud</code>
+        {% endif %}
+      </span>
+      <span class="status-badge beta-badge"><i data-lucide="flask-conical"></i> Beta</span>
+      <span class="status-badge access-badge"><i data-lucide="users"></i> Requires Workspace Access</span>
+      <span class="status-badge guide-toggle-badge" onclick="toggleGuide()" style="cursor: pointer;">
+        <i data-lucide="book-open"></i> <span id="guide-badge-text">Xem cẩm nang</span>
+      </span>
     </div>
   </section>
 
   {% if not ai_enabled %}
   <section class="workspace-lock">
-    <strong>AI provider chÆ°a báº­t</strong>
+    <strong>AI provider chưa bật</strong>
     <p>{{ ai_message }}</p>
   </section>
   {% endif %}
@@ -56,33 +158,266 @@
   <section class="ai-grid">
     <article class="ai-panel {% if not ai_enabled %}is-disabled{% endif %}">
       <div class="panel-head">
-        <div><span>Commit</span><h2>Gá»£i Ã½ commit message</h2></div>
-        <button class="btn btn-primary btn-sm" onclick="generateCommit()" {% if not ai_enabled %}disabled{% endif %}>Táº¡o</button>
+        <div><span>Commit</span><h2>Gợi ý commit message</h2></div>
+        <button class="btn btn-primary btn-sm" onclick="generateCommit()" {% if not ai_enabled %}disabled{% endif %}>Tạo</button>
       </div>
-      <textarea id="commit-diff" placeholder="DÃ¡n git diff vÃ o Ä‘Ã¢y..." {% if not ai_enabled %}disabled{% endif %}></textarea>
-      <pre id="commit-output" class="ai-output">{% if ai_enabled %}Commit message sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.{% else %}{{ ai_message }}{% endif %}</pre>
+      <textarea id="commit-diff" placeholder="Dán git diff vào đây..." {% if not ai_enabled %}disabled{% endif %}></textarea>
+      <pre id="commit-output" class="ai-output">{% if ai_enabled %}Commit message sẽ xuất hiện tại đây.{% else %}{{ ai_message }}{% endif %}</pre>
     </article>
 
     <article class="ai-panel {% if not ai_enabled %}is-disabled{% endif %}">
       <div class="panel-head">
-        <div><span>Review</span><h2>RÃ  soÃ¡t PR diff</h2></div>
+        <div><span>Review</span><h2>Rà soát PR diff</h2></div>
         <button class="btn btn-primary btn-sm" onclick="reviewDiff()" {% if not ai_enabled %}disabled{% endif %}>Review</button>
       </div>
-      <textarea id="review-diff" placeholder="DÃ¡n PR diff Ä‘á»ƒ rÃ  soÃ¡t rá»§i ro..." {% if not ai_enabled %}disabled{% endif %}></textarea>
-      <div id="review-output" class="review-output">{% if ai_enabled %}Nháº­n xÃ©t review sáº½ xuáº¥t hiá»‡n táº¡i Ä‘Ã¢y.{% else %}{{ ai_message }}{% endif %}</div>
+      <textarea id="review-diff" placeholder="Dán PR diff để rà soát rủi ro..." {% if not ai_enabled %}disabled{% endif %}></textarea>
+      <div id="review-output" class="review-output">{% if ai_enabled %}Nhận xét review sẽ xuất hiện tại đây.{% else %}{{ ai_message }}{% endif %}</div>
     </article>
   </section>
 
   <section class="ai-panel chat-panel {% if not ai_enabled %}is-disabled{% endif %}">
-    <div class="panel-head">
-      <div><span>Repo Assistant</span><h2>Há»i vá» codebase</h2></div>
-      <button class="btn btn-primary btn-sm" onclick="askAssistant()" {% if not ai_enabled %}disabled{% endif %}>Gá»­i</button>
+    <div class="panel-head" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="assistant-identity-icon">
+          <i data-lucide="bot"></i>
+        </div>
+        <div>
+          <h2 style="font-size: 15px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
+            AI Repo Assistant
+          </h2>
+          <span style="font-size: 11px; color: var(--text-muted); text-transform: none; letter-spacing: normal; font-weight: normal;">Engineering Copilot Mode</span>
+        </div>
+      </div>
+      
+      <div class="chat-header-badges" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <span id="chat-provider-badge" class="status-badge provider-badge" style="margin: 0; padding: 3px 8px; font-size: 11px;">
+          {% if ai_label %}
+            <code class="provider-mono" style="font-size: 10px;"><i data-lucide="sparkles" style="width:11px; height:11px;"></i> {{ ai_label }}</code>
+          {% else %}
+            <code class="provider-mono" style="font-size: 10px;"><i data-lucide="sparkles" style="width:11px; height:11px;"></i> Gemini 2.5 Pro</code>
+          {% endif %}
+        </span>
+        <span class="status-badge" style="margin: 0; padding: 3px 8px; font-size: 11px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.25); background: rgba(56, 189, 248, 0.05); display: inline-flex; align-items: center; gap: 4px;">
+          <i data-lucide="shield-check" style="width:11px; height:11px;"></i> Repository Scoped
+        </span>
+        <span class="status-badge" style="margin: 0; padding: 3px 8px; font-size: 11px; color: #4ade80; border-color: rgba(74, 222, 128, 0.25); background: rgba(74, 222, 128, 0.05); display: inline-flex; align-items: center; gap: 4px;">
+          <span class="badge-dot" style="width: 5px; height: 5px; margin: 0;"></span> Indexed Context Active
+        </span>
+      </div>
     </div>
-    <div id="chat-output" class="chat-output">
-      <div class="assistant-msg">{% if ai_enabled %}Há»i vá» auth flow, sync pipeline, architecture hoáº·c module xá»­ lÃ½ GitHub.{% else %}{{ ai_message }}{% endif %}</div>
+
+    {% if not is_public and ai_enabled %}
+    <!-- Repository and Branch Selection Context Toolbar -->
+    <div class="chat-context-toolbar">
+      <div class="selector-row">
+        <!-- Repository Searchable Selector Dropdown -->
+        <div class="custom-dropdown repo-dropdown" id="repo-dropdown-wrapper">
+          <button type="button" class="dropdown-trigger" id="repo-trigger" onclick="toggleDropdown('repo-menu'); event.stopPropagation();">
+            <i data-lucide="folder-git-2" class="trigger-icon"></i>
+            <span id="selected-repo-label" class="mono-font">Choose Repository</span>
+            <i data-lucide="chevron-down" class="chevron-icon"></i>
+          </button>
+          <div class="dropdown-menu" id="repo-menu">
+            <div class="dropdown-search-wrapper" onclick="event.stopPropagation();">
+              <i data-lucide="search" class="search-icon"></i>
+              <input type="text" placeholder="Tìm repository..." id="repo-search-input" oninput="filterRepositories(event)">
+            </div>
+            <div class="dropdown-items" id="repo-list">
+              {% for r in repos %}
+                <div class="dropdown-item mono-font" data-repo-id="{{ r.id }}" data-repo-fullname="{{ r.full_name }}" onclick="selectRepository({{ r.id }}); event.stopPropagation();">
+                  <i data-lucide="folder-git-2" class="item-icon"></i>
+                  <span>{{ r.full_name }}</span>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Branch Selection Dropdown -->
+        <div class="custom-dropdown branch-dropdown" id="branch-dropdown-wrapper">
+          <button type="button" class="dropdown-trigger" id="branch-trigger" onclick="toggleDropdown('branch-menu'); event.stopPropagation();">
+            <i data-lucide="git-branch" class="trigger-icon"></i>
+            <span id="selected-branch-label" class="mono-font">Choose Branch</span>
+            <i data-lucide="chevron-down" class="chevron-icon"></i>
+          </button>
+          <div class="dropdown-menu" id="branch-menu">
+            <div class="dropdown-items" id="branch-list">
+              <!-- Dynamically loaded branches -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Subtle AI Context Active Badge -->
+        <span class="scope-badge" id="ai-scope-badge" style="display: none;">
+          <span class="badge-dot"></span>
+          <span class="badge-text">Repository Context Active</span>
+        </span>
+      </div>
+
+      <!-- Monospace Context Detail Bar -->
+      <div class="context-info-row" id="active-context-info" style="display: none;">
+        <span class="info-item">
+          <span class="info-label">Analyzing:</span>
+          <span class="mono-font info-value" id="info-repo-name">—</span>
+        </span>
+        <span class="info-divider"></span>
+        <span class="info-item">
+          <i data-lucide="git-branch" class="info-icon"></i>
+          <span class="info-label">Branch:</span>
+          <span class="mono-font info-value" id="info-branch-name">—</span>
+        </span>
+        <span class="info-divider"></span>
+        <span class="info-item">
+          <i data-lucide="git-commit" class="info-icon"></i>
+          <span class="info-label">Indexed commits:</span>
+          <span class="info-value" id="info-commits-count">—</span>
+        </span>
+        <span class="info-divider"></span>
+        <span class="info-item">
+          <i data-lucide="users" class="info-icon"></i>
+          <span class="info-label">Contributors:</span>
+          <span class="info-value" id="info-contributors-count">—</span>
+        </span>
+      </div>
     </div>
-    <div class="chat-input-row">
-      <input id="assistant-question" placeholder="VÃ­ dá»¥: CÃ¡c module sync hoáº¡t Ä‘á»™ng tháº¿ nÃ o?" {% if not ai_enabled %}disabled{% endif %}>
+    {% endif %}
+    
+    <div class="chat-viewport" id="chat-viewport">
+      <!-- Onboarding Empty State Overlay -->
+      <div class="chat-onboarding-state" id="chat-onboarding-state" style="display: none;">
+        <div class="onboarding-icon">
+          <i data-lucide="folder-git-2"></i>
+        </div>
+        <h3>Select a repository to start repository-aware AI assistance.</h3>
+        <p>Choose an active repository and a branch to scope your engineering copilot queries to indexed codebases.</p>
+        <button class="btn btn-primary btn-sm" onclick="toggleDropdown('repo-menu'); event.stopPropagation();">
+          <i data-lucide="plus" style="width: 14px; height: 14px; margin-right: 4px;"></i> Choose Repository
+        </button>
+      </div>
+
+      <div id="chat-messages" class="chat-messages">
+        <!-- Assistant Welcome Card -->
+        <div class="assistant-welcome-card" id="assistant-welcome">
+          <div class="welcome-header">
+            <div class="welcome-avatar">
+              <i data-lucide="sparkles"></i>
+            </div>
+            <h3 id="assistant-welcome-title">Engineering AI Copilot</h3>
+          </div>
+          <p class="welcome-desc" id="assistant-welcome-desc">
+            {% if ai_enabled %}
+              Hỏi bất kỳ điều gì về repository đã đồng bộ của bạn. Tôi có thể giải thích kiến trúc, rà soát quy trình auth flow, phân tích pipeline sync, hoặc đề xuất test cases.
+            {% else %}
+              {{ ai_message }}
+            {% endif %}
+          </p>
+          
+          {% if ai_enabled %}
+          <div class="welcome-suggestions-label">Gợi ý câu hỏi nhanh:</div>
+          <div class="suggestion-chips-grid" id="welcome-suggestions-chips">
+            <div class="suggestion-chip" onclick="useSuggestion('Giải thích kiến trúc đồng bộ repository (Sync Service)')">
+              <i data-lucide="git-compare"></i> Explain sync architecture
+            </div>
+            <div class="suggestion-chip" onclick="useSuggestion('Quy trình auth và đăng nhập bằng GitHub được thiết kế ra sao?')">
+              <i data-lucide="shield-check"></i> Review auth flow
+            </div>
+            <div class="suggestion-chip" onclick="useSuggestion('Đề xuất bộ test case cho chức năng chuyển đổi cấu hình BYOK.')">
+              <i data-lucide="terminal"></i> Suggest test cases
+            </div>
+            <div class="suggestion-chip" onclick="useSuggestion('Phân tích cấu trúc thư mục và các module chính của dự án.')">
+              <i data-lucide="brain-circuit"></i> Analyze repository structure
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      {% if ai_enabled %}
+      <div class="suggestion-chips-row" id="mini-suggestions-chips">
+        <div class="suggestion-chip-mini" onclick="useSuggestion('Đề xuất cải tiến cấu trúc dự án')">
+          Suggest improvements
+        </div>
+        <div class="suggestion-chip-mini" onclick="useSuggestion('Tạo tóm tắt release notes từ commit gần đây')">
+          Generate release summary
+        </div>
+      </div>
+      {% endif %}
+      
+      <div class="chat-input-wrapper">
+        <input id="assistant-question" placeholder="Hỏi về codebase..." {% if not ai_enabled %}disabled{% endif %} onkeydown="if(event.key === 'Enter') askAssistant()">
+        <button id="send-question-btn" class="chat-send-btn" onclick="askAssistant()" {% if not ai_enabled %}disabled{% endif %}>
+          <i data-lucide="arrow-up"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Collapsible AI User Guide Panel -->
+  <section class="ai-panel ai-guide-panel">
+    <div class="panel-head" style="cursor: pointer; user-select: none;" onclick="toggleGuide()">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <i data-lucide="book-open" style="color: var(--purple); width: 20px; height: 20px;"></i>
+        <h2>Cẩm nang Hướng dẫn Sử dụng & Mẹo Khai thác AI</h2>
+      </div>
+      <span id="guide-toggle-icon" class="status-badge" style="padding: 4px 12px; font-weight: 600;"><i data-lucide="chevron-down"></i> Xem cẩm nang</span>
+    </div>
+    
+    <div id="guide-content" style="display: none; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;">
+      <div class="guide-grid">
+        <!-- Card 1: Hướng dẫn Git Diff -->
+        <div class="guide-card">
+          <h3><i data-lucide="git-compare"></i> Git Diff Workflow</h3>
+          <p>
+            Để AI gợi ý commit và review chính xác nhất, bạn cần cung cấp mã diff tiêu chuẩn từ terminal của dự án:
+          </p>
+          <ul>
+            <li><strong>Chưa stage (chưa git add):</strong> <code>git diff</code></li>
+            <li><strong>Đã stage (đã chạy git add):</strong> <code>git diff --cached</code></li>
+            <li><strong>Commit gần nhất:</strong> <code>git show HEAD</code></li>
+          </ul>
+        </div>
+
+        <!-- Card 2: Conventional Commits -->
+        <div class="guide-card">
+          <h3><i data-lucide="terminal"></i> Conventional Commits</h3>
+          <p>
+            AI sẽ phân tích code thay đổi và tự động viết commit message theo quy chuẩn chuẩn hóa của các team công nghệ toàn cầu:
+          </p>
+          <div style="background:#080c12; padding:8px; border-radius:4px; font-family:monospace; color:#58a6ff; font-size:12px; margin-bottom:8px; border:1px solid var(--border-sub)">
+            &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;
+          </div>
+          <ul>
+            <li><strong>feat:</strong> Tính năng mới (ví dụ: <code>feat(auth):...</code>)</li>
+            <li><strong>fix:</strong> Sửa lỗi hệ thống</li>
+            <li><strong>refactor:</strong> Cấu trúc lại code</li>
+            <li><strong>docs:</strong> Cập nhật tài liệu</li>
+          </ul>
+        </div>
+
+        <!-- Card 3: Gợi ý câu hỏi Codebase -->
+        <div class="guide-card">
+          <h3><i data-lucide="brain-circuit"></i> Repo Assistant</h3>
+          <p>
+            Hỏi trợ lý AI về cấu trúc mã nguồn, quy trình nghiệp vụ dựa trên codebase đã được đồng bộ hóa của bạn:
+          </p>
+          <ul style="font-style: italic;">
+            <li>"Kiến trúc đồng bộ repository (Sync Service) hoạt động như thế nào?"</li>
+            <li>"Quy trình auth và đăng nhập bằng GitHub được thiết kế ra sao?"</li>
+            <li>"Đề xuất bộ test case cho chức năng chuyển đổi cấu hình BYOK."</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="guide-footer">
+        <span style="font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
+          <i data-lucide="shield-check" style="color: var(--success-text);"></i> <strong>BYOK Security:</strong> Khóa BYOK của bạn được mã hóa an toàn bằng thuật toán Fernet đối xứng trước khi lưu vào DB.
+        </span>
+        <a href="https://github.com/kh4i-dev/git-analytics/blob/main/README.md" target="_blank" style="font-size: 13px; color: var(--text-link); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+          Tài liệu kỹ thuật đầy đủ <i data-lucide="arrow-right"></i>
+        </a>
+      </div>
     </div>
   </section>
 </div>
@@ -90,22 +425,126 @@
 
 <style>
   .ai-workspace, .ai-public { display:grid; gap:18px; max-width:1180px; }
-  .ai-header, .ai-hero {
-    display:flex; justify-content:space-between; gap:20px; align-items:flex-start;
-    padding:20px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface);
+  .ai-header {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    background: radial-gradient(100% 100% at 50% 0%, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 100%), rgba(10, 15, 26, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   }
-  .ai-hero { align-items:stretch; min-height:360px; }
+  .ai-hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: stretch;
+    min-height: 360px;
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    background: radial-gradient(100% 100% at 50% 0%, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 100%), rgba(10, 15, 26, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+  }
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: rgba(188, 140, 255, 0.08);
+    border: 1px solid rgba(188, 140, 255, 0.15);
+    margin-bottom: 8px;
+    box-shadow: 0 0 15px rgba(188, 140, 255, 0.06);
+    color: var(--purple);
+  }
+  .header-icon .lucide {
+    width: 22px;
+    height: 22px;
+  }
   .ai-kicker { color:var(--purple); font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-  .ai-header h1, .ai-hero h1 { font-size:24px; margin:4px 0; }
+  .ai-header h1, .ai-hero h1 { font-size: 26px; margin: 6px 0; font-weight: 700; letter-spacing: -0.02em; }
   .ai-hero h1 { font-size:34px; max-width:520px; }
-  .ai-header p, .ai-hero p { color:var(--text-muted); line-height:1.6; max-width:610px; }
-  .ai-badges, .provider-strip { display:flex; gap:8px; flex-wrap:wrap; margin:18px 0; }
-  .provider-strip { justify-content:flex-end; margin:0; }
-  .ai-badges span, .provider-strip span {
-    padding:5px 9px; border:1px solid var(--border); border-radius:999px; background:var(--surface-2); font-size:12px;
+  .subtitle { color:var(--text-muted); font-size: 14px; line-height: 1.5; max-width: 650px; margin: 0; }
+  .ai-badges, .provider-strip { display:flex; gap:8px; flex-wrap:wrap; margin:12px 0 0 0; }
+  
+  /* Reusable StatusBadge Component */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
-  .mode-badge.enabled { color:var(--success-text); border-color:var(--success-border); background:var(--success-bg); }
-  .mode-badge.disabled { color:var(--warn-text); border-color:var(--warn-border); background:var(--warn-bg); }
+  .status-badge .lucide {
+    width: 14px;
+    height: 14px;
+    stroke-width: 1.5;
+  }
+  .provider-mono {
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+    font-size: 11.5px;
+    letter-spacing: -0.015em;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .mode-badge.enabled {
+    color: #4ade80 !important;
+    border-color: rgba(74, 222, 128, 0.25) !important;
+    background: rgba(74, 222, 128, 0.06) !important;
+    box-shadow: 0 0 12px rgba(74, 222, 128, 0.12), inset 0 1px 0 rgba(74, 222, 128, 0.08) !important;
+  }
+  .mode-badge.disabled {
+    color: #f87171 !important;
+    border-color: rgba(248, 113, 113, 0.25) !important;
+    background: rgba(248, 113, 113, 0.06) !important;
+    box-shadow: 0 0 12px rgba(248, 113, 113, 0.12), inset 0 1px 0 rgba(248, 113, 113, 0.08) !important;
+  }
+  .provider-badge {
+    color: #c084fc !important;
+    border-color: rgba(192, 132, 252, 0.25) !important;
+    background: rgba(192, 132, 252, 0.06) !important;
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.12), inset 0 1px 0 rgba(192, 132, 252, 0.08) !important;
+  }
+  .beta-badge {
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.2) !important;
+    background: rgba(56, 189, 248, 0.05) !important;
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.08) !important;
+  }
+  .access-badge {
+    color: #a1a1aa !important;
+    border-color: rgba(161, 161, 170, 0.2) !important;
+    background: rgba(161, 161, 170, 0.05) !important;
+  }
+  .guide-toggle-badge {
+    color: #a78bfa !important;
+    border-color: rgba(167, 139, 250, 0.25) !important;
+    background: rgba(167, 139, 250, 0.06) !important;
+    box-shadow: 0 0 12px rgba(167, 139, 250, 0.08) !important;
+  }
+  .guide-toggle-badge:hover {
+    border-color: rgba(167, 139, 250, 0.5) !important;
+    background: rgba(167, 139, 250, 0.12) !important;
+    transform: translateY(-1px);
+  }
   .workspace-lock {
     padding:14px 16px;
     border:1px solid var(--warn-border);
@@ -116,8 +555,23 @@
   .workspace-lock strong { display:block; color:var(--text); margin-bottom:3px; }
   .workspace-lock p { margin:0; font-size:13px; color:var(--warn-text); }
   .ai-grid { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:14px; }
-  .ai-panel, .ai-preview-card { padding:16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); }
-  .ai-preview-card { width:min(420px, 42vw); background:linear-gradient(180deg, var(--surface-2), var(--surface)); }
+  
+  /* Reusable FeatureCard Component */
+  .ai-panel, .ai-preview-card {
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    background: radial-gradient(100% 100% at 50% 0%, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0) 100%), rgba(10, 15, 26, 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .ai-panel:hover {
+    border-color: rgba(188, 140, 255, 0.25);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  .ai-preview-card { width:min(420px, 42vw); }
   .ai-panel.is-disabled { opacity:.72; }
   .panel-head { display:flex; justify-content:space-between; gap:12px; align-items:center; margin-bottom:12px; }
   .panel-head span { color:var(--text-muted); font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
@@ -146,10 +600,863 @@
   .preview-list div { padding:12px; border:1px solid var(--border-sub); border-radius:8px; background:rgba(255,255,255,.02); }
   .preview-list strong { display:block; margin-bottom:5px; }
   .preview-list span { color:var(--text-muted); font-size:13px; line-height:1.45; }
+
+  /* Collapsible AI User Guide Panel */
+  .ai-guide-panel {
+    margin-top: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    transition: all 0.25s ease;
+  }
+  .ai-guide-panel .panel-head:hover {
+    opacity: 0.95;
+  }
+  .guide-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .guide-card {
+    padding: 16px;
+    border: 1px solid var(--border-sub);
+    border-radius: var(--radius);
+    background: var(--surface-2);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .guide-card:hover {
+    border-color: rgba(188, 140, 255, 0.4);
+    transform: translateY(-1px);
+  }
+  .guide-card h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: var(--purple);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .guide-card p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 10px;
+  }
+  .guide-card ul {
+    font-size: 13px;
+    padding-left: 18px;
+    margin: 0;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .guide-card code {
+    background: #080c12;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+  }
+  .guide-footer {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Redesigned Repo Assistant Conversational UI */
+  .chat-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 480px;
+    max-height: 640px;
+    padding: 20px !important;
+  }
+  .assistant-identity-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(188, 140, 255, 0.1);
+    color: var(--purple);
+    border: 1px solid rgba(188, 140, 255, 0.2);
+  }
+  .assistant-identity-icon .lucide {
+    width: 16px;
+    height: 16px;
+  }
+  .chat-viewport {
+    flex: 1;
+    overflow-y: auto;
+    margin: 16px 0;
+    padding-right: 6px;
+    min-height: 280px;
+    max-height: 420px;
+  }
+  .chat-viewport::-webkit-scrollbar {
+    width: 5px;
+  }
+  .chat-viewport::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .chat-viewport::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+  }
+  .chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  /* Assistant Welcome Card */
+  .assistant-welcome-card {
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    background: radial-gradient(100% 100% at 50% 0%, rgba(188, 140, 255, 0.03) 0%, rgba(255, 255, 255, 0) 100%), rgba(255, 255, 255, 0.01);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  }
+  .welcome-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .welcome-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #c084fc 0%, #a78bfa 100%);
+    color: #fff;
+    box-shadow: 0 0 12px rgba(192, 132, 252, 0.4);
+  }
+  .welcome-avatar .lucide {
+    width: 16px;
+    height: 16px;
+  }
+  .welcome-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .welcome-desc {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+  }
+  
+  .welcome-suggestions-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+  
+  /* Suggestion Chips Grid & Row */
+  .suggestion-chips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+  }
+  .suggestion-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 12.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .suggestion-chip:hover {
+    border-color: rgba(188, 140, 255, 0.3);
+    background: rgba(188, 140, 255, 0.05);
+    color: var(--text);
+    transform: translateY(-1px);
+  }
+  .suggestion-chip .lucide {
+    width: 14px;
+    height: 14px;
+    color: var(--purple);
+  }
+  
+  .suggestion-chips-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+  .suggestion-chip-mini {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 11.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .suggestion-chip-mini:hover {
+    border-color: rgba(188, 140, 255, 0.25);
+    background: rgba(188, 140, 255, 0.04);
+    color: var(--text);
+  }
+  
+  /* Chat Input Area */
+  .chat-input-area {
+    margin-top: auto;
+  }
+  .chat-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 8px 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+    transition: all 0.25s ease;
+  }
+  .chat-input-wrapper:focus-within {
+    border-color: rgba(188, 140, 255, 0.45);
+    box-shadow: 0 0 18px rgba(188, 140, 255, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .chat-input-wrapper input {
+    flex: 1;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--text);
+    font-size: 13.5px;
+    padding: 8px 12px;
+    padding-right: 48px;
+    outline: 0 !important;
+    box-shadow: none !important;
+  }
+  .chat-send-btn {
+    position: absolute;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--purple);
+    color: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(188, 140, 255, 0.3);
+  }
+  .chat-send-btn:hover {
+    transform: scale(1.05);
+    background: #a78bfa;
+    box-shadow: 0 4px 12px rgba(188, 140, 255, 0.5);
+  }
+  .chat-send-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .chat-send-btn .lucide {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2.5;
+  }
+  
+  /* Chat Message Bubbles */
+  .chat-bubble-row {
+    display: flex;
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .chat-bubble-row.user {
+    justify-content: flex-end;
+  }
+  .chat-bubble-row.assistant {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  .chat-avatar-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(188, 140, 255, 0.1);
+    color: var(--purple);
+    border: 1px solid rgba(188, 140, 255, 0.25);
+    margin-top: 4px;
+    flex-shrink: 0;
+  }
+  .chat-avatar-mini .lucide {
+    width: 13px;
+    height: 13px;
+  }
+  .message-bubble {
+    padding: 14px 18px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+  .message-bubble.user-bubble {
+    max-width: 75%;
+    background: rgba(188, 140, 255, 0.08);
+    color: var(--text);
+    border: 1px solid rgba(188, 140, 255, 0.18);
+    border-radius: 16px 16px 4px 16px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  }
+  .message-bubble.assistant-bubble {
+    max-width: 820px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px 16px 16px 4px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+  }
+  .message-bubble code {
+    font-family: SFMono-Regular, Consolas, monospace;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 2px 5px;
+    border-radius: 4px;
+    color: #c084fc;
+  }
+
+  /* Assistant Markdown Elements Styling */
+  .assistant-bubble p {
+    margin: 0 0 12px 0;
+  }
+  .assistant-bubble p:last-child {
+    margin-bottom: 0;
+  }
+  .assistant-bubble h1, .assistant-bubble h2, .assistant-bubble h3, .assistant-bubble h4 {
+    margin: 18px 0 8px 0;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.35;
+  }
+  .assistant-bubble h1 { font-size: 1.4em; }
+  .assistant-bubble h2 { font-size: 1.25em; }
+  .assistant-bubble h3 { font-size: 1.1em; }
+  .assistant-bubble ul, .assistant-bubble ol {
+    margin: 0 0 12px 0;
+    padding-left: 20px;
+  }
+  .assistant-bubble li {
+    margin-bottom: 4px;
+  }
+  .assistant-bubble blockquote {
+    border-left: 3px solid var(--purple);
+    background: rgba(188, 140, 255, 0.03);
+    padding: 8px 12px;
+    margin: 12px 0;
+    border-radius: 0 6px 6px 0;
+    color: var(--text-muted);
+  }
+  .assistant-bubble table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 12.5px;
+  }
+  .assistant-bubble th, .assistant-bubble td {
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-align: left;
+  }
+  .assistant-bubble th {
+    background: rgba(255, 255, 255, 0.03);
+    font-weight: 600;
+  }
+
+  /* Premium Terminal Code Blocks */
+  .terminal-code-block {
+    margin: 14px 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: #080c12;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .terminal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.02);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    user-select: none;
+  }
+  .terminal-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .terminal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+  .terminal-dot.red { background-color: #ff5f56; }
+  .terminal-dot.yellow { background-color: #ffbd2e; }
+  .terminal-dot.green { background-color: #27c93f; }
+  
+  .terminal-lang {
+    font-family: SFMono-Regular, Consolas, monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: lowercase;
+  }
+  .copy-code-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .copy-code-btn:hover {
+    border-color: rgba(188, 140, 255, 0.35);
+    background: rgba(188, 140, 255, 0.08);
+    color: var(--text);
+  }
+  .copy-code-btn .lucide {
+    width: 11px;
+    height: 11px;
+  }
+  .terminal-code-block pre {
+    margin: 0 !important;
+    padding: 14px 18px !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    overflow-x: auto;
+  }
+  .terminal-code-block code {
+    font-family: SFMono-Regular, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #e1e4e8;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+
+  /* Scoped Context Strip styling */
+  .context-sources-strip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    font-size: 11px;
+    flex-wrap: wrap;
+  }
+  .sources-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--purple);
+    font-weight: 600;
+  }
+  .sources-title .lucide {
+    width: 12px;
+    height: 12px;
+  }
+  .sources-tags-wrapper {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .source-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-family: SFMono-Regular, Consolas, monospace;
+    font-size: 10.5px;
+    transition: all 0.15s ease;
+  }
+  .source-tag:hover {
+    border-color: rgba(188, 140, 255, 0.25);
+    background: rgba(188, 140, 255, 0.04);
+    color: var(--text);
+  }
+  .source-tag .lucide {
+    width: 11px;
+    height: 11px;
+  }
+
+  /* Typing Indicator Shimmer */
+  .shimmer-bubble {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 18px;
+  }
+  .shimmer-line {
+    height: 10px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.02) 75%);
+    background-size: 200% 100%;
+    animation: shimmer-pulse 1.6s infinite linear;
+  }
+  .shimmer-line.long { width: 90%; }
+  .shimmer-line.medium { width: 70%; }
+  .shimmer-line.short { width: 45%; }
+  @keyframes shimmer-pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* Feedback chips row */
+  .feedback-chips-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding-left: 4px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .feedback-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .feedback-chip:hover {
+    border-color: rgba(188, 140, 255, 0.3);
+    background: rgba(188, 140, 255, 0.05);
+    color: var(--text);
+  }
+  .feedback-chip .lucide {
+    width: 11px;
+    height: 11px;
+    opacity: 0.8;
+  }
+  
+  /* Typing Indicator Animation */
+  .typing-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+  }
+  .typing-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-muted);
+    border-radius: 50%;
+    animation: typing-bounce 1.4s infinite ease-in-out both;
+    opacity: 0.6;
+  }
+  .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+  .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+  @keyframes typing-bounce {
+    0%, 80%, 100% { transform: scale(0.6); }
+    40% { transform: scale(1.1); opacity: 1; }
+  }
+
   @media (max-width: 860px) {
     .ai-header, .ai-hero, .ai-grid { grid-template-columns:1fr; display:grid; }
     .provider-strip { justify-content:flex-start; }
     .ai-preview-card { width:100%; }
+  }
+
+  /* Repository Context Toolbar & Dropdowns */
+  .chat-context-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.01);
+  }
+  .selector-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .custom-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+  .dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .dropdown-trigger:hover {
+    border-color: rgba(188, 140, 255, 0.35);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text);
+  }
+  .dropdown-trigger .trigger-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--purple);
+  }
+  .dropdown-trigger .chevron-icon {
+    width: 13px;
+    height: 13px;
+    opacity: 0.7;
+    margin-left: 4px;
+  }
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    min-width: 280px;
+    margin-top: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(10, 15, 26, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    animation: dropdown-fade-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .dropdown-menu.is-active {
+    display: flex;
+  }
+  @keyframes dropdown-fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .dropdown-search-wrapper .search-icon {
+    width: 13px;
+    height: 13px;
+    color: var(--text-muted);
+  }
+  .dropdown-search-wrapper input {
+    flex: 1;
+    border: 0 !important;
+    background: transparent !important;
+    color: var(--text);
+    font-size: 13px;
+    padding: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+  }
+  .dropdown-items {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 4px;
+  }
+  .dropdown-items::-webkit-scrollbar {
+    width: 4px;
+  }
+  .dropdown-items::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+  }
+  .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .dropdown-item:hover {
+    background: rgba(188, 140, 255, 0.08);
+    color: var(--text);
+  }
+  .dropdown-item.is-selected {
+    background: rgba(188, 140, 255, 0.12);
+    color: #c084fc;
+    font-weight: 600;
+  }
+  .dropdown-item .item-icon {
+    width: 13px;
+    height: 13px;
+    opacity: 0.8;
+  }
+  .mono-font {
+    font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  }
+
+  /* AI Scope Badge with pulse glow */
+  .scope-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid rgba(74, 222, 128, 0.16);
+    border-radius: 999px;
+    background: rgba(74, 222, 128, 0.04);
+    font-size: 11px;
+    font-weight: 600;
+    color: #4ade80;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.05);
+    margin-left: auto;
+  }
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #4ade80;
+    animation: badge-pulse 2s infinite ease-in-out;
+  }
+  @keyframes badge-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+    70% { box-shadow: 0 0 0 4px rgba(74, 222, 128, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+  }
+
+  /* Monospace context info row */
+  .context-info-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.05);
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+  }
+  .info-label {
+    opacity: 0.7;
+  }
+  .info-value {
+    color: var(--text);
+    font-weight: 600;
+  }
+  .info-icon {
+    width: 12px;
+    height: 12px;
+    color: var(--purple);
+  }
+  .info-divider {
+    width: 1px;
+    height: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Onboarding Empty State */
+  .chat-onboarding-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+    height: 100%;
+    min-height: 280px;
+  }
+  .onboarding-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(188, 140, 255, 0.06);
+    color: var(--purple);
+    border: 1px solid rgba(188, 140, 255, 0.15);
+    margin-bottom: 16px;
+    box-shadow: 0 0 20px rgba(188, 140, 255, 0.05);
+  }
+  .onboarding-icon .lucide {
+    width: 24px;
+    height: 24px;
+  }
+  .chat-onboarding-state h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--text);
+  }
+  .chat-onboarding-state p {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    max-width: 380px;
+    margin: 0 0 16px 0;
   }
 </style>
 
@@ -157,6 +1464,28 @@
 <script>
 const ai_enabled = {{ 'true' if ai_enabled else 'false' }};
 const ai_message = {{ ai_message|tojson }};
+
+// Serialize repositories to client-side state
+const userRepositories = [
+  {% for r in repos %}
+  {
+    id: {{ r.id }},
+    name: {{ r.name|tojson }},
+    full_name: {{ r.full_name|tojson }},
+    default_branch: {{ r.default_branch|tojson if r.default_branch else 'null' }},
+    commit_count: {{ r.commits|length }},
+    contributor_count: {{ r.contributors|length }},
+    branches: [
+      {% for b in r.branches %}
+      {{ b.github_branch_name|tojson }}{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ]
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+let activeRepoId = null;
+let activeBranch = null;
 
 async function postAI(path, payload) {
   if (!ai_enabled) {
@@ -183,45 +1512,731 @@ function escapeHtml(value) {
   }[char]));
 }
 
+function updateActiveProviderBadge(metadata) {
+  if (metadata && metadata.source) {
+    const label = metadata.source;
+    const icon = label.startsWith('Cloud') ? 'sparkles' : 'bot';
+    
+    const badge = document.getElementById('active-provider-badge');
+    if (badge) {
+      badge.innerHTML = `<code class="provider-mono"><i data-lucide="${icon}"></i> ${escapeHtml(label)}</code>`;
+    }
+    
+    const chatBadge = document.getElementById('chat-provider-badge');
+    if (chatBadge) {
+      chatBadge.innerHTML = `<code class="provider-mono" style="font-size: 10px;"><i data-lucide="${icon}" style="width:11px; height:11px;"></i> ${escapeHtml(label)}</code>`;
+    }
+    
+    if (window.lucide) window.lucide.createIcons();
+  }
+}
+
+// Premium Code Block Copy Helper
+function copyCodeBlock(codeId, btn) {
+  const codeEl = document.getElementById(codeId);
+  if (!codeEl) return;
+  const text = codeEl.textContent;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const textSpan = btn.querySelector('span');
+    btn.style.borderColor = 'rgba(74, 222, 128, 0.4)';
+    btn.style.background = 'rgba(74, 222, 128, 0.08)';
+    btn.style.color = '#4ade80';
+    if (textSpan) textSpan.textContent = 'Copied!';
+    
+    setTimeout(() => {
+      btn.style.borderColor = '';
+      btn.style.background = '';
+      btn.style.color = '';
+      if (textSpan) textSpan.textContent = 'Copy';
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+  });
+}
+
+// Copy full response helper
+function copyFullAnswer(bubbleId, btn) {
+  const bubble = document.getElementById(bubbleId);
+  if (!bubble) return;
+  let cleanText = bubble.innerText;
+  
+  // Strip files context tag text if present to only copy assistant response
+  const contextStrip = bubble.querySelector('.context-sources-strip');
+  if (contextStrip) {
+    cleanText = cleanText.replace(contextStrip.innerText, '').trim();
+  }
+  
+  navigator.clipboard.writeText(cleanText).then(() => {
+    const textSpan = btn.querySelector('span');
+    btn.style.borderColor = 'rgba(74, 222, 128, 0.4)';
+    btn.style.background = 'rgba(74, 222, 128, 0.08)';
+    btn.style.color = '#4ade80';
+    if (textSpan) textSpan.textContent = 'Copied!';
+    
+    setTimeout(() => {
+      btn.style.borderColor = '';
+      btn.style.background = '';
+      btn.style.color = '';
+      if (textSpan) textSpan.textContent = 'Copy Answer';
+    }, 2000);
+  }).catch(err => console.error(err));
+}
+
+// Click chips handler
+function askFollowUp(text) {
+  const input = document.getElementById('assistant-question');
+  if (input) {
+    input.value = text;
+    askAssistant();
+  }
+}
+
+// Initialize custom marked renderer for premium terminal code blocks
+function setupMarkedRenderer() {
+  if (typeof marked !== 'undefined') {
+    const renderer = new marked.Renderer();
+    renderer.code = function(code, language) {
+      const cleanLang = language || 'code';
+      const blockId = 'code-' + Math.random().toString(36).substring(2, 9);
+      return `
+        <div class="terminal-code-block">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="terminal-dot red"></span>
+              <span class="terminal-dot yellow"></span>
+              <span class="terminal-dot green"></span>
+            </div>
+            <span class="terminal-lang">${cleanLang}</span>
+            <button class="copy-code-btn" onclick="copyCodeBlock('${blockId}', this)">
+              <i data-lucide="copy" class="copy-icon"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+          <pre><code id="${blockId}" class="language-${cleanLang}">${escapeHtml(code)}</code></pre>
+        </div>
+      `;
+    };
+    marked.setOptions({ renderer: renderer });
+  }
+}
+
 async function generateCommit() {
   const output = document.getElementById('commit-output');
-  output.textContent = 'Äang phÃ¢n tÃ­ch diff...';
+  output.textContent = 'Đang phân tích diff...';
   try {
     const data = await postAI('/api/v1/ai/commit-message', {diff: document.getElementById('commit-diff').value});
     output.textContent = data.message;
+    updateActiveProviderBadge(data.metadata);
   } catch (err) {
-    output.textContent = 'ChÆ°a táº¡o Ä‘Æ°á»£c commit message: ' + err.message;
+    output.textContent = 'Chưa tạo được commit message: ' + err.message;
   }
 }
 
 async function reviewDiff() {
   const output = document.getElementById('review-output');
-  output.textContent = 'Äang rÃ  soÃ¡t diff...';
+  output.textContent = 'Đang rà soát diff...';
   try {
     const data = await postAI('/api/v1/ai/review', {diff: document.getElementById('review-diff').value});
     output.innerHTML = data.findings.map(item => `<div class="review-item"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.detail)}</span></div>`).join('');
+    updateActiveProviderBadge(data.metadata);
   } catch (err) {
-    output.textContent = 'ChÆ°a review Ä‘Æ°á»£c diff: ' + err.message;
+    output.textContent = 'Chưa review được diff: ' + err.message;
+  }
+}
+
+function useSuggestion(text) {
+  const input = document.getElementById('assistant-question');
+  if (input) {
+    input.value = text;
+    askAssistant();
+  }
+}
+
+function recreateWelcomeCard(repoName) {
+  const messagesContainer = document.getElementById('chat-messages');
+  if (!messagesContainer) return;
+  
+  const existing = document.getElementById('assistant-welcome');
+  if (existing) existing.remove();
+  
+  const welcomeCard = document.createElement('div');
+  welcomeCard.className = 'assistant-welcome-card';
+  welcomeCard.id = 'assistant-welcome';
+  welcomeCard.innerHTML = `
+    <div class="welcome-header">
+      <div class="welcome-avatar">
+        <i data-lucide="sparkles"></i>
+      </div>
+      <h3 id="assistant-welcome-title">Engineering AI Copilot</h3>
+    </div>
+    <p class="welcome-desc" id="assistant-welcome-desc">
+      Hỏi bất kỳ điều gì về repository đã đồng bộ của bạn. Tôi có thể giải thích kiến trúc, rà soát quy trình auth flow, phân tích pipeline sync, hoặc đề xuất test cases.
+    </p>
+    <div class="welcome-suggestions-label">Gợi ý câu hỏi nhanh:</div>
+    <div class="suggestion-chips-grid" id="welcome-suggestions-chips">
+      <!-- suggestions chips grid gets loaded dynamically -->
+    </div>
+  `;
+  messagesContainer.appendChild(welcomeCard);
+  updateWelcomeAndSuggestions(repoName);
+}
+
+function loadScopedChatHistory(repoId, branchName, repoName) {
+  const messagesContainer = document.getElementById('chat-messages');
+  if (!messagesContainer) return;
+  
+  messagesContainer.innerHTML = '';
+  
+  const cacheKey = `git_analytics_chat_history:${repoId}:${branchName}`;
+  const raw = localStorage.getItem(cacheKey);
+  let messages = [];
+  try {
+    if (raw) {
+      messages = JSON.parse(raw);
+    }
+  } catch (e) {
+    console.error('Failed to parse chat history', e);
+  }
+  
+  if (!Array.isArray(messages) || messages.length === 0) {
+    recreateWelcomeCard(repoName);
+    return;
+  }
+  
+  messages.forEach(msg => {
+    if (msg.role === 'user') {
+      const userRow = document.createElement('div');
+      userRow.className = 'chat-bubble-row user';
+      userRow.innerHTML = `<div class="message-bubble user-bubble">${escapeHtml(msg.content)}</div>`;
+      messagesContainer.appendChild(userRow);
+    } else if (msg.role === 'assistant') {
+      const assistantRow = document.createElement('div');
+      assistantRow.className = 'chat-bubble-row assistant';
+      
+      const parsedHtml = typeof marked !== 'undefined' ? marked.parse(msg.answer) : escapeHtml(msg.answer);
+      const answerBubbleId = 'answer-' + Math.random().toString(36).substring(2, 9);
+      
+      let contextBannerHtml = '';
+      if (msg.context_metadata && msg.context_metadata.retrieved_files && msg.context_metadata.retrieved_files.length > 0) {
+        const filteredFiles = msg.context_metadata.retrieved_files.filter(filePath => !filePath.includes('grapuco'));
+        if (filteredFiles.length > 0) {
+          const fileTags = filteredFiles.map(filePath => {
+            const isMd = filePath.endsWith('.md');
+            const icon = isMd ? 'file-text' : 'file-code';
+            const parts = filePath.split('/');
+            const simpleName = parts[parts.length - 1];
+            return `<span class="source-tag" title="${escapeHtml(filePath)}"><i data-lucide="${icon}"></i> ${escapeHtml(simpleName)}</span>`;
+          }).join('');
+          
+          contextBannerHtml = `
+            <div class="context-sources-strip">
+              <span class="sources-title"><i data-lucide="database"></i> Indexed Context:</span>
+              <div class="sources-tags-wrapper">${fileTags}</div>
+            </div>
+          `;
+        }
+      }
+      
+      let devDebugHtml = '';
+      if (msg.context_metadata) {
+        const source = msg.context_metadata.repository_source || 'Unknown';
+        const count = msg.context_metadata.retrieved_chunk_count || 0;
+        const filesCount = (msg.context_metadata.retrieved_files || []).length;
+        const badgeColor = source === 'Local Workspace' ? '#10B981' : '#F59E0B';
+        devDebugHtml = `
+          <div class="dev-debug-badge" style="display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-family: SFMono-Regular, Consolas, monospace; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); margin-top: 8px; color: var(--text-muted); width: fit-content;">
+            <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${badgeColor}; box-shadow: 0 0 8px ${badgeColor};"></span>
+            <span style="font-weight: 600; color: var(--purple);">[Dev Debug]</span> 
+            <span>Source: <strong>${escapeHtml(source)}</strong></span>
+            <span style="opacity: 0.35;">|</span>
+            <span>Chunks: <strong>${count}</strong></span>
+            <span style="opacity: 0.35;">|</span>
+            <span>Files: <strong>${filesCount}</strong></span>
+          </div>
+        `;
+      }
+      
+      assistantRow.innerHTML = `
+        <div class="chat-avatar-mini"><i data-lucide="bot"></i></div>
+        <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 820px;">
+          <div id="${answerBubbleId}" class="message-bubble assistant-bubble">
+            ${contextBannerHtml}
+            ${parsedHtml}
+            ${devDebugHtml}
+          </div>
+          <div class="feedback-chips-row">
+            <button class="feedback-chip" onclick="copyFullAnswer('${answerBubbleId}', this)"><i data-lucide="copy"></i> <span>Copy Answer</span></button>
+            <button class="feedback-chip" onclick="askFollowUp('Suggest improvements to this solution.')"><i data-lucide="sparkles"></i> Suggest Improvements</button>
+            <button class="feedback-chip" onclick="askFollowUp('Explain this part further.')"><i data-lucide="code-2"></i> Explain Further</button>
+          </div>
+        </div>
+      `;
+      messagesContainer.appendChild(assistantRow);
+    }
+  });
+  
+  if (window.lucide) window.lucide.createIcons();
+  const viewport = document.getElementById('chat-viewport');
+  if (viewport) viewport.scrollTop = viewport.scrollHeight;
+}
+
+async function clearBackendContextCache(repoId, branchName) {
+  try {
+    await postAI('/api/v1/ai/clear-context', { repo_id: repoId, branch: branchName });
+  } catch (e) {
+    console.error('Failed to clear backend context cache', e);
   }
 }
 
 async function askAssistant() {
-  const output = document.getElementById('chat-output');
+  const messagesContainer = document.getElementById('chat-messages');
+  const viewport = document.getElementById('chat-viewport');
   const input = document.getElementById('assistant-question');
   const question = input.value.trim();
-  if (!question) {
-    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--warn-text)">Nhập câu hỏi trước khi gửi.</div>`;
-    return;
+  
+  if (!question) return;
+  
+  // Hide welcome card on first interaction
+  const welcome = document.getElementById('assistant-welcome');
+  if (welcome) {
+    welcome.remove();
   }
-  output.innerHTML += `<div class="assistant-msg" style="border-color:var(--text-link);margin-top:8px">${escapeHtml(question)}</div>`;
-  input.value = '';
+  
+  // Append User message bubble
+  const userRow = document.createElement('div');
+  userRow.className = 'chat-bubble-row user';
+  userRow.innerHTML = `<div class="message-bubble user-bubble">${escapeHtml(question)}</div>`;
+  messagesContainer.appendChild(userRow);
+  
+  // Save user message to history
+  const cacheKey = `git_analytics_chat_history:${activeRepoId}:${activeBranch || 'main'}`;
+  let messages = [];
   try {
-    const data = await postAI('/api/v1/ai/assistant', {question});
-    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px">${escapeHtml(data.answer)}</div>`;
+    const raw = localStorage.getItem(cacheKey);
+    if (raw) messages = JSON.parse(raw);
+  } catch (e) {}
+  messages.push({ role: 'user', content: question });
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify(messages));
+  } catch (e) {}
+  
+  // Clear input and scroll
+  input.value = '';
+  viewport.scrollTop = viewport.scrollHeight;
+  
+  // Append Assistant elegant loading shimmer
+  const indicatorRow = document.createElement('div');
+  indicatorRow.className = 'chat-bubble-row assistant';
+  indicatorRow.id = 'assistant-typing';
+  indicatorRow.innerHTML = `
+    <div class="chat-avatar-mini"><i data-lucide="bot"></i></div>
+    <div class="message-bubble assistant-bubble shimmer-bubble" style="width: 100%; max-width: 540px;">
+      <div class="shimmer-line long"></div>
+      <div class="shimmer-line medium"></div>
+      <div class="shimmer-line short"></div>
+    </div>
+  `;
+  messagesContainer.appendChild(indicatorRow);
+  if (window.lucide) window.lucide.createIcons();
+  viewport.scrollTop = viewport.scrollHeight;
+  
+  try {
+    // Append repository context metadata securely to the question payload
+    let contextualQuestion = question;
+    if (activeRepoId) {
+      const repo = userRepositories.find(r => r.id === activeRepoId);
+      if (repo) {
+        contextualQuestion += `\n\n[Context - Repository: ${repo.full_name}, Branch: ${activeBranch || 'N/A'}]`;
+      }
+    }
+    
+    // Call setup for robust marked formatting
+    setupMarkedRenderer();
+    
+    const payload = {
+      question: contextualQuestion,
+      repo_id: activeRepoId,
+      branch: activeBranch
+    };
+    
+    const data = await postAI('/api/v1/ai/assistant', payload);
+    
+    // Remove typing indicator
+    const typingIndicator = document.getElementById('assistant-typing');
+    if (typingIndicator) typingIndicator.remove();
+    
+    // Append Assistant response bubble with sources strip and quick feedback chips
+    const assistantRow = document.createElement('div');
+    assistantRow.className = 'chat-bubble-row assistant';
+    
+    let contextBannerHtml = '';
+    if (data.context_metadata && data.context_metadata.retrieved_files && data.context_metadata.retrieved_files.length > 0) {
+      const filteredFiles = data.context_metadata.retrieved_files.filter(filePath => !filePath.includes('grapuco'));
+      if (filteredFiles.length > 0) {
+        const fileTags = filteredFiles.map(filePath => {
+          const isMd = filePath.endsWith('.md');
+          const icon = isMd ? 'file-text' : 'file-code';
+          const parts = filePath.split('/');
+          const simpleName = parts[parts.length - 1];
+          return `<span class="source-tag" title="${escapeHtml(filePath)}"><i data-lucide="${icon}"></i> ${escapeHtml(simpleName)}</span>`;
+        }).join('');
+        
+        contextBannerHtml = `
+          <div class="context-sources-strip">
+            <span class="sources-title"><i data-lucide="database"></i> Indexed Context:</span>
+            <div class="sources-tags-wrapper">${fileTags}</div>
+          </div>
+        `;
+      }
+    }
+    
+    // Build beautiful [Dev Debug] section
+    let devDebugHtml = '';
+    if (data.context_metadata) {
+      const source = data.context_metadata.repository_source || 'Unknown';
+      const count = data.context_metadata.retrieved_chunk_count || 0;
+      const filesCount = (data.context_metadata.retrieved_files || []).length;
+      const badgeColor = source === 'Local Workspace' ? '#10B981' : '#F59E0B';
+      devDebugHtml = `
+        <div class="dev-debug-badge" style="display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-family: SFMono-Regular, Consolas, monospace; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); margin-top: 8px; color: var(--text-muted); width: fit-content;">
+          <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: ${badgeColor}; box-shadow: 0 0 8px ${badgeColor};"></span>
+          <span style="font-weight: 600; color: var(--purple);">[Dev Debug]</span> 
+          <span>Source: <strong>${escapeHtml(source)}</strong></span>
+          <span style="opacity: 0.35;">|</span>
+          <span>Chunks: <strong>${count}</strong></span>
+          <span style="opacity: 0.35;">|</span>
+          <span>Files: <strong>${filesCount}</strong></span>
+        </div>
+      `;
+    }
+    
+    const answerBubbleId = 'answer-' + Math.random().toString(36).substring(2, 9);
+    const parsedHtml = typeof marked !== 'undefined' ? marked.parse(data.answer) : escapeHtml(data.answer);
+    
+    assistantRow.innerHTML = `
+      <div class="chat-avatar-mini"><i data-lucide="bot"></i></div>
+      <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; max-width: 820px;">
+        <div id="${answerBubbleId}" class="message-bubble assistant-bubble">
+          ${contextBannerHtml}
+          ${parsedHtml}
+          ${devDebugHtml}
+        </div>
+        <div class="feedback-chips-row">
+          <button class="feedback-chip" onclick="copyFullAnswer('${answerBubbleId}', this)"><i data-lucide="copy"></i> <span>Copy Answer</span></button>
+          <button class="feedback-chip" onclick="askFollowUp('Suggest improvements to this solution.')"><i data-lucide="sparkles"></i> Suggest Improvements</button>
+          <button class="feedback-chip" onclick="askFollowUp('Explain this part further.')"><i data-lucide="code-2"></i> Explain Further</button>
+        </div>
+      </div>
+    `;
+    
+    messagesContainer.appendChild(assistantRow);
+    updateActiveProviderBadge(data.metadata);
+    
+    // Save assistant response to history
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) messages = JSON.parse(raw);
+    } catch (e) {}
+    messages.push({
+      role: 'assistant',
+      answer: data.answer,
+      context_metadata: data.context_metadata,
+      metadata: data.metadata
+    });
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(messages));
+    } catch (e) {}
+    
   } catch (err) {
-    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--danger-text)">ChÆ°a cÃ³ cÃ¢u tráº£ lá»i: ${escapeHtml(err.message)}</div>`;
+    // Remove typing indicator
+    const typingIndicator = document.getElementById('assistant-typing');
+    if (typingIndicator) typingIndicator.remove();
+    
+    // Append Assistant error bubble
+    const assistantRow = document.createElement('div');
+    assistantRow.className = 'chat-bubble-row assistant';
+    assistantRow.innerHTML = `
+      <div class="chat-avatar-mini"><i data-lucide="alert-circle" style="color:var(--danger-text)"></i></div>
+      <div class="message-bubble assistant-bubble" style="color:var(--danger-text)">Chưa có câu trả lời: ${escapeHtml(err.message)}</div>
+    `;
+    messagesContainer.appendChild(assistantRow);
   }
+  
+  if (window.lucide) window.lucide.createIcons();
+  viewport.scrollTop = viewport.scrollHeight;
 }
+
+// Client-side Custom Dropdown Controls
+function toggleDropdown(menuId) {
+  const menus = ['repo-menu', 'branch-menu'];
+  menus.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      if (id === menuId) {
+        el.classList.toggle('is-active');
+      } else {
+        el.classList.remove('is-active');
+      }
+    }
+  });
+}
+
+function filterRepositories(event) {
+  const query = event.target.value.toLowerCase();
+  const items = document.querySelectorAll('#repo-list .dropdown-item');
+  items.forEach(item => {
+    const text = item.getAttribute('data-repo-fullname').toLowerCase();
+    if (text.includes(query)) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+function selectRepository(repoId, savedBranch = null) {
+  const repo = userRepositories.find(r => r.id === repoId);
+  if (!repo) return;
+
+  activeRepoId = repoId;
+  localStorage.setItem('git_analytics_ai_active_repo', repoId);
+
+  // Update selected repo styling
+  document.querySelectorAll('#repo-list .dropdown-item').forEach(item => {
+    if (parseInt(item.getAttribute('data-repo-id')) === repoId) {
+      item.classList.add('is-selected');
+    } else {
+      item.classList.remove('is-selected');
+    }
+  });
+
+  // Update repo trigger text label
+  const repoLabel = document.getElementById('selected-repo-label');
+  if (repoLabel) repoLabel.textContent = repo.full_name;
+
+  // Build branch options contextual list
+  const branchList = document.getElementById('branch-list');
+  if (branchList) {
+    branchList.innerHTML = '';
+    
+    // Add default branch
+    if (repo.default_branch) {
+      const defaultDiv = document.createElement('div');
+      defaultDiv.className = 'dropdown-item mono-font';
+      defaultDiv.setAttribute('data-branch-name', repo.default_branch);
+      defaultDiv.innerHTML = `<i data-lucide="git-commit" class="item-icon"></i> <span>${escapeHtml(repo.default_branch)} <small style="opacity:0.65">(default)</small></span>`;
+      defaultDiv.onclick = (e) => { selectBranch(repo.default_branch); e.stopPropagation(); };
+      branchList.appendChild(defaultDiv);
+    }
+
+    // Add other synced branches
+    (repo.branches || []).forEach(bName => {
+      if (bName !== repo.default_branch) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'dropdown-item mono-font';
+        itemDiv.setAttribute('data-branch-name', bName);
+        itemDiv.innerHTML = `<i data-lucide="git-branch" class="item-icon"></i> <span>${escapeHtml(bName)}</span>`;
+        itemDiv.onclick = (e) => { selectBranch(bName); e.stopPropagation(); };
+        branchList.appendChild(itemDiv);
+      }
+    });
+
+    if (window.lucide) window.lucide.createIcons();
+  }
+
+  // Pick branch
+  let targetBranch = savedBranch || repo.default_branch || 'main';
+  // Ensure the picked branch actually exists in repo's list, fallback to default branch if not
+  const allRepoBranches = [...(repo.branches || [])];
+  if (repo.default_branch && !allRepoBranches.includes(repo.default_branch)) {
+    allRepoBranches.push(repo.default_branch);
+  }
+  if (!allRepoBranches.includes(targetBranch)) {
+    targetBranch = repo.default_branch || allRepoBranches[0] || 'main';
+  }
+  selectBranch(targetBranch);
+
+  // Update context info row details
+  document.getElementById('info-repo-name').textContent = repo.full_name;
+  document.getElementById('info-commits-count').textContent = repo.commit_count;
+  document.getElementById('info-contributors-count').textContent = repo.contributor_count;
+
+  // Toggle layout sections visibility
+  document.getElementById('ai-scope-badge').style.display = 'inline-flex';
+  document.getElementById('active-context-info').style.display = 'flex';
+  document.getElementById('chat-onboarding-state').style.display = 'none';
+  document.getElementById('chat-messages').style.display = 'flex';
+  
+  // Enable interactive input textareas
+  const chatInput = document.getElementById('assistant-question');
+  const chatSend = document.getElementById('send-question-btn');
+  if (chatInput) {
+    chatInput.removeAttribute('disabled');
+    chatInput.placeholder = `Ask about auth flow, sync pipeline, architecture or modules in ${repo.full_name}`;
+  }
+  if (chatSend) chatSend.removeAttribute('disabled');
+
+  // Close dropdown menu
+  toggleDropdown(null);
+}
+
+function selectBranch(branchName) {
+  activeBranch = branchName;
+  localStorage.setItem('git_analytics_ai_active_branch', branchName);
+
+  // Update trigger branch text label
+  const branchLabel = document.getElementById('selected-branch-label');
+  if (branchLabel) branchLabel.textContent = branchName;
+
+  // Update selected branch list class
+  document.querySelectorAll('#branch-list .dropdown-item').forEach(item => {
+    if (item.getAttribute('data-branch-name') === branchName) {
+      item.classList.add('is-selected');
+    } else {
+      item.classList.remove('is-selected');
+    }
+  });
+
+  // Update info bar detail
+  document.getElementById('info-branch-name').textContent = branchName;
+
+  // Invalidate cache and load scoped history
+  if (activeRepoId) {
+    clearBackendContextCache(activeRepoId, branchName);
+    const repo = userRepositories.find(r => r.id === activeRepoId);
+    const repoName = repo ? repo.name : 'Repository';
+    loadScopedChatHistory(activeRepoId, branchName, repoName);
+  }
+
+  // Close dropdown menu
+  toggleDropdown(null);
+}
+
+function updateWelcomeAndSuggestions(repoName) {
+  // Update welcome header
+  const title = document.getElementById('assistant-welcome-title');
+  if (title) title.innerHTML = `Engineering AI Copilot <span style="color:var(--purple); font-size:12px; font-weight:700; margin-left:6px; font-family:monospace; background:rgba(188,140,255,0.08); padding:2px 6px; border-radius:4px; border:1px solid rgba(188,140,255,0.15)">${escapeHtml(repoName)}</span>`;
+
+  const desc = document.getElementById('assistant-welcome-desc');
+  if (desc) desc.textContent = `Hỏi bất kỳ điều gì về codebase của ${repoName}. Tôi có thể phân tích kiến trúc sync service, giải thích quy trình auth flow, đề xuất test cases, hoặc rà soát cấu trúc thư mục.`;
+
+  // Update quick chips
+  const chipsGrid = document.getElementById('welcome-suggestions-chips');
+  if (chipsGrid) {
+    chipsGrid.innerHTML = `
+      <div class="suggestion-chip" onclick="useSuggestion('Giải thích kiến trúc đồng bộ repository (Sync Service) của ${escapeHtml(repoName)}')">
+        <i data-lucide="git-compare"></i> Explain ${escapeHtml(repoName)} sync
+      </div>
+      <div class="suggestion-chip" onclick="useSuggestion('Quy trình auth và đăng nhập bằng GitHub được thiết kế ra sao trong ${escapeHtml(repoName)}?')">
+        <i data-lucide="shield-check"></i> Review auth flow
+      </div>
+      <div class="suggestion-chip" onclick="useSuggestion('Đề xuất bộ test case cho chức năng chuyển đổi cấu hình BYOK trong ${escapeHtml(repoName)}.')">
+        <i data-lucide="terminal"></i> Suggest test cases
+      </div>
+      <div class="suggestion-chip" onclick="useSuggestion('Phân tích cấu trúc thư mục và các module chính của ${escapeHtml(repoName)}.')">
+        <i data-lucide="brain-circuit"></i> Analyze repository structure
+      </div>
+    `;
+  }
+
+  // Update mini chips
+  const miniChips = document.getElementById('mini-suggestions-chips');
+  if (miniChips) {
+    miniChips.innerHTML = `
+      <div class="suggestion-chip-mini" onclick="useSuggestion('Đề xuất cải tiến cấu trúc dự án ${escapeHtml(repoName)}')">
+        Suggest improvements
+      </div>
+      <div class="suggestion-chip-mini" onclick="useSuggestion('Tạo tóm tắt release notes từ commit gần đây trong ${escapeHtml(repoName)}')">
+        Generate release summary
+      </div>
+    `;
+  }
+
+  if (window.lucide) window.lucide.createIcons();
+}
+
+// Global click-away handler to auto-close custom dropdowns
+document.addEventListener('click', () => {
+  toggleDropdown(null);
+});
+
+// Load persistent state on bootstrap load
+window.addEventListener('DOMContentLoaded', () => {
+  if (ai_enabled && userRepositories.length > 0) {
+    const savedRepoId = localStorage.getItem('git_analytics_ai_active_repo');
+    const savedBranchName = localStorage.getItem('git_analytics_ai_active_branch');
+
+    let initialRepoId = savedRepoId ? parseInt(savedRepoId) : null;
+    let initialBranch = savedBranchName;
+
+    // Validate that the persisted repo still exists in current user repositories list
+    if (initialRepoId) {
+      const exists = userRepositories.some(r => r.id === initialRepoId);
+      if (!exists) initialRepoId = null;
+    }
+
+    if (initialRepoId) {
+      selectRepository(initialRepoId, initialBranch);
+    } else {
+      // Show onboarding overlay state by default if no selection exists
+      document.getElementById('chat-onboarding-state').style.display = 'flex';
+      document.getElementById('chat-messages').style.display = 'none';
+
+      // Disable chat input fields
+      const chatInput = document.getElementById('assistant-question');
+      const chatSend = document.getElementById('send-question-btn');
+      if (chatInput) {
+        chatInput.setAttribute('disabled', 'true');
+        chatInput.placeholder = "Select a repository to start AI assistance...";
+      }
+      if (chatSend) chatSend.setAttribute('disabled', 'true');
+    }
+  } else if (ai_enabled) {
+    // Enabled but user has absolutely 0 repositories connected
+    document.getElementById('chat-onboarding-state').style.display = 'flex';
+    document.getElementById('chat-onboarding-state').innerHTML = `
+      <div class="onboarding-icon"><i data-lucide="alert-circle" style="color:var(--danger-text)"></i></div>
+      <h3>Chưa kết nối Repository</h3>
+      <p>Vui lòng kết nối repository GitHub của bạn trong mục Settings để bắt đầu sử dụng trợ lý codebase.</p>
+    `;
+    document.getElementById('chat-messages').style.display = 'none';
+
+    const chatInput = document.getElementById('assistant-question');
+    const chatSend = document.getElementById('send-question-btn');
+    if (chatInput) {
+      chatInput.setAttribute('disabled', 'true');
+      chatInput.placeholder = "No connected repositories available...";
+    }
+    if (chatSend) chatSend.setAttribute('disabled', 'true');
+    if (window.lucide) window.lucide.createIcons();
+  }
+});
 </script>
 {% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script>
+function toggleGuide() {
+  const content = document.getElementById('guide-content');
+  const icon = document.getElementById('guide-toggle-icon');
+  const badgeText = document.getElementById('guide-badge-text');
+  
+  if (content.style.display === 'none' || content.style.display === '') {
+    content.style.display = 'block';
+    if (icon) icon.innerHTML = `<i data-lucide="chevron-up"></i> Ẩn cẩm nang`;
+    if (badgeText) badgeText.textContent = 'Ẩn cẩm nang';
+  } else {
+    content.style.display = 'none';
+    if (icon) icon.innerHTML = `<i data-lucide="chevron-down"></i> Xem cẩm nang`;
+    if (badgeText) badgeText.textContent = 'Xem cẩm nang';
+  }
+  if (window.lucide) window.lucide.createIcons();
+}
+
+if (window.lucide) {
+  window.lucide.createIcons();
+}
+</script>
 {% endblock %}

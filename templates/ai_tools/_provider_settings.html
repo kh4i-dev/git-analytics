@@ -1,0 +1,6 @@
+{% if not is_public and not ai_enabled %}
+<section class="workspace-lock">
+  <strong>AI provider chưa bật</strong>
+  <p>{{ ai_message }}</p>
+</section>
+{% endif %}

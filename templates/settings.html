@@ -74,6 +74,7 @@
               <option value="openai">OpenAI</option>
               <option value="gemini">Gemini</option>
               <option value="claude">Claude</option>
+              <option value="nvidia">NVIDIA</option>
             </select>
           </label>
         </div>
@@ -93,6 +94,11 @@
             <div class="ai-key-card-head"><div><strong>Claude</strong><span>Claude API for deeper PR review and repo assistant runs.</span></div><span class="provider-pill">Claude</span></div>
             <div class="secret-input-row"><input id="claude-api-key" type="password" class="secret-input" placeholder="Paste new Claude key" autocomplete="off" data-provider-key="claude"></div>
             <small class="saved-key-state" data-key-status="claude">No saved key on the server.</small>
+          </div>
+          <div class="ai-key-card" data-provider-card="nvidia">
+            <div class="ai-key-card-head"><div><strong>NVIDIA</strong><span>High-performance model hosting via NVIDIA NIM.</span></div><span class="provider-pill">NIM</span></div>
+            <div class="secret-input-row"><input id="nvidia-api-key" type="password" class="secret-input" placeholder="Paste new NVIDIA key" autocomplete="off" data-provider-key="nvidia"></div>
+            <small class="saved-key-state" data-key-status="nvidia">No saved key on the server.</small>
           </div>
         </div>
 
@@ -1166,7 +1172,7 @@ const PERM_KEY = 'ga_permissions';
 
 /* ── AI Settings ─────────────────────────────────────────── */
 const AI_MODE_VALUES = new Set(['byok', 'cloud']);
-const AI_PROVIDER_VALUES = new Set(['openai', 'gemini', 'claude']);
+const AI_PROVIDER_VALUES = new Set(['openai', 'gemini', 'claude', 'nvidia']);
 let aiSettingsState = null;
 
 function validateAiMode(mode) {
@@ -1265,7 +1271,7 @@ function updateProviderOptions(mode) {
     if (mode === 'cloud' && !item.cloud_available) return;
     const option = document.createElement('option');
     option.value = provider;
-    option.textContent = provider === 'openai' ? 'OpenAI' : provider === 'gemini' ? 'Gemini' : 'Claude';
+    option.textContent = provider === 'openai' ? 'OpenAI' : provider === 'gemini' ? 'Gemini' : provider === 'claude' ? 'Claude' : 'NVIDIA';
     select.appendChild(option);
   });
   if (!select.options.length) {
@@ -1339,8 +1345,8 @@ async function saveAIConfiguration() {
     applyAiSettings(payload.data);
     setAiStatus('AI configuration saved. Keys are encrypted server-side and remain masked.', 'success');
     if (window.showToast) window.showToast('AI configuration saved.');
-  } catch (_) {
-    setAiStatus('Could not save AI configuration. Check provider keys and cloud availability.', 'error');
+  } catch (err) {
+    setAiStatus(err.message || 'Could not save AI configuration. Check provider keys and cloud availability.', 'error');
   } finally {
     setAiSaving(false);
     setAiModeSavingState();

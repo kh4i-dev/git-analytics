@@ -1,0 +1,31 @@
+<div class="provider-strip">
+  <span class="status-badge mode-badge {{ 'disabled' if is_public else ('enabled' if ai_enabled else 'disabled') }}">
+    {% if is_public %}
+      <i data-lucide="alert-circle"></i> Needs setup
+    {% else %}
+      {% if ai_enabled %}
+        <i data-lucide="check-circle-2"></i> Configured
+      {% else %}
+        <i data-lucide="alert-circle"></i> Needs setup
+      {% endif %}
+    {% endif %}
+  </span>
+  <span id="active-provider-badge" class="status-badge provider-badge">
+    {% if not is_public and ai_label %}
+      {% if ai_label.startswith('BYOK') %}
+        <code class="provider-mono"><i data-lucide="bot"></i> {{ ai_label }}</code>
+      {% elif ai_label.startswith('Cloud') %}
+        <code class="provider-mono"><i data-lucide="sparkles"></i> {{ ai_label }}</code>
+      {% else %}
+        <code class="provider-mono"><i data-lucide="bot"></i> {{ ai_label }}</code>
+      {% endif %}
+    {% else %}
+      <code class="provider-mono"><i data-lucide="bot"></i> BYOK or Cloud</code>
+    {% endif %}
+  </span>
+  <span class="status-badge beta-badge"><i data-lucide="flask-conical"></i> Beta</span>
+  <span class="status-badge access-badge"><i data-lucide="users"></i> Requires Workspace Access</span>
+  <span class="status-badge guide-toggle-badge" onclick="toggleGuide()" style="cursor: pointer;">
+    <i data-lucide="book-open"></i> <span id="guide-badge-text">Xem cẩm nang</span>
+  </span>
+</div>

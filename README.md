@@ -12,27 +12,36 @@ Engineering Intelligence Platform for GitHub repository analytics, contributor i
 
 ---
 
-Self-hosted platform connecting to GitHub via secure OAuth. Syncs repository data and provides engineering-grade analytics, AI-powered insights, and immutable shareable reports.
+## 📌 Tổng quan dự án (Project Overview)
 
-## Features
+**Git Analytics** là nền tảng tự lưu trữ (self-hosted) kết nối bảo mật với GitHub qua giao thức OAuth. Hệ thống tự động đồng bộ hóa lịch sử mã nguồn của repository để cung cấp các phân tích chất lượng kỹ thuật (engineering-grade analytics), chỉ số sức khỏe của nhánh (branch intelligence), báo cáo kỹ thuật bất biến có khả năng chia sẻ an toàn và không gian làm việc AI hỗ trợ nhà phát triển.
 
-- Repository health scoring and KPI tracking
-- Branch-aware analytics with branch selector
-- Contributor profiles with activity breakdown
-- Engineering reports (immutable snapshots with public sharing)
-- Report revoke, token rotation, and anonymization
-- PDF and Excel export
-- AI commit message generator and PR diff reviewer
-- AI repository assistant (natural language Q&A)
-- Contribution heatmap (365-day GitHub-style grid)
-- Activity insights (streaks, time-of-day, weekday)
-- Pre-sync rate limit guard
-- Incremental sync engine
-- GitHub OAuth with encrypted token storage
-- Dark SaaS UI (GitHub/Vercel-inspired)
+### Đối tượng sử dụng chính:
+- **Engineering Managers / Tech Leads**: Theo dõi tốc độ phát triển (velocity), phân tích xu hướng đóng góp và tạo báo cáo snapshot định kỳ gửi ban giám đốc.
+- **Software Engineers**: Tự động viết Conventional Commit message, rà soát nhanh PR diff và hỏi đáp tự nhiên về mã nguồn cấu trúc hệ thống.
 
-## Architecture
+---
 
+## 🚀 Tính năng cốt lõi (Main Features)
+
+- **GitHub Repository Sync**: Đồng bộ hóa không đồng bộ lịch sử commits, pull requests, issues bằng cơ chế đồng bộ gia tăng (incremental sync) thông minh kết hợp cảnh báo giới hạn rate-limit của GitHub.
+- **Dashboard Analytics**: Theo dõi điểm sức khỏe dự án (health scoring), biểu đồ phân phối hoạt động, heatmap đóng góp 365 ngày kiểu GitHub và phân tích xu hướng PR/Issues.
+- **Branch-Aware Intelligence**: Hỗ trợ bộ lọc chọn nhánh động, giúp xem phân tích độc lập cho từng nhánh riêng biệt hoặc thực hiện đồng bộ riêng cho nhánh chỉ định.
+- **Engineering Reports**: Chụp nhanh trạng thái phân tích để tạo báo cáo bất biến, tự động tạo release notes, changelog và phân tích rủi ro. Hỗ trợ xuất định dạng PDF/Excel.
+- **Báo cáo Chia sẻ An toàn (Capability URLs)**: Công bố báo cáo qua liên kết công khai ngẫu nhiên ẩn danh hóa tên repo, có quyền hủy bỏ liên kết bất cứ lúc nào (revoke access).
+- **AI Workspace**: Không gian trợ lý AI được tích hợp sâu bao gồm:
+  - *Gợi ý commit message*: Tự động phân tích git diff để sinh commit chuẩn Conventional Commit.
+  - *Rà soát PR diff*: Đánh giá rủi ro bảo mật, hiệu năng, logic và đề xuất viết unit test.
+  - *Repo Assistant*: Hỏi đáp tự nhiên bằng tiếng Việt/tiếng Anh về cấu trúc, nghiệp vụ dựa trên ngữ cảnh mã nguồn.
+- **Dual AI Modes**: Hỗ trợ song song hai chế độ cấu hình AI:
+  - *BYOK (Bring Your Own Key)*: Người dùng tự cung cấp khóa API cá nhân, mã hóa đối xứng Fernet server-side an toàn.
+  - *Cloud AI*: Sử dụng API Key hoặc cổng tương thích (OpenClaw gateway) cấu hình sẵn phía máy chủ.
+
+---
+
+## 📐 Kiến trúc hệ thống (Architecture)
+
+### Sơ đồ luồng dữ liệu rộng (Architecture Flow)
 ```mermaid
 graph TB
     Client["Browser (Jinja2 + Chart.js)"]
@@ -56,6 +65,7 @@ graph TB
     DB --> Database
 ```
 
+### Quy trình Đăng nhập, Đồng bộ và Tạo báo cáo
 ```mermaid
 sequenceDiagram
     participant U as User
@@ -67,7 +77,7 @@ sequenceDiagram
     participant D as Database
 
     Note over U,D: OAuth Login
-    U->>B: Click Login
+    U->{B}: Click Login
     B->>R: GET /auth/github/login
     R->>G: Redirect to GitHub OAuth
     G->>B: Authorization prompt
@@ -79,7 +89,7 @@ sequenceDiagram
     R->>B: Set signed cookie, redirect
 
     Note over U,D: Data Sync
-    U->>B: Click Sync
+    U->{B}: Click Sync
     B->>R: POST /api/v1/sync
     R->>S: SyncService.sync()
     S->>C: Check rate limit
@@ -98,7 +108,7 @@ sequenceDiagram
     R->>B: Sync complete
 
     Note over U,D: Analytics Dashboard
-    U->>B: Open Dashboard
+    U->{B}: Open Dashboard
     B->>R: GET /dashboard/overview
     R->>B: HTML skeleton
     B->>R: fetch /api/v1/analytics
@@ -109,7 +119,7 @@ sequenceDiagram
     B->>B: Chart.js render
 
     Note over U,D: Report Generation
-    U->>B: Generate Report
+    U->{B}: Generate Report
     B->>R: POST /api/v1/reports
     R->>S: EngineeringReportService
     S->>S: Snapshot analytics state
@@ -120,158 +130,117 @@ sequenceDiagram
     B->>B: Show capability URL
 ```
 
-### Layered Stack
+### Các lớp công nghệ (Layered Stack)
 
-| Layer | Technology | Responsibility |
+| Lớp (Layer) | Công nghệ | Trách nhiệm chính |
 |---|---|---|
-| Frontend | Jinja2 + Chart.js | Server-rendered pages, interactive charts, dark SaaS UI |
-| Routes | FastAPI | HTTP handling, hybrid page and API routing |
-| Services | Python | Business logic orchestration, domain exceptions |
-| Clients | httpx | GitHub REST API, pagination, rate limit handling |
-| ORM | SQLAlchemy 2.0 | Data access, upsert, schema migrations |
-| Database | SQLite / PostgreSQL | Persistence |
+| Frontend | Jinja2 + Chart.js | Render giao diện phía server, vẽ biểu đồ tương tác, chủ đề tối (Dark SaaS) |
+| Routes | FastAPI | Điều hướng HTTP, xử lý phân tách trang HTML tĩnh và API JSON endpoint |
+| Services | Python | Lớp nghiệp vụ xử lý logic chính, điều phối hoạt động đồng bộ/AI/báo cáo |
+| Clients | httpx | Thực hiện các cuộc gọi API tới GitHub REST API và cổng AI bên ngoài |
+| ORM | SQLAlchemy 2.0 | Tương tác cơ sở dữ liệu, ánh xạ đối tượng, quản lý di chuyển schema |
+| Database | SQLite / PostgreSQL | Lưu trữ dữ liệu lâu bền |
 
-### Sync State Machine
+---
 
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> pending: Repository connected
-    pending --> syncing: User clicks Sync
+## 🛠️ Hướng dẫn cài đặt nhanh (Quick Start)
 
-    state syncing {
-        [*] --> checking_rate_limit
-        checking_rate_limit --> fetching_commits: Quota sufficient
-        checking_rate_limit --> sync_error: Quota exceeded
-        fetching_commits --> fetching_pull_requests
-        fetching_pull_requests --> fetching_issues
-        fetching_issues --> persisting_data
-        persisting_data --> [*]
-    }
+### Yêu cầu hệ thống (Prerequisites)
+- **Python 3.11+**
+- **GitHub OAuth App** (Tạo tại: *GitHub Settings > Developer Settings > OAuth Apps*)
 
-    syncing --> success: All data persisted
-    syncing --> sync_error: Error at any step
-    success --> syncing: Incremental sync
-    sync_error --> syncing: Retry
-    success --> [*]
-    sync_error --> [*]
-```
-
-## Current Scope
-
-### Phase 1 (Active)
-- Single repository intelligence
-- Immutable engineering reports with public sharing (capability URL)
-- User-triggered and single-process queued sync
-- AI workspace with encrypted BYOK and Cloud AI preview modes
-- PDF and Excel export
-- GitHub OAuth authentication
-
-### Phase 2 (Planned)
-- Hosted AI providers (OpenAI, Gemini, BYOK)
-- Scheduled report generation groundwork
-- AI insight layer across all analytics
-
-### Phase 3 (Planned)
-- Background workers and queue system
-- Async sync engine with retry and recovery
-- Tenant isolation
-
-### Phase 4 (Planned)
-- Multi-repo intelligence
-- Contributor identity resolution
-- Cross-repo analytics and ranking
-
-## Not in Scope (Phase 1)
-
-- External/multi-process sync worker deployment
-- Cross-repo aggregation
-- Contributor identity resolution
-- Scheduled report generation
-- Multi-user workspace
-- Password-protected reports
-- Expiring public links
-- Enterprise RBAC
-- High-stakes cross-repo KPI
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- GitHub OAuth App (GitHub Settings > Developer Settings > OAuth Apps)
-
-### 1. Clone
-
+### 1. Tải mã nguồn về máy
 ```bash
 git clone https://github.com/kh4i-dev/git-analytics.git
 cd git-analytics
 ```
 
-### 2. Configure
-
-```bash
-copy .env.example .env
-```
-
-| Variable | Required | Description |
-|---|---|---|
-| `GITHUB_CLIENT_ID` | Yes | GitHub OAuth App client ID |
-| `GITHUB_CLIENT_SECRET` | Yes | GitHub OAuth App client secret |
-| `SECRET_KEY` | Yes | Session signing key (`os.urandom(24)`). |
-| `ENCRYPTION_KEY` | Yes | 32-byte url-safe base64 Fernet key |
-| `DATABASE_URL` | No | Default: `sqlite:///./git_analytics.db` |
-
-### 3. Install
-
+### 2. Thiết lập môi trường ảo Python & Cài đặt thư viện
 ```bash
 python -m venv .venv
+# Trên Windows:
 .venv\Scripts\activate
+# Trên macOS/Linux:
+source .venv/bin/activate
+
 pip install -r requirements.txt
 ```
 
-### 4. Migrate
+### 3. Cấu hình biến môi trường
+Sao chép file cấu hình mẫu `.env.example` thành `.env`:
+```bash
+# Trên Windows:
+copy .env.example .env
+# Trên macOS/Linux:
+cp .env.example .env
+```
+Điền đầy đủ thông tin khóa Client ID/Secret từ GitHub OAuth App của bạn vào tệp `.env`.
 
+### 4. Khởi chạy Database Migrations (Alembic)
 ```bash
 alembic upgrade head
 ```
 
-### 5. Run
-
+### 5. Khởi động Web Server cục bộ
 ```bash
 uvicorn app.main:app --reload
 ```
 
-| URL | Description |
+| Địa chỉ truy cập | Chức năng |
 |---|---|
-| `http://localhost:8000` | Application |
-| `http://localhost:8000/docs` | API documentation |
-| `http://localhost:8000/health` | Health check |
+| `http://localhost:8000` | Trang chủ ứng dụng Git Analytics |
+| `http://localhost:8000/docs` | Tài liệu API tương tác tự động (Swagger UI) |
+| `http://localhost:8000/health` | API kiểm tra trạng thái sức khỏe hệ thống |
 
-## Testing
+---
 
-```bash
-.venv\Scripts\python.exe -m pytest -q
-python -m compileall app tests
-```
+## 🤖 Cấu hình tính năng AI (AI Setup)
 
-## Known Limitations
+Git Analytics hỗ trợ hai cơ chế tích hợp trí tuệ nhân tạo để người dùng linh hoạt lựa chọn:
 
-- Sync queue is single-process; hosted deployments still need an external worker strategy
-- Contributor identity resolution is simple (github_login with email fallback); same person using multiple emails may appear as separate contributors
-- Reports are single-repository scoped in Phase 1
-- Public reports do not support password protection or expiring links
-- Token encryption uses Fernet (symmetric); key rotation requires re-encryption
+### 1. Chế độ BYOK (Bring Your Own Key)
+Người dùng tự quản lý hóa đơn AI của mình bằng cách điền API Key cá nhân trong trang cài đặt.
+- Truy cập vào **Settings** > tab **AI Settings**.
+- Nhập khóa API của nhà cung cấp bạn muốn dùng: **OpenAI**, **Google Gemini**, hoặc **Anthropic Claude**.
+- Hệ thống giải mã an toàn và lưu trữ khóa dạng mã hóa đối xứng đối với từng tài khoản trong Database.
 
-## Documentation
+### 2. Chế độ Cloud AI (Server-side Preview)
+Nếu bạn triển khai hệ thống cho cả đội ngũ và muốn cung cấp hạn ngạch chạy thử, hãy khai báo các API Key trực tiếp trong file `.env` của máy chủ:
+- `OPENAI_API_KEY`, `GEMINI_API_KEY`, `CLAUDE_API_KEY`
+- Hoặc định tuyến tất cả cuộc gọi qua một cổng tương thích với chuẩn OpenAI (ví dụ: **OpenClaw**):
+  ```env
+  OPENAI_COMPATIBLE_BASE_URL=https://your-openclaw-gateway.com/v1
+  OPENAI_COMPATIBLE_API_KEY=claw-secret-key
+  OPENAI_COMPATIBLE_MODEL=gateway-model-name
+  ```
+- *Lưu ý*: Nhãn badge trạng thái trên trang AI Tools sẽ tự động cập nhật phản ánh chính xác nhà cung cấp đang chạy thực tế (ví dụ: **`BYOK · Gemini`** hoặc **`Cloud AI · OpenClaw`**).
 
-| File | Description |
+---
+
+## 🔒 Bảo mật thông tin khóa API (Security Notes)
+
+- **Quy tắc Secret Locality**: Tuyệt đối **KHÔNG** ghi các khóa API cá nhân (BYOK) vào tệp cấu hình `.env` của mã nguồn hay commit chúng lên GitHub.
+- **Mã hóa cơ sở dữ liệu**: Mọi khóa BYOK do người dùng cung cấp đều được mã hóa đối xứng bằng thuật toán mật mã Fernet của Python thông qua khóa `ENCRYPTION_KEY` bí mật phía máy chủ trước khi ghi vào Database.
+- **Không bao giờ lộ khóa thô**: Các API của Git Analytics không bao giờ trả về chuỗi API Key thô ban đầu ra ngoài giao diện web hay ghi chúng vào file log máy chủ.
+- **Bảo vệ Client-side**: Khóa thô tuyệt đối không được lưu tại `localStorage` của trình duyệt để phòng ngừa rủi ro bị tấn công chèn mã độc XSS.
+
+---
+
+## 📂 Danh mục tài liệu kỹ thuật (Documentation Index)
+
+Dưới đây là các tài liệu hướng dẫn chuyên sâu được thiết lập chi tiết trong thư mục `docs/`:
+
+| Tài liệu | Mô tả chi tiết nội dung |
 |---|---|
-| [CONTEXT.md](CONTEXT.md) | Domain glossary and product principles |
-| [docs/architecture.md](docs/architecture.md) | System architecture and data flows |
-| [docs/walkthrough.md](docs/walkthrough.md) | End-to-end user flow |
-| [docs/roadmap.md](docs/roadmap.md) | Phase roadmap with scope boundaries |
-| [docs/report-system.md](docs/report-system.md) | Engineering report system |
-| [docs/ai-tools.md](docs/ai-tools.md) | AI workspace documentation |
-| [docs/ui-guidelines.md](docs/ui-guidelines.md) | Design system and UI patterns |
-| [docs/changelog.md](docs/changelog.md) | Full release history |
+| 📘 **[Hướng Dẫn Sử Dụng AI Tools](docs/AI_TOOLS_USER_GUIDE.md)** | Hướng dẫn cho lập trình viên cách lấy mã git diff chuẩn từ terminal, dán vào UI, đọc nhãn trạng thái nhà cung cấp hoạt động thực tế và sử dụng các công cụ AI hiệu quả. |
+| ⚙️ **[Hướng Dẫn Cấu Hình AI](docs/AI_CONFIGURATION.md)** | Chi tiết cách thiết lập các tham số môi trường `.env`, cấu hình cổng tương thích OpenAI (OpenClaw), quản lý Model và hạn ngạch quota sử dụng hàng ngày. |
+| 💡 **[Ví Dụ Thực Tế & Kỹ Năng Prompting](docs/AI_PROMPT_EXAMPLES.md)** | Chứa các mẫu prompt chất lượng cao, các ví dụ Git Diff đầu vào hợp lệ/không hợp lệ, bộ câu hỏi khuyến nghị cho trợ lý ảo Repo Assistant và kỹ năng đặt câu hỏi. |
+| 🛠️ **[Khắc Phục Sự Cố AI (Troubleshooting)](docs/AI_TROUBLESHOOTING.md)** | Hướng dẫn tự kiểm tra và giải quyết các mã lỗi AI thường gặp (Needs setup, Invalid format, 401/403, 429), lỗi font tiếng Việt và cách đọc log server an toàn. |
+| 🔒 **[Bản Đồ Bảo Mật API Keys](docs/SECURITY_AI_KEYS.md)** | Chi tiết cơ chế mã hóa đối xứng Fernet phía server, lý do không dùng localStorage ở Client, vòng đời khóa BYOK và checklist an ninh trước khi lên Production. |
+| 🌐 [CONTEXT.md](CONTEXT.md) | Thuật ngữ chuyên ngành, định hướng sản phẩm và các nguyên lý thiết kế ứng dụng. |
+| 🏗️ [docs/architecture.md](docs/architecture.md) | Phân tích sâu kiến trúc hệ thống, sơ đồ di chuyển dữ liệu và thiết kế database. |
+| 🏃‍♂️ [docs/walkthrough.md](docs/walkthrough.md) | Kịch bản trải nghiệm toàn trình cho người dùng cuối. |
+| 🗺️ [docs/roadmap.md](docs/roadmap.md) | Lộ trình phát triển qua các Phase và ranh giới phạm vi tính năng. |
+| 📑 [docs/report-system.md](docs/report-system.md) | Thiết kế hệ thống báo cáo kỹ thuật bất biến. |
+| 🎨 [docs/ui-guidelines.md](docs/ui-guidelines.md) | Cẩm nang thiết kế giao diện Dark SaaS và các thành phần mẫu UI. |
+| 📜 [docs/changelog.md](docs/changelog.md) | Lịch sử cập nhật phiên bản. |

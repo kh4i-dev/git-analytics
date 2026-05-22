@@ -9,10 +9,10 @@ from sqlalchemy.orm import Session, sessionmaker
 
 import app.models  # noqa: F401
 from app.core.config import Settings
-from app.core.exceptions import AIRateLimitException
+from app.core.exceptions import AIRateLimitException, ValidationException
 from app.db.base import Base
 from app.models.ai_usage_event import AiUsageEvent
-from app.repositories import UserRepository
+from app.repositories import UserRepository, RepositoryRepository
 from app.services.ai_provider_service import AiProviderGateway, AiToolService
 from app.services.ai_settings_service import AiSettingsService
 
@@ -125,3 +125,247 @@ def test_cloud_tool_records_usage_and_enforces_preview_limit(
     assert len(events) == 1
     assert events[0].usage_units == 13
     assert events[0].operation == "commit_message"
+
+
+def test_git_diff_validation(db_session: Session) -> None:
+    user = _make_user(db_session)
+    tool = AiToolService(db_session)
+    with pytest.raises(ValidationException) as exc:
+        run_async(tool.generate_commit_message(user_id=user.id, diff="not a git diff"))
+    assert "Invalid git diff format" in str(exc.value)
+
+
+def test_inject_metadata_in_responses(db_session: Session) -> None:
+    user = _make_user(db_session)
+    app_settings = Settings(
+        openai_compatible_base_url="https://openclaw.test/v1",
+        openai_compatible_api_key="cloud-key",
+    )
+    AiSettingsService(db_session, app_settings=app_settings).update_settings(
+        user.id,
+        {"mode": "cloud", "default_provider": "openai"},
+    )
+
+    class FakeGateway:
+        async def complete(self, **_kwargs):
+            from app.services.ai_provider_service import AiCompletion
+
+            return AiCompletion("feat(ai): correct active provider", usage_units=10)
+
+    tool = AiToolService(db_session, app_settings=app_settings, gateway=FakeGateway())
+    res = run_async(tool.generate_commit_message(user_id=user.id, diff="diff --git a/a.py b/a.py"))
+    assert "metadata" in res
+    assert res["metadata"]["mode"] == "cloud"
+    assert res["metadata"]["provider"] == "openai"
+    assert res["metadata"]["source"] == "Cloud AI · OpenClaw"
+
+
+def test_post_json_raises_validation_exception_on_401_403() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(401, json={"error": "unauthorized"})
+
+    async def execute() -> object:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            gateway = AiProviderGateway(http_client=client)
+            return await gateway._post_json(
+                "https://api.openai.com/v1/chat/completions",
+                headers={"Authorization": "Bearer bad-key"},
+                json_body={},
+            )
+
+    with pytest.raises(ValidationException) as exc:
+        run_async(execute())
+    assert "Invalid API key configured for the AI provider" in str(exc.value)
+
+
+def test_nvidia_completion_uses_correct_endpoint() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={
+                "choices": [{"message": {"content": "fix(nvidia): complete NIM integration"}}],
+                "usage": {"total_tokens": 12},
+            },
+        )
+
+    app_settings = Settings(
+        nvidia_api_key="nvidia-secret",
+        nvidia_model="custom-nvidia-nim-model",
+    )
+
+    async def execute() -> object:
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            gateway = AiProviderGateway(app_settings=app_settings, http_client=client)
+            return await gateway.complete(
+                mode="byok",
+                provider="nvidia",
+                api_key="nvidia-secret",
+                system_prompt="System Prompt",
+                user_prompt="User Prompt",
+            )
+
+    completion = run_async(execute())
+
+    assert completion.text == "fix(nvidia): complete NIM integration"
+    assert completion.usage_units == 12
+    assert requests[0].url == "https://integrate.api.nvidia.com/v1/chat/completions"
+    assert requests[0].headers["Authorization"] == "Bearer nvidia-secret"
+    assert json.loads(requests[0].content)["model"] == "custom-nvidia-nim-model"
+
+
+def test_repo_scoped_retrieval_isolation(db_session: Session) -> None:
+    user = _make_user(db_session)
+    
+    # 1. Create a foreign repository that is NOT indexed (BAITAP_HQTCSDL)
+    foreign_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 9002,
+        "owner": "kh4i-dev",
+        "name": "BAITAP_HQTCSDL",
+        "full_name": "kh4i-dev/BAITAP_HQTCSDL",
+        "html_url": "https://github.com/kh4i-dev/BAITAP_HQTCSDL",
+        "default_branch": "main",
+        "last_sync_status": "success",
+    })
+    
+    # 2. Create the indexed local repository (git-analytics)
+    local_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 9003,
+        "owner": "kh4i-dev",
+        "name": "git-analytics",
+        "full_name": "kh4i-dev/git-analytics",
+        "html_url": "https://github.com/kh4i-dev/git-analytics",
+        "default_branch": "main",
+        "last_sync_status": "success",
+    })
+    db_session.commit()
+    
+    # Mock settings
+    app_settings = Settings(
+        openai_compatible_base_url="https://openclaw.test/v1",
+        openai_compatible_api_key="cloud-key",
+    )
+    AiSettingsService(db_session, app_settings=app_settings).update_settings(
+        user.id,
+        {"mode": "cloud", "default_provider": "openai"},
+    )
+    
+    class FakeGateway:
+        async def complete(self, **_kwargs):
+            from app.services.ai_provider_service import AiCompletion
+            return AiCompletion("Mock response text.", usage_units=5)
+            
+    tool = AiToolService(db_session, app_settings=app_settings, gateway=FakeGateway())
+    
+    # Querying the foreign repository
+    res_foreign = run_async(
+        tool.answer_question(
+            user_id=user.id,
+            question="Tell me about auth flow or sync pipeline",
+            repo_id=foreign_repo.id,
+            branch="main"
+        )
+    )
+    
+    # Querying a foreign repository must return empty index message
+    assert res_foreign["answer"] == "No indexed source files available for this repository."
+    assert res_foreign["context_metadata"]["repository_source"] == "Empty/Non-indexed"
+    assert res_foreign["context_metadata"]["retrieved_chunk_count"] == 0
+    assert len(res_foreign["context_metadata"]["retrieved_files"]) == 0
+
+
+def test_empty_repo_no_global_fallback(db_session: Session) -> None:
+    user = _make_user(db_session)
+    
+    # Create empty repo
+    empty_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 9004,
+        "owner": "kh4i-dev",
+        "name": "empty-project",
+        "full_name": "kh4i-dev/empty-project",
+        "html_url": "https://github.com/kh4i-dev/empty-project",
+        "default_branch": "main",
+        "last_sync_status": "success",
+    })
+    db_session.commit()
+    
+    app_settings = Settings()
+    tool = AiToolService(db_session, app_settings=app_settings)
+    
+    res = run_async(
+        tool.answer_question(
+            user_id=user.id,
+            question="Give me the contents of auth_service.py or sync_service.py",
+            repo_id=empty_repo.id,
+            branch="main"
+        )
+    )
+    
+    # Assert zero leakage
+    assert res["answer"] == "No indexed source files available for this repository."
+    assert res["context_metadata"]["repository_source"] == "Empty/Non-indexed"
+    assert len(res["context_metadata"]["retrieved_files"]) == 0
+
+
+def test_context_cache_invalidation(db_session: Session) -> None:
+    user = _make_user(db_session)
+    
+    # Create indexed local repository (git-analytics)
+    local_repo = RepositoryRepository(db_session).create({
+        "user_id": user.id,
+        "github_repo_id": 9005,
+        "owner": "kh4i-dev",
+        "name": "git-analytics",
+        "full_name": "kh4i-dev/git-analytics",
+        "html_url": "https://github.com/kh4i-dev/git-analytics",
+        "default_branch": "main",
+        "last_sync_status": "success",
+    })
+    db_session.commit()
+    
+    app_settings = Settings(
+        openai_compatible_base_url="https://openclaw.test/v1",
+        openai_compatible_api_key="cloud-key",
+    )
+    AiSettingsService(db_session, app_settings=app_settings).update_settings(
+        user.id,
+        {"mode": "cloud", "default_provider": "openai"},
+    )
+    
+    class FakeGateway:
+        async def complete(self, **_kwargs):
+            from app.services.ai_provider_service import AiCompletion
+            return AiCompletion("Mock answers.", usage_units=2)
+            
+    tool = AiToolService(db_session, app_settings=app_settings, gateway=FakeGateway())
+    
+    # We ask a question that triggers a cache entry
+    from app.services.ai_provider_service import _assistant_cache
+    
+    cache_key = f"repo_assistant:{local_repo.id}:main"
+    if cache_key in _assistant_cache:
+        del _assistant_cache[cache_key]
+        
+    res = run_async(
+        tool.answer_question(
+            user_id=user.id,
+            question="Tell me about sync worker pipeline",
+            repo_id=local_repo.id,
+            branch="main"
+        )
+    )
+    
+    # Cache key must exist now
+    assert cache_key in _assistant_cache
+    assert _assistant_cache[cache_key]["repository_source"] == "Local Workspace"
+    
+    # Clear context cache
+    tool.clear_context_cache(repo_id=local_repo.id, branch="main")
+    
+    # Cache key must be deleted
+    assert cache_key not in _assistant_cache

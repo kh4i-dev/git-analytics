@@ -1,0 +1,8 @@
+<article class="ai-panel {% if not ai_enabled %}is-disabled{% endif %}">
+  <div class="panel-head">
+    <div><span>Review</span><h2>Rà soát PR diff</h2></div>
+    <button class="btn btn-primary btn-sm" onclick="reviewDiff()" {% if not ai_enabled %}disabled{% endif %}>Review</button>
+  </div>
+  <textarea id="review-diff" placeholder="Dán PR diff để rà soát rủi ro..." {% if not ai_enabled %}disabled{% endif %}></textarea>
+  <div id="review-output" class="review-output">{% if ai_enabled %}Nhận xét review sẽ xuất hiện tại đây.{% else %}{{ ai_message }}{% endif %}</div>
+</article>

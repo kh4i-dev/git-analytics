@@ -17,6 +17,13 @@ class DiffRequest(BaseModel):
 
 class AssistantRequest(BaseModel):
     question: str = Field(max_length=60_000)
+    repo_id: int | None = None
+    branch: str | None = None
+
+
+class ClearContextRequest(BaseModel):
+    repo_id: int
+    branch: str | None = None
 
 
 @router.post("/commit-message")
@@ -54,5 +61,18 @@ async def ai_assistant(
     data = await AiToolService(db).answer_question(
         user_id=user_id,
         question=body.question,
+        repo_id=body.repo_id,
+        branch=body.branch,
     )
     return JSONResponse(success_response(request, data))
+
+
+@router.post("/clear-context")
+async def clear_ai_context(
+    request: Request,
+    body: ClearContextRequest,
+    db: Session = Depends(get_db),
+) -> JSONResponse:
+    user_id = require_user_id(request, db)
+    AiToolService(db).clear_context_cache(repo_id=body.repo_id, branch=body.branch)
+    return JSONResponse(success_response(request, {"status": "success"}))

@@ -22,9 +22,11 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
     claude_api_key: str | None = None
+    nvidia_api_key: str | None = None
     openai_model: str = "gpt-4.1-mini"
     gemini_model: str = "gemini-2.5-flash"
     claude_model: str = "claude-sonnet-4-20250514"
+    nvidia_model: str = "meta/llama-3.3-70b-instruct"
     openai_compatible_base_url: str | None = None
     openai_compatible_api_key: str | None = None
     openai_compatible_model: str | None = None

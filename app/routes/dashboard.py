@@ -273,6 +273,12 @@ async def ai_tools_page(
             or any(item["has_key"] for item in ai_settings["providers"])
         )
     )
+    ai_label = None
+    if user and ai_enabled:
+        meta = AiSettingsService(db).get_active_provider_metadata(user.id)
+        if meta:
+            ai_label = meta.get("source")
+
     return templates.TemplateResponse(
         request=request,
         name="ai_tools.html",
@@ -284,6 +290,7 @@ async def ai_tools_page(
             "base_template": "layouts/dashboard_base.html" if user else "layouts/public_base.html",
             "is_public": user is None,
             "ai_enabled": ai_enabled,
+            "ai_label": ai_label,
             "ai_message": "Configure BYOK or Cloud AI in Settings before using AI tools.",
         },
     )

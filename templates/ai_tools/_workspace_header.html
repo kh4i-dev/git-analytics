@@ -1,0 +1,35 @@
+{% if is_public %}
+  <div class="hero-left">
+    <div class="header-icon">
+      <i data-lucide="bot"></i>
+    </div>
+    <div class="header-main">
+      <span class="ai-kicker">AI Tools</span>
+      <h1>AI workspace cho engineering team</h1>
+      <p class="subtitle">Commit generation, PR review, repository intelligence and engineering insights.</p>
+    </div>
+    {% include "ai_tools/_status_badges.html" %}
+    <a class="btn btn-primary" href="/login" style="margin-top: 20px;">Đăng nhập để sử dụng với repository của bạn</a>
+  </div>
+  <div class="ai-preview-card">
+    <div class="panel-head">
+      <div><span>Commit</span><h2>Conventional Commit</h2></div>
+      <span class="status-pill">Preview</span>
+    </div>
+    <pre>feat(analytics): add branch-aware dashboard filters</pre>
+    <div class="preview-list">
+      <div><strong>PR Diff Reviewer</strong><span>Phát hiện rủi ro bảo mật, hiệu năng và kiến trúc.</span></div>
+      <div><strong>Repo Assistant</strong><span>Trả lời dựa trên source context trong configured provider.</span></div>
+    </div>
+  </div>
+{% else %}
+  <div class="header-icon">
+    <i data-lucide="bot"></i>
+  </div>
+  <div class="header-main">
+    <span class="ai-kicker">AI Workspace</span>
+    <h1>Trợ lý kỹ thuật</h1>
+    <p class="subtitle">Commit generation, PR review, repository intelligence and engineering insights.</p>
+  </div>
+  {% include "ai_tools/_status_badges.html" %}
+{% endif %}

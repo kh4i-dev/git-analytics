@@ -1,0 +1,8 @@
+<article class="ai-panel {% if not ai_enabled %}is-disabled{% endif %}">
+  <div class="panel-head">
+    <div><span>Commit</span><h2>Gợi ý commit message</h2></div>
+    <button class="btn btn-primary btn-sm" onclick="generateCommit()" {% if not ai_enabled %}disabled{% endif %}>Tạo</button>
+  </div>
+  <textarea id="commit-diff" placeholder="Dán git diff vào đây..." {% if not ai_enabled %}disabled{% endif %}></textarea>
+  <pre id="commit-output" class="ai-output">{% if ai_enabled %}Commit message sẽ xuất hiện tại đây.{% else %}{{ ai_message }}{% endif %}</pre>
+</article>

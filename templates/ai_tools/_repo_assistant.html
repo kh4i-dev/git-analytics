@@ -1,0 +1,178 @@
+<section class="ai-panel chat-panel {% if not ai_enabled %}is-disabled{% endif %}">
+  <div class="panel-head" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+    <div style="display:flex; align-items:center; gap:10px;">
+      <div class="assistant-identity-icon">
+        <i data-lucide="bot"></i>
+      </div>
+      <div>
+        <h2 style="font-size: 15px; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 6px;">
+          AI Repo Assistant
+        </h2>
+        <span style="font-size: 11px; color: var(--text-muted); text-transform: none; letter-spacing: normal; font-weight: normal;">Engineering Copilot Mode</span>
+      </div>
+    </div>
+    
+    <div class="chat-header-badges" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+      <span id="chat-provider-badge" class="status-badge provider-badge" style="margin: 0; padding: 3px 8px; font-size: 11px;">
+        {% if ai_label %}
+          <code class="provider-mono" style="font-size: 10px;"><i data-lucide="sparkles" style="width:11px; height:11px;"></i> {{ ai_label }}</code>
+        {% else %}
+          <code class="provider-mono" style="font-size: 10px;"><i data-lucide="sparkles" style="width:11px; height:11px;"></i> Gemini 2.5 Pro</code>
+        {% endif %}
+      </span>
+      <span class="status-badge" style="margin: 0; padding: 3px 8px; font-size: 11px; color: #38bdf8; border-color: rgba(56, 189, 248, 0.25); background: rgba(56, 189, 248, 0.05); display: inline-flex; align-items: center; gap: 4px;">
+        <i data-lucide="shield-check" style="width:11px; height:11px;"></i> Repository Scoped
+      </span>
+      <span class="status-badge" style="margin: 0; padding: 3px 8px; font-size: 11px; color: #4ade80; border-color: rgba(74, 222, 128, 0.25); background: rgba(74, 222, 128, 0.05); display: inline-flex; align-items: center; gap: 4px;">
+        <span class="badge-dot" style="width: 5px; height: 5px; margin: 0;"></span> Indexed Context Active
+      </span>
+    </div>
+  </div>
+
+  {% if not is_public and ai_enabled %}
+  <!-- Repository and Branch Selection Context Toolbar -->
+  <div class="chat-context-toolbar">
+    <div class="selector-row">
+      <!-- Repository Searchable Selector Dropdown -->
+      <div class="custom-dropdown repo-dropdown" id="repo-dropdown-wrapper">
+        <button type="button" class="dropdown-trigger" id="repo-trigger" onclick="toggleDropdown('repo-menu'); event.stopPropagation();">
+          <i data-lucide="folder-git-2" class="trigger-icon"></i>
+          <span id="selected-repo-label" class="mono-font">Choose Repository</span>
+          <i data-lucide="chevron-down" class="chevron-icon"></i>
+        </button>
+        <div class="dropdown-menu" id="repo-menu">
+          <div class="dropdown-search-wrapper" onclick="event.stopPropagation();">
+            <i data-lucide="search" class="search-icon"></i>
+            <input type="text" placeholder="Tìm repository..." id="repo-search-input" oninput="filterRepositories(event)">
+          </div>
+          <div class="dropdown-items" id="repo-list">
+            {% for r in repos %}
+              <div class="dropdown-item mono-font" data-repo-id="{{ r.id }}" data-repo-fullname="{{ r.full_name }}" onclick="selectRepository({{ r.id }}); event.stopPropagation();">
+                <i data-lucide="folder-git-2" class="item-icon"></i>
+                <span>{{ r.full_name }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Branch Selection Dropdown -->
+      <div class="custom-dropdown branch-dropdown" id="branch-dropdown-wrapper">
+        <button type="button" class="dropdown-trigger" id="branch-trigger" onclick="toggleDropdown('branch-menu'); event.stopPropagation();">
+          <i data-lucide="git-branch" class="trigger-icon"></i>
+          <span id="selected-branch-label" class="mono-font">Choose Branch</span>
+          <i data-lucide="chevron-down" class="chevron-icon"></i>
+        </button>
+        <div class="dropdown-menu" id="branch-menu">
+          <div class="dropdown-items" id="branch-list">
+            <!-- Dynamically loaded branches -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Subtle AI Context Active Badge -->
+      <span class="scope-badge" id="ai-scope-badge" style="display: none;">
+        <span class="badge-dot"></span>
+        <span class="badge-text">Repository Context Active</span>
+      </span>
+    </div>
+
+    <!-- Monospace Context Detail Bar -->
+    <div class="context-info-row" id="active-context-info" style="display: none;">
+      <span class="info-item">
+        <span class="info-label">Analyzing:</span>
+        <span class="mono-font info-value" id="info-repo-name">—</span>
+      </span>
+      <span class="info-divider"></span>
+      <span class="info-item">
+        <i data-lucide="git-branch" class="info-icon"></i>
+        <span class="info-label">Branch:</span>
+        <span class="mono-font info-value" id="info-branch-name">—</span>
+      </span>
+      <span class="info-divider"></span>
+      <span class="info-item">
+        <i data-lucide="git-commit" class="info-icon"></i>
+        <span class="info-label">Indexed commits:</span>
+        <span class="info-value" id="info-commits-count">—</span>
+      </span>
+      <span class="info-divider"></span>
+      <span class="info-item">
+        <i data-lucide="users" class="info-icon"></i>
+        <span class="info-label">Contributors:</span>
+        <span class="info-value" id="info-contributors-count">—</span>
+      </span>
+    </div>
+  </div>
+  {% endif %}
+  
+  <div class="chat-viewport" id="chat-viewport">
+    <!-- Onboarding Empty State Overlay -->
+    <div class="chat-onboarding-state" id="chat-onboarding-state" style="display: none;">
+      <div class="onboarding-icon">
+        <i data-lucide="folder-git-2"></i>
+      </div>
+      <h3>Select a repository to start repository-aware AI assistance.</h3>
+      <p>Choose an active repository and a branch to scope your engineering copilot queries to indexed codebases.</p>
+      <button class="btn btn-primary btn-sm" onclick="toggleDropdown('repo-menu'); event.stopPropagation();">
+        <i data-lucide="plus" style="width: 14px; height: 14px; margin-right: 4px;"></i> Choose Repository
+      </button>
+    </div>
+
+    <div id="chat-messages" class="chat-messages">
+      <!-- Assistant Welcome Card -->
+      <div class="assistant-welcome-card" id="assistant-welcome">
+        <div class="welcome-header">
+          <div class="welcome-avatar">
+            <i data-lucide="sparkles"></i>
+          </div>
+          <h3 id="assistant-welcome-title">Engineering AI Copilot</h3>
+        </div>
+        <p class="welcome-desc" id="assistant-welcome-desc">
+          {% if ai_enabled %}
+            Hỏi bất kỳ điều gì về repository đã đồng bộ của bạn. Tôi có thể giải thích kiến trúc, rà soát quy trình auth flow, phân tích pipeline sync, hoặc đề xuất test cases.
+          {% else %}
+            {{ ai_message }}
+          {% endif %}
+        </p>
+        
+        {% if ai_enabled %}
+        <div class="welcome-suggestions-label">Gợi ý câu hỏi nhanh:</div>
+        <div class="suggestion-chips-grid" id="welcome-suggestions-chips">
+          <div class="suggestion-chip" onclick="useSuggestion('Giải thích kiến trúc đồng bộ repository (Sync Service)')">
+            <i data-lucide="git-compare"></i> Explain sync architecture
+          </div>
+          <div class="suggestion-chip" onclick="useSuggestion('Quy trình auth và đăng nhập bằng GitHub được thiết kế ra sao?')">
+            <i data-lucide="shield-check"></i> Review auth flow
+          </div>
+          <div class="suggestion-chip" onclick="useSuggestion('Đề xuất bộ test case cho chức năng chuyển đổi cấu hình BYOK.')">
+            <i data-lucide="terminal"></i> Suggest test cases
+          </div>
+          <div class="suggestion-chip" onclick="useSuggestion('Phân tích cấu trúc thư mục và các module chính của dự án.')">
+            <i data-lucide="brain-circuit"></i> Analyze repository structure
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-input-area">
+    {% if ai_enabled %}
+    <div class="suggestion-chips-row" id="mini-suggestions-chips">
+      <div class="suggestion-chip-mini" onclick="useSuggestion('Đề xuất cải tiến cấu trúc dự án')">
+        Suggest improvements
+      </div>
+      <div class="suggestion-chip-mini" onclick="useSuggestion('Tạo tóm tắt release notes từ commit gần đây')">
+        Generate release summary
+      </div>
+    </div>
+    {% endif %}
+    
+    <div class="chat-input-wrapper">
+      <input id="assistant-question" placeholder="Hỏi về codebase..." {% if not ai_enabled %}disabled{% endif %} onkeydown="if(event.key === 'Enter') askAssistant()">
+      <button id="send-question-btn" class="chat-send-btn" onclick="askAssistant()" {% if not ai_enabled %}disabled{% endif %}>
+        <i data-lucide="arrow-up"></i>
+      </button>
+    </div>
+  </div>
+</section>

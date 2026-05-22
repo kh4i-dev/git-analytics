@@ -1,0 +1,65 @@
+<section class="ai-panel ai-guide-panel" {% if is_public %}style="margin-top: 24px;"{% endif %}>
+  <div class="panel-head" style="cursor: pointer; user-select: none;" onclick="toggleGuide()">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <i data-lucide="book-open" style="color: var(--purple); width: 20px; height: 20px;"></i>
+      <h2>Cẩm nang Hướng dẫn Sử dụng & Mẹo Khai thác AI</h2>
+    </div>
+    <span id="guide-toggle-icon" class="status-badge" style="padding: 4px 12px; font-weight: 600;"><i data-lucide="chevron-down"></i> Xem cẩm nang</span>
+  </div>
+  
+  <div id="guide-content" style="display: none; margin-top: 16px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px;">
+    <div class="guide-grid">
+      <!-- Card 1: Hướng dẫn Git Diff -->
+      <div class="guide-card">
+        <h3><i data-lucide="git-compare"></i> Git Diff Workflow</h3>
+        <p>
+          Để AI gợi ý commit và review chính xác nhất, bạn cần cung cấp mã diff tiêu chuẩn từ terminal của dự án:
+        </p>
+        <ul>
+          <li><strong>Chưa stage (chưa git add):</strong> <code>git diff</code></li>
+          <li><strong>Đã stage (đã chạy git add):</strong> <code>git diff --cached</code></li>
+          <li><strong>Commit gần nhất:</strong> <code>git show HEAD</code></li>
+        </ul>
+      </div>
+
+      <!-- Card 2: Conventional Commits -->
+      <div class="guide-card">
+        <h3><i data-lucide="terminal"></i> Conventional Commits</h3>
+        <p>
+          AI sẽ phân tích code thay đổi và tự động viết commit message theo quy chuẩn chuẩn hóa của các team công nghệ toàn cầu:
+        </p>
+        <div style="background:#080c12; padding:8px; border-radius:4px; font-family:monospace; color:#58a6ff; font-size:12px; margin-bottom:8px; border:1px solid var(--border-sub)">
+          &lt;type&gt;(&lt;scope&gt;): &lt;description&gt;
+        </div>
+        <ul>
+          <li><strong>feat:</strong> Tính năng mới (ví dụ: <code>feat(auth):...</code>)</li>
+          <li><strong>fix:</strong> Sửa lỗi hệ thống</li>
+          <li><strong>refactor:</strong> Cấu trúc lại code</li>
+          <li><strong>docs:</strong> Cập nhật tài liệu</li>
+        </ul>
+      </div>
+
+      <!-- Card 3: Gợi ý câu hỏi Codebase -->
+      <div class="guide-card">
+        <h3><i data-lucide="brain-circuit"></i> Repo Assistant</h3>
+        <p>
+          Hỏi trợ lý AI về cấu trúc mã nguồn, quy trình nghiệp vụ dựa trên codebase đã được đồng bộ hóa của bạn:
+        </p>
+        <ul style="font-style: italic;">
+          <li>"Kiến trúc đồng bộ repository (Sync Service) hoạt động như thế nào?"</li>
+          <li>"Quy trình auth và đăng nhập bằng GitHub được thiết kế ra sao?"</li>
+          <li>"Đề xuất bộ test case cho chức năng chuyển đổi cấu hình BYOK."</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="guide-footer">
+      <span style="font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px;">
+        <i data-lucide="shield-check" style="color: var(--success-text);"></i> <strong>BYOK Security:</strong> Khóa BYOK của bạn được mã hóa an toàn bằng thuật toán Fernet đối xứng trước khi lưu vào DB.
+      </span>
+      <a href="https://github.com/kh4i-dev/git-analytics/blob/main/README.md" target="_blank" style="font-size: 13px; color: var(--text-link); text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+        Tài liệu kỹ thuật đầy đủ <i data-lucide="arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</section>

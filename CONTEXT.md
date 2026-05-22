@@ -286,6 +286,10 @@
 - **OpenAI-compatible gateway**: Server-side Cloud adapter option, not a browser-entered provider.
 - **No fake AI responses**: When AI is unavailable, clear error states shown.
 - **Provider states**: Each tool shows its current provider readiness.
+- **Repository-Scoped Retrieval Invariant**: Enforces strict zero cross-repository leakage. Code snippet search and metadata aggregation are strictly filtered by the selected `repository_id` and active `branch`.
+- **Empty/Non-indexed Repositories**: Only the local `git-analytics` workspace codebase is physically indexed. All foreign/remote repositories are handled securely, immediately returning: `"No indexed source files available for this repository."`
+- **Cache Isolation Namespace**: Caches context snippet queries using `repo_assistant:{repo_id}:{branch}` to eliminate session context contamination.
+- **Graceful Switching**: Dropping down a different repo or branch clears viewport chat logs, invalidates backend context cache, and recreates scoped welcome cards dynamically.
 
 ### Future
 - Repo-context retrieval quality improvements.

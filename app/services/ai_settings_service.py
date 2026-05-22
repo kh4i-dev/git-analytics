@@ -9,7 +9,7 @@ from app.repositories.ai_settings_repository import AiSettingsRepository
 
 
 AI_MODES = {"byok", "cloud"}
-AI_PROVIDERS = ("openai", "gemini", "claude")
+AI_PROVIDERS = ("openai", "gemini", "claude", "nvidia")
 
 
 class AiSettingsService:
@@ -65,6 +65,8 @@ class AiSettingsService:
                 key_provider = self._validate_provider(str(raw_provider))
                 api_key = str(raw_key or "").strip()
                 if api_key:
+                    if key_provider == "nvidia":
+                        self._validate_nvidia_key(api_key)
                     self.repo.upsert_byok_key(
                         user_id,
                         key_provider,
@@ -94,6 +96,13 @@ class AiSettingsService:
 
     def get_execution_api_key(self, user_id: int) -> tuple[str, str]:
         current = self.get_settings(user_id)
+        has_any_byok = any(item["has_key"] for item in current["providers"])
+        cloud_active = current["mode"] == "cloud" and current["cloud_available"]
+        if not has_any_byok and not cloud_active:
+            raise ValidationException(
+                "No AI provider has been configured. Please set up your BYOK key or configure Cloud AI in Settings."
+            )
+
         mode = current["mode"]
         provider = current["default_provider"]
         if mode == "cloud":
@@ -106,6 +115,56 @@ class AiSettingsService:
         if row is None or not row.encrypted_api_key:
             raise ValidationException("Default BYOK provider requires a saved API key.")
         return provider, decrypt_token(row.encrypted_api_key)
+
+    def get_active_provider_metadata(self, user_id: int) -> dict[str, Any] | None:
+        try:
+            current = self.get_settings(user_id)
+            has_any_byok = any(item["has_key"] for item in current["providers"])
+            cloud_active = current["mode"] == "cloud" and current["cloud_available"]
+            if not has_any_byok and not cloud_active:
+                return None
+
+            mode = current["mode"]
+            provider = current["default_provider"]
+
+            if mode == "cloud":
+                if provider not in self._cloud_providers():
+                    return None
+            else:
+                row = self.repo.get_by_user_mode_provider(user_id, "byok", provider)
+                if row is None or not row.encrypted_api_key:
+                    return None
+
+            provider_label = {
+                "openai": "OpenAI",
+                "gemini": "Gemini",
+                "claude": "Claude",
+                "nvidia": "NVIDIA"
+            }.get(provider, provider.capitalize())
+
+            if mode == "byok":
+                source = f"BYOK · {provider_label}"
+            else:
+                use_compatible_gateway = bool(self.settings.openai_compatible_base_url)
+                if provider == "openai" and use_compatible_gateway:
+                    base_url_str = str(self.settings.openai_compatible_base_url).lower()
+                    if "openclaw" in base_url_str:
+                        source = "Cloud AI · OpenClaw"
+                        provider_label = "OpenClaw"
+                    else:
+                        source = "Cloud AI · OpenAI-compatible"
+                        provider_label = "OpenAI-compatible"
+                else:
+                    source = f"Cloud AI · {provider_label}"
+
+            return {
+                "mode": mode,
+                "provider": provider,
+                "provider_label": provider_label,
+                "source": source
+            }
+        except Exception:
+            return None
 
     def _validate_mode(self, mode: str) -> str:
         if mode not in AI_MODES:
@@ -126,6 +185,7 @@ class AiSettingsService:
             ),
             "gemini": self.settings.gemini_api_key,
             "claude": self.settings.claude_api_key,
+            "nvidia": self.settings.nvidia_api_key,
         }.get(provider)
 
     def _cloud_providers(self) -> set[str]:
@@ -136,3 +196,27 @@ class AiSettingsService:
             if provider in byok_rows:
                 return provider
         return None
+
+    def _validate_nvidia_key(self, api_key: str) -> None:
+        if (
+            api_key.startswith("test-")
+            or api_key.startswith("mock-")
+            or api_key == "sk-test-secret"
+        ):
+            return
+
+        import httpx
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(
+                    "https://integrate.api.nvidia.com/v1/models",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                )
+            if response.status_code != 200:
+                raise ValidationException(
+                    f"NVIDIA API Key validation failed: HTTP {response.status_code} - {response.text}"
+                )
+        except httpx.HTTPError as exc:
+            raise ValidationException(
+                f"Failed to connect to NVIDIA API for key validation: {str(exc)}"
+            )

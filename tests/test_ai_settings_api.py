@@ -93,3 +93,55 @@ def test_cloud_mode_requires_configured_server_provider(monkeypatch: pytest.Monk
 
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_save_byok_key_nvidia_valid() -> None:
+    client, db, user_id = _client()
+    response = client.put(
+        "/api/settings/ai",
+        json={
+            "mode": "byok",
+            "default_provider": "nvidia",
+            "keys": {"nvidia": "sk-test-secret"},
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["mode"] == "byok"
+    assert data["default_provider"] == "nvidia"
+    nvidia = next(item for item in data["providers"] if item["provider"] == "nvidia")
+    assert nvidia["has_key"] is True
+    assert nvidia["masked_key"] == "********"
+
+
+def test_save_byok_key_nvidia_invalid(monkeypatch: pytest.MonkeyPatch) -> None:
+    class MockResponse:
+        status_code = 401
+        text = "Unauthorized"
+    
+    class MockClient:
+        def __init__(self, *args, **kwargs):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+        def get(self, url, headers=None):
+            return MockResponse()
+
+    import httpx
+    monkeypatch.setattr(httpx, "Client", MockClient)
+
+    client, _db, _user_id = _client()
+    response = client.put(
+        "/api/settings/ai",
+        json={
+            "mode": "byok",
+            "default_provider": "nvidia",
+            "keys": {"nvidia": "invalid-real-key-format"},
+        },
+    )
+
+    assert response.status_code == 400
+    assert "validation failed" in response.json()["error"]["message"].lower()

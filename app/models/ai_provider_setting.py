@@ -27,7 +27,7 @@ class AiProviderSetting(Base):
     __table_args__ = (
         CheckConstraint("mode IN ('byok', 'cloud')", name="ck_ai_provider_settings_mode"),
         CheckConstraint(
-            "provider IN ('openai', 'gemini', 'claude')",
+            "provider IN ('openai', 'gemini', 'claude', 'nvidia')",
             name="ck_ai_provider_settings_provider",
         ),
         CheckConstraint(
