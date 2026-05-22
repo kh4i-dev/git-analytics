@@ -278,7 +278,7 @@ sequenceDiagram
     Service-->>API: Commit stats
     API-->>Client: { data: { commits_by_date: [...] }, meta: { ... } }
 
-    Note over Client,DB: Standard response format:<br>{ data, error: { code, message }, meta: { trace_id, timestamp } }
+    Note over Client,DB: Response: { data, error, meta }
 ```
 
 </div>
