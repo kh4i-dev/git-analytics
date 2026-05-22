@@ -459,3 +459,116 @@ def test_force_reset_repository_route_marks_failed(
     assert updated_repo.last_sync_status == "failed"
     assert updated_repo.last_sync_error == "Sync was manually force reset."
     assert updated_repo.sync_started_at is None
+
+
+def test_delete_repository_success(
+    db_session: Session,
+) -> None:
+    user, session_cookie = create_logged_in_user(db_session)
+    repo_repo = RepositoryRepository(db_session)
+    repo = repo_repo.create(
+        {
+            "user_id": user.id,
+            "github_repo_id": 101,
+            "owner": "octo",
+            "name": "repo-alpha",
+            "full_name": "octo/repo-alpha",
+            "html_url": "https://github.com/octo/repo-alpha",
+        }
+    )
+    db_session.commit()
+
+    app = create_app()
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    client.cookies.set("git_analytics_session", session_cookie)
+
+    response = client.delete(f"/repositories/{repo.id}")
+    assert response.status_code == 200
+    assert response.json() == {"success": True}
+
+    assert repo_repo.get_by_id(repo.id) is None
+
+
+def test_delete_repository_unauthorized_if_wrong_user(
+    db_session: Session,
+) -> None:
+    user, session_cookie = create_logged_in_user(db_session)
+    # create another user's repo
+    other_user = UserRepository(db_session).create(
+        {
+            "github_id": 1002,
+            "github_login": "other",
+            "encrypted_github_token": "token",
+        }
+    )
+    db_session.commit()
+
+    repo_repo = RepositoryRepository(db_session)
+    repo = repo_repo.create(
+        {
+            "user_id": other_user.id,
+            "github_repo_id": 102,
+            "owner": "other",
+            "name": "repo-beta",
+            "full_name": "other/repo-beta",
+            "html_url": "https://github.com/other/repo-beta",
+        }
+    )
+    db_session.commit()
+
+    app = create_app()
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    client.cookies.set("git_analytics_session", session_cookie)
+
+    response = client.delete(f"/repositories/{repo.id}")
+    assert response.status_code == 404
+
+    assert repo_repo.get_by_id(repo.id) is not None
+
+
+def test_repositories_page_disables_analyze_button_for_unavailable_repo(
+    db_session: Session,
+) -> None:
+    user, session_cookie = create_logged_in_user(db_session)
+    repo_repo = RepositoryRepository(db_session)
+    repo_repo.create(
+        {
+            "user_id": user.id,
+            "github_repo_id": 101,
+            "owner": "octo",
+            "name": "repo-alpha",
+            "full_name": "octo/repo-alpha",
+            "html_url": "https://github.com/octo/repo-alpha",
+            "last_sync_status": "failed",
+            "last_sync_error": "Repository not found or access removed",
+        }
+    )
+    db_session.commit()
+
+    app = create_app()
+
+    def override_get_db() -> Generator[Session, None, None]:
+        yield db_session
+
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    client.cookies.set("git_analytics_session", session_cookie)
+
+    response = client.get("/repositories")
+    assert response.status_code == 200
+
+    html = response.text
+    assert "Mất quyền truy cập" in html
+    assert "disabled" in html
+    assert "Không thể phân tích repository này" in html
+

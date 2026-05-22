@@ -41,14 +41,13 @@ class PDFRenderer:
 
     def _render_metadata(self) -> None:
         p = self.layout
-        for item in [
+        items = [
             ("Generated", self.data.generated_at),
             ("User", self.data.username),
             ("Scope", self.data.repository_scope),
             ("Format", self.data.export_type),
-        ]:
-            p.metadata_row(*item)
-        p.pdf.ln(4)
+        ]
+        p.metadata_block(items)
 
     def _render_kpi_cards(self) -> None:
         p = self.layout
@@ -124,9 +123,4 @@ class PDFRenderer:
         p = self.layout
         p.check_page_overflow(30)
         p.section_heading("Key Insights")
-        pdf = p.pdf
-        for insight in self.data.insights:
-            pdf.set_font("DejaVu", "", p.BODY_SIZE)
-            pdf.set_text_color(*TEXT_DARK)
-            pdf.cell(3, 6, chr(8226) + " ", align="C")
-            pdf.cell(0, 6, insight, new_x="LMARGIN", new_y="NEXT")
+        p.insight_callout(self.data.insights)

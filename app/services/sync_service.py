@@ -18,6 +18,7 @@ from app.core.exceptions import (
     GitHubRateLimitExceeded,
     RepositoryNotFoundException,
     SyncFailedException,
+    GitHubNotFound,
 )
 from app.core.security import decrypt_token
 from app.models.contributor import Contributor
@@ -165,6 +166,19 @@ class SyncService:
                 started_at=started_at,
                 completed_at=completed_at,
             )
+        except GitHubNotFound as exc:
+            self.db.rollback()
+            try:
+                self.repository_repo.update_sync_status(
+                    repository,
+                    status="failed",
+                    last_sync_error="Repository not found or access removed",
+                    sync_started_at=None,
+                )
+                self.db.commit()
+            except BaseException:
+                self.db.rollback()
+            raise SyncFailedException("Repository not found or access removed") from exc
         except BaseException as exc:
             self.db.rollback()
             self._mark_failed(repo_id, exc)

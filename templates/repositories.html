@@ -162,7 +162,9 @@
             <td>
               {% set s = repo.last_sync_status %}
               <div class="status-cell">
-                {% if s == "success" %}
+                {% if repo.last_sync_error == "Repository not found or access removed" %}
+                  <span class="badge badge-closed" style="background:var(--danger-bg); color:var(--danger-text); border-color:var(--danger-border);">✕ Mất quyền truy cập</span>
+                {% elif s == "success" %}
                   <span class="badge badge-open">✓ Thành Công</span>
                 {% elif s == "failed" %}
                   <span class="badge badge-closed" style="background:var(--danger-bg); color:var(--danger-text); border-color:var(--danger-border);">✕ Thất Bại</span>
@@ -198,14 +200,23 @@
             <!-- Actions -->
             <td>
               <div class="repo-actions-list">
-                <a id="btn-analytics-{{ repo.id }}" href="/dashboard/{{ repo.id }}" class="btn btn-outline btn-sm">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
-                  Phân Tích
-                </a>
-                <a id="btn-open-{{ repo.id }}" href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
-                  GitHub
-                </a>
+                {% if repo.last_sync_error == "Repository not found or access removed" %}
+                  <button class="btn btn-outline btn-sm" disabled style="opacity:0.5; cursor:not-allowed;" title="Không thể phân tích repository này">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                    Phân Tích
+                  </button>
+                {% else %}
+                  <a id="btn-analytics-{{ repo.id }}" href="/dashboard/{{ repo.id }}" class="btn btn-outline btn-sm">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+                    Phân Tích
+                  </a>
+                {% endif %}
+                {% if repo.html_url %}
+                  <a id="btn-open-{{ repo.id }}" href="{{ repo.html_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-sm">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></svg>
+                    GitHub
+                  </a>
+                {% endif %}
                 {% if repo.last_sync_status == "syncing" %}
                 <form method="post" action="/repositories/{{ repo.id }}/reset" class="js-submit-form">
                   <button
@@ -230,6 +241,18 @@
                   </button>
                 </form>
                 {% endif %}
+                <button
+                  id="btn-delete-{{ repo.id }}"
+                  class="btn btn-outline btn-sm js-loading-btn"
+                  style="border-color: #f85149; color: #f85149;"
+                  onclick="deleteRepository({{ repo.id }})"
+                  title="Xóa khỏi hệ thống"
+                >
+                  <span class="spinner" aria-hidden="true"></span>
+                  <span class="btn-label" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                  </span>
+                </button>
               </div>
             </td>
           </tr>
@@ -550,5 +573,44 @@
       else if (label) label.textContent = 'Đang cập nhật...';
     });
   });
+
+  async function deleteRepository(repoId) {
+    if (!confirm('Bạn có chắc chắn muốn xóa repository này khỏi hệ thống? Dữ liệu phân tích sẽ bị xóa vĩnh viễn.')) {
+      return;
+    }
+    
+    try {
+      const btn = document.getElementById('btn-delete-' + repoId);
+      if (btn) {
+        btn.classList.add('loading');
+        btn.disabled = true;
+      }
+      
+      const response = await fetch(`/repositories/${repoId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        const data = await response.json().catch(() => ({}));
+        alert(data.detail || data.message || 'Có lỗi xảy ra khi xóa repository.');
+        if (btn) {
+          btn.classList.remove('loading');
+          btn.disabled = false;
+        }
+      }
+    } catch (err) {
+      alert('Có lỗi xảy ra khi xóa repository.');
+      const btn = document.getElementById('btn-delete-' + repoId);
+      if (btn) {
+        btn.classList.remove('loading');
+        btn.disabled = false;
+      }
+    }
+  }
 </script>
 {% endblock %}
