@@ -175,14 +175,14 @@ flowchart TD
     Page --> Response["Nhan response"]
     Response --> CheckRate{"Kiem tra<br>X-RateLimit-Remaining"}
     
-    CheckRate -- "== 0" --> RateLimitErr["Raise<br>GitHubRateLimitExceeded"]
-    CheckRate -- "> 0" --> ParseLink["Doc Link header"]
+    CheckRate -- "== 0 -->" RateLimitErr["Raise<br>GitHubRateLimitExceeded"]
+    CheckRate -- "> 0 -->" ParseLink["Doc Link header"]
     
-    ParseLink --> HasNext{"Co rel=\"next\"?"}
-    HasNext -- "Co" --> NextPage["Tang page<br>Goi page tiep theo"]
+    ParseLink --> HasNext{"Co rel=next?"}
+    HasNext -- "Co -->" NextPage["Tang page<br>Goi page tiep theo"]
     NextPage --> Response
     
-    HasNext -- "Khong" --> Done["Da lay het data"]
+    HasNext -- "Khong -->" Done["Da lay het data"]
     Done --> End(["Tra ve danh sach"])
     
     RateLimitErr --> EndErr(["Dung sync<br>set status = failed"])
