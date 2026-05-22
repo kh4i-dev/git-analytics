@@ -119,7 +119,11 @@ class AiSettingsService:
 
     def _cloud_key(self, provider: str) -> str | None:
         return {
-            "openai": self.settings.openai_api_key,
+            "openai": (
+                self.settings.openai_compatible_api_key
+                if self.settings.openai_compatible_base_url
+                else self.settings.openai_api_key
+            ),
             "gemini": self.settings.gemini_api_key,
             "claude": self.settings.claude_api_key,
         }.get(provider)

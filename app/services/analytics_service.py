@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
 
-from sqlalchemy import select, func
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AuthorizationException, RepositoryNotFoundException
@@ -29,6 +29,15 @@ def _normalize_global_filter(value: str | None) -> str | None:
     if not normalized or normalized.lower() == "all" or normalized == "*":
         return None
     return normalized
+
+
+def _commit_branch_predicate(branch: str):
+    return or_(
+        Commit.branch_name == branch,
+        Commit.branch_name.like(f"{branch},%"),
+        Commit.branch_name.like(f"%,{branch}"),
+        Commit.branch_name.like(f"%,{branch},%"),
+    )
 
 
 class AnalyticsService:
@@ -63,7 +72,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id)
         )
         if branch:
-            total_commits_query = total_commits_query.where(Commit.branch_name == branch)
+            total_commits_query = total_commits_query.where(_commit_branch_predicate(branch))
         if contributor:
             total_commits_query = total_commits_query.where(Commit.author_login == contributor)
         total_commits = self.db.scalar(total_commits_query) or 0
@@ -94,7 +103,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id)
         )
         if branch:
-            total_contributors_query = total_contributors_query.where(Commit.branch_name == branch)
+            total_contributors_query = total_contributors_query.where(_commit_branch_predicate(branch))
         if contributor:
             total_contributors_query = total_contributors_query.where(Commit.author_login == contributor)
         total_contributors = self.db.scalar(total_contributors_query) or 0
@@ -110,7 +119,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id)
         )
         if branch:
-            most_active_query = most_active_query.where(Commit.branch_name == branch)
+            most_active_query = most_active_query.where(_commit_branch_predicate(branch))
         if contributor:
             most_active_query = most_active_query.where(Commit.author_login == contributor)
 
@@ -154,7 +163,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id)
         )
         if branch:
-            timeline_query = timeline_query.where(Commit.branch_name == branch)
+            timeline_query = timeline_query.where(_commit_branch_predicate(branch))
         if contributor:
             timeline_query = timeline_query.where(Commit.author_login == contributor)
 
@@ -169,7 +178,7 @@ class AnalyticsService:
         repo_commit_query = (
             select(Repository.id, func.count(Commit.id).label("c_count"))
             .outerjoin(Commit, (Repository.id == Commit.repo_id) & 
-                       ((Commit.branch_name == branch) if branch else True) &
+                       (_commit_branch_predicate(branch) if branch else True) &
                        ((Commit.author_login == contributor) if contributor else True))
             .where(Repository.user_id == user_id)
             .group_by(Repository.id)
@@ -197,8 +206,8 @@ class AnalyticsService:
             )
         )
         if branch:
-            commits_last_7_query = commits_last_7_query.where(Commit.branch_name == branch)
-            commits_prev_7_query = commits_prev_7_query.where(Commit.branch_name == branch)
+            commits_last_7_query = commits_last_7_query.where(_commit_branch_predicate(branch))
+            commits_prev_7_query = commits_prev_7_query.where(_commit_branch_predicate(branch))
         if contributor:
             commits_last_7_query = commits_last_7_query.where(Commit.author_login == contributor)
             commits_prev_7_query = commits_prev_7_query.where(Commit.author_login == contributor)
@@ -266,8 +275,8 @@ class AnalyticsService:
             )
         )
         if branch:
-            active_current_query = active_current_query.where(Commit.branch_name == branch)
-            active_prev_query = active_prev_query.where(Commit.branch_name == branch)
+            active_current_query = active_current_query.where(_commit_branch_predicate(branch))
+            active_prev_query = active_prev_query.where(_commit_branch_predicate(branch))
         if contributor:
             active_current_query = active_current_query.where(Commit.author_login == contributor)
             active_prev_query = active_prev_query.where(Commit.author_login == contributor)
@@ -286,7 +295,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id)
         )
         if branch:
-            top_contrib_query = top_contrib_query.where(Commit.branch_name == branch)
+            top_contrib_query = top_contrib_query.where(_commit_branch_predicate(branch))
         if contributor:
             top_contrib_query = top_contrib_query.where(Commit.author_login == contributor)
             
@@ -308,7 +317,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id, Commit.committed_at >= seven_days_ago)
         )
         if branch:
-            last_7_days_query = last_7_days_query.where(Commit.branch_name == branch)
+            last_7_days_query = last_7_days_query.where(_commit_branch_predicate(branch))
         if contributor:
             last_7_days_query = last_7_days_query.where(Commit.author_login == contributor)
             
@@ -331,7 +340,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id, Commit.committed_at >= thirty_days_ago)
         )
         if branch:
-            recent_commits_query = recent_commits_query.where(Commit.branch_name == branch)
+            recent_commits_query = recent_commits_query.where(_commit_branch_predicate(branch))
         if contributor:
             recent_commits_query = recent_commits_query.where(Commit.author_login == contributor)
             
@@ -443,7 +452,7 @@ class AnalyticsService:
             .order_by(Commit.committed_at.desc())
         )
         if branch:
-            commits_recent_query = commits_recent_query.where(Commit.branch_name == branch)
+            commits_recent_query = commits_recent_query.where(_commit_branch_predicate(branch))
         if contributor:
             commits_recent_query = commits_recent_query.where(Commit.author_login == contributor)
             
@@ -458,7 +467,7 @@ class AnalyticsService:
             .where(Repository.user_id == user_id, Commit.committed_at >= since_365)
         )
         if branch:
-            commits_year_query = commits_year_query.where(Commit.branch_name == branch)
+            commits_year_query = commits_year_query.where(_commit_branch_predicate(branch))
         if contributor:
             commits_year_query = commits_year_query.where(Commit.author_login == contributor)
 

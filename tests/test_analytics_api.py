@@ -279,6 +279,22 @@ def test_global_analytics_normalizes_all_branch_filters(db_session: Session) -> 
         assert response.json()["data"]["summary"]["total_commits"] == 1
 
 
+def test_global_analytics_filters_shared_commit_branch_names(db_session: Session) -> None:
+    user, cookie = _make_user(db_session)
+    repo = _make_repo(db_session, user.id)
+    _seed_data(db_session, repo.id)
+    commit = db_session.query(Commit).filter(Commit.repo_id == repo.id).one()
+    commit.branch_name = "main,release"
+    db_session.commit()
+    client = _test_client(db_session)
+    client.cookies.set(global_settings.session_cookie_name, cookie)
+
+    response = client.get("/api/v1/analytics/global?branch=release")
+
+    assert response.status_code == 200
+    assert response.json()["data"]["summary"]["total_commits"] == 1
+
+
 def test_analytics_commits_empty_repo(db_session: Session) -> None:
     user, cookie = _make_user(db_session)
     repo = _make_repo(db_session, user.id)

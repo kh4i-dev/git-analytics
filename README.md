@@ -162,8 +162,8 @@ stateDiagram-v2
 ### Phase 1 (Active)
 - Single repository intelligence
 - Immutable engineering reports with public sharing (capability URL)
-- Manual sync (button press, no background worker)
-- AI workspace with local fallback mode
+- User-triggered and single-process queued sync
+- AI workspace with encrypted BYOK and Cloud AI preview modes
 - PDF and Excel export
 - GitHub OAuth authentication
 
@@ -184,7 +184,7 @@ stateDiagram-v2
 
 ## Not in Scope (Phase 1)
 
-- Background sync worker
+- External/multi-process sync worker deployment
 - Cross-repo aggregation
 - Contributor identity resolution
 - Scheduled report generation
@@ -257,7 +257,7 @@ python -m compileall app tests
 
 ## Known Limitations
 
-- Sync is manual (button press) — no background worker
+- Sync queue is single-process; hosted deployments still need an external worker strategy
 - Contributor identity resolution is simple (github_login with email fallback); same person using multiple emails may appear as separate contributors
 - Reports are single-repository scoped in Phase 1
 - Public reports do not support password protection or expiring links

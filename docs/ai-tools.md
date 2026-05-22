@@ -4,7 +4,7 @@
 
 ## Overview
 
-The AI Workspace provides three AI-powered tools for developers. In Phase 1, all tools support **Local Fallback Mode** (no API key required). Hosted providers (OpenAI, Gemini, BYOK) are Phase 2.
+The AI Workspace provides three AI-powered tools for developers. AI calls use either encrypted BYOK provider keys or the hosted-preview Cloud AI configuration supplied by the server.
 
 ---
 
@@ -14,54 +14,52 @@ The AI Workspace provides three AI-powered tools for developers. In Phase 1, all
 - **Purpose**: Generate conventional commit messages from staged changes
 - **Input**: Staged diff or description of changes
 - **Output**: Formatted commit message (conventional commits style)
-- **Provider Readiness**: ✅ Local fallback — Phase 1
+- **Provider Readiness**: OpenAI, Gemini, Claude through configured provider keys
 
 ### PR Diff Reviewer
 - **Purpose**: AI-powered code review for pull request diffs
 - **Input**: PR diff or partial code changes
 - **Output**: Review with code quality, security, performance notes
-- **Provider Readiness**: ✅ Local fallback — Phase 1
+- **Provider Readiness**: OpenAI, Gemini, Claude through configured provider keys
 
 ### Repo Assistant
 - **Purpose**: Natural language Q&A over repository data
 - **Input**: Question about repository (e.g., "Who contributed most last month?")
 - **Output**: Answer based on synced data context
-- **Provider Readiness**: ✅ Local fallback — Phase 1
+- **Provider Readiness**: OpenAI, Gemini, Claude through configured provider keys
 
 ---
 
 ## AI Modes
 
-### Local Fallback (Phase 1)
-- Runs entirely on-device
-- No external API calls
-- No API key required
-- Limited by local compute resources
-- All three tools available
+### BYOK
+- Stores OpenAI, Gemini, or Claude API keys encrypted in the database
+- Never renders saved raw key values back to the browser
+- Sends AI requests to the selected provider when a tool runs
 
-### Hosted Provider (Phase 2 — Future)
-- OpenAI provider
-- Gemini provider
-- BYOK (bring-your-own-key)
-- Cloud inference pipeline
-- Hybrid local/cloud execution strategy
+### Git Analytics Cloud AI
+- Uses server-side provider configuration only
+- Can route OpenAI-compatible Cloud traffic through a server-configured gateway
+- Runs as Preview until quota and billing policy are production-ready
 
 ---
 
 ## Design Principles
 
 - **No fake AI responses**: When AI is unavailable, show clear error states — never fabricate results
-- **Provider/TODO states**: Each tool shows its current provider readiness (Local / Hosted-TODO)
-- **BYOK documented**: Architecture for custom API keys is documented, not yet implemented
-- **Clear fallback path**: If hosted provider fails, fall back to local mode
+- **Provider states**: Each tool shows when provider configuration is missing
+- **Secret locality**: Personal and Cloud provider keys stay server-side
+- **Clear failures**: Provider and quota errors surface as explicit UI error states
 
 ---
 
 ## Architecture
 
 ```
-User → Route → AI Service → AI Provider (Local | Future: Hosted)
-                                     → Response
+User → Route → AI Tool Service → AI Settings Service → encrypted key or Cloud ENV
+                         │
+                         └→ Provider Gateway → OpenAI | Gemini | Claude | Cloud gateway
+                                                → Response
 ```
 
-In Phase 1, the local provider is the only implementation. The provider interface is designed for drop-in replacement with OpenAI/Gemini adapters in Phase 2.
+Cloud preview usage records provider, operation, status, and coarse token metadata only. It does not persist prompts, diffs, or provider secrets.

@@ -8,26 +8,19 @@ from sqlalchemy.orm import Session
 from app.clients.github_client import GitHubClient
 from app.templates import templates
 from app.core.config import settings
-from app.core.exceptions import AppException, AuthenticationException
+from app.core.exceptions import AppException
 from app.core.security import decrypt_token
-from app.core.session import parse_session_cookie
 from app.models.user import User
-from app.repositories import RepositoryRepository, UserRepository
+from app.repositories import RepositoryRepository
 from app.services.sync_service import SyncService
 from app.utils.deps import get_db
+from app.utils.auth import get_optional_user
 
 router = APIRouter(tags=["repositories"])
 
 
 def _authenticate(request: Request, db: Session) -> User | None:
-    session_cookie = request.cookies.get(settings.session_cookie_name)
-    if not session_cookie:
-        return None
-    try:
-        user_id = parse_session_cookie(session_cookie)
-    except AuthenticationException:
-        return None
-    return UserRepository(db).get_by_id(user_id)
+    return get_optional_user(request, db)
 
 
 def _login_redirect() -> Response:

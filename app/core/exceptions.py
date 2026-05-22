@@ -86,6 +86,18 @@ class SyncFailedException(AppException):
     message = "Repository sync failed."
 
 
+class AIProviderException(AppException):
+    status_code = 502
+    code = "AI_PROVIDER_ERROR"
+    message = "AI provider request failed."
+
+
+class AIRateLimitException(AppException):
+    status_code = 429
+    code = "AI_RATE_LIMIT_EXCEEDED"
+    message = "AI request limit exceeded."
+
+
 class DatabaseException(AppException):
     status_code = 500
     code = "DATABASE_ERROR"

@@ -18,6 +18,7 @@
   .field input:focus, .field select:focus { outline: 0; border-color: var(--text-link); box-shadow: 0 0 0 2px rgba(88, 166, 255, .14); }
   .hint { color: var(--text-muted); font-size: 12px; margin: 10px 0 0; }
   .notice { border: 1px solid var(--warn-border); background: var(--warn-bg); color: var(--warn-text); border-radius: var(--radius); padding: 10px 12px; font-size: 12px; margin-bottom: 12px; }
+  .notice.error { border-color: var(--danger-border); background: var(--danger-bg); color: var(--danger-text); }
   .report-list { display: grid; gap: 12px; }
   .report-item { border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px; background: var(--surface-2); }
   .report-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
@@ -84,6 +85,7 @@
 
     <section class="panel">
       <h2>Report Library</h2>
+      <div id="report-error" class="notice error" role="alert" hidden></div>
       <div id="report-list" class="report-list">
         {% for report in reports %}
         <article class="report-item" data-report-id="{{ report.id }}">
@@ -133,6 +135,17 @@
 <script>
 const list = document.getElementById('report-list');
 const form = document.getElementById('report-form');
+const reportError = document.getElementById('report-error');
+
+function showReportError(error) {
+  reportError.hidden = false;
+  reportError.textContent = error.message || 'Report request failed.';
+}
+
+function clearReportError() {
+  reportError.hidden = true;
+  reportError.textContent = '';
+}
 
 function escapeHtml(value) {
   return String(value || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -183,6 +196,7 @@ function renderPreview(report) {
       <div class="preview-card"><span>Issues</span><strong>${counts.issues || 0}</strong></div>
       <div class="preview-card"><span>Risks</span><strong>${counts.risks || 0}</strong></div>
     </div>
+    ${report.summary.is_data_stale ? '<div class="notice">This report was generated from stale synced data. Sync the repository before the next snapshot.</div>' : ''}
     ${report.summary.ai_summary ? `
       <h3>AI Summary</h3>
       <p>${escapeHtml(report.summary.ai_summary.headline)}</p>
@@ -197,6 +211,7 @@ function renderPreview(report) {
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  clearReportError();
   const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
   button.textContent = 'Generating...';
@@ -209,6 +224,8 @@ form.addEventListener('submit', async (event) => {
     };
     await jsonFetch('/api/v1/reports', {method: 'POST', body: JSON.stringify(body)});
     window.location.reload();
+  } catch (error) {
+    showReportError(error);
   } finally {
     button.disabled = false;
     button.textContent = 'Generate report';
@@ -229,34 +246,39 @@ list.addEventListener('click', async (event) => {
   if (!button) return;
   const item = button.closest('[data-report-id]');
   const reportId = item.dataset.reportId;
-  if (button.dataset.action === 'view') {
-    const report = await jsonFetch(`/api/v1/reports/${reportId}`);
-    const preview = item.querySelector('.preview');
-    preview.style.display = preview.style.display === 'block' ? 'none' : 'block';
-    preview.innerHTML = renderPreview(report);
-  }
-  if (button.dataset.action === 'publish-panel') {
-    const panel = item.querySelector('.publish-panel');
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-  }
-  if (button.dataset.action === 'publish') {
-    const panel = item.querySelector('.publish-panel');
-    const anonymize = panel.querySelector('[data-anon-toggle]').checked;
-    const displayName = panel.querySelector('[data-display-name]').value || null;
-    const report = await jsonFetch(`/api/v1/reports/${reportId}/publish`, {
-      method: 'POST',
-      body: JSON.stringify({is_repository_anonymized: anonymize, display_repository_name: displayName})
-    });
-    const publicUrl = `${window.location.origin}${report.public_url}`;
-    await copyText(publicUrl);
-    const urlBox = panel.querySelector('.public-url');
-    urlBox.style.display = 'block';
-    urlBox.textContent = `Copied: ${publicUrl}`;
-  }
-  if (button.dataset.action === 'revoke') {
-    if (!window.confirm('Revoke public access for this report? The private snapshot remains available.')) return;
-    await jsonFetch(`/api/v1/reports/${reportId}/revoke`, {method: 'POST', body: '{}'});
-    window.location.reload();
+  clearReportError();
+  try {
+    if (button.dataset.action === 'view') {
+      const report = await jsonFetch(`/api/v1/reports/${reportId}`);
+      const preview = item.querySelector('.preview');
+      preview.style.display = preview.style.display === 'block' ? 'none' : 'block';
+      preview.innerHTML = renderPreview(report);
+    }
+    if (button.dataset.action === 'publish-panel') {
+      const panel = item.querySelector('.publish-panel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    }
+    if (button.dataset.action === 'publish') {
+      const panel = item.querySelector('.publish-panel');
+      const anonymize = panel.querySelector('[data-anon-toggle]').checked;
+      const displayName = panel.querySelector('[data-display-name]').value || null;
+      const report = await jsonFetch(`/api/v1/reports/${reportId}/publish`, {
+        method: 'POST',
+        body: JSON.stringify({is_repository_anonymized: anonymize, display_repository_name: displayName})
+      });
+      const publicUrl = `${window.location.origin}${report.public_url}`;
+      await copyText(publicUrl);
+      const urlBox = panel.querySelector('.public-url');
+      urlBox.style.display = 'block';
+      urlBox.textContent = `Copied: ${publicUrl}`;
+    }
+    if (button.dataset.action === 'revoke') {
+      if (!window.confirm('Revoke public access for this report? The private snapshot remains available.')) return;
+      await jsonFetch(`/api/v1/reports/${reportId}/revoke`, {method: 'POST', body: '{}'});
+      window.location.reload();
+    }
+  } catch (error) {
+    showReportError(error);
   }
 });
 </script>

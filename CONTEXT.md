@@ -28,7 +28,7 @@
 
 - **Report Snapshot + Sharing**: Engineering Reports are immutable snapshots shareable via capability URL. This is the core distribution mechanism in Phase 1.
 
-- **AI Engineering Utilities**: AI Workspace provides commit message generation, PR diff review, and repo Q&A. Local fallback mode ships in Phase 1; hosted AI providers are Phase 2.
+- **AI Engineering Utilities**: AI Workspace provides commit message generation, PR diff review, and repo Q&A through encrypted BYOK settings or hosted-preview Cloud AI provider configuration.
 
 - **SaaS-Grade UI/UX**: Dark theme, compact analytics layout, typography-first design inspired by GitHub/Vercel/Linear.
 
@@ -171,8 +171,8 @@
 - **Commit Message Generator**: Generate commit messages from staged changes.
 - **PR Diff Reviewer**: AI-powered PR diff review and suggestions.
 - **Repo Assistant**: Q&A over repository data.
-- **Local Fallback AI Mode**: Offline-capable AI using local models.
-- **Future Hosted AI Architecture**: Documented provider model (OpenAI/Gemini/BYOK).
+- **BYOK AI Mode**: User-managed OpenAI, Gemini, or Claude credentials stored encrypted server-side and decrypted only for provider execution.
+- **Git Analytics Cloud AI**: Hosted-preview AI mode that uses server ENV provider credentials or a server-configured OpenAI-compatible gateway.
 
 ### Export & Reports
 - **PDF Export**: Engineering report export with typography and layout.
@@ -186,7 +186,7 @@
 
 ### Current Architecture
 - **Single-user oriented**: One user per deployment, no workspace/team abstraction.
-- **Manual sync driven**: User initiates sync via button press.
+- **Queued sync driven**: User-initiated sync and single-process retry/auto-sync jobs share the same repository sync service.
 - **Repository-scoped analytics**: All analytics computed within single repo boundary.
 - **Synchronous/per-repo sync**: Sequential per-repository data fetching.
 - **DB snapshot based reports**: Reports serialize analytics state at generation time.
@@ -281,17 +281,16 @@
 ## AI Tools
 
 ### Current AI Workspace
-- **Local fallback mode**: Runs AI tasks without external API calls.
-- **Future hosted provider mode**: Architecture for OpenAI/Gemini/etc.
-- **BYOK concept**: Bring-your-own-key documented.
+- **BYOK provider mode**: Uses encrypted OpenAI, Gemini, or Claude user keys.
+- **Git Analytics Cloud AI**: Uses server-side provider configuration in hosted preview.
+- **OpenAI-compatible gateway**: Server-side Cloud adapter option, not a browser-entered provider.
 - **No fake AI responses**: When AI is unavailable, clear error states shown.
-- **Provider/TODO states**: Each tool shows its current provider readiness.
+- **Provider states**: Each tool shows its current provider readiness.
 
 ### Future
-- OpenAI provider support.
-- Gemini provider support.
-- Cloud inference pipeline.
-- Hybrid local/cloud execution strategy.
+- Repo-context retrieval quality improvements.
+- Quota and billing policy for Cloud AI.
+- Provider observability and rollout controls.
 
 ---
 

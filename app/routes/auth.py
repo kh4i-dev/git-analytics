@@ -15,23 +15,16 @@ from app.core.session import (
     parse_session_cookie,
 )
 from app.models.user import User
-from app.repositories.user_repo import UserRepository
 from app.services.auth_service import AuthService
 from app.utils.deps import get_db
+from app.utils.auth import get_optional_user
 
 router = APIRouter(tags=["auth"])
 logger = logging.getLogger(__name__)
 
 
 def get_current_user(request: Request, db: Session) -> User | None:
-    cookie = request.cookies.get(settings.session_cookie_name)
-    if not cookie:
-        return None
-    try:
-        user_id = parse_session_cookie(cookie)
-    except AuthenticationException:
-        return None
-    return UserRepository(db).get_by_id(user_id)
+    return get_optional_user(request, db)
 
 
 def _localhost_redirect(request: Request) -> RedirectResponse | None:

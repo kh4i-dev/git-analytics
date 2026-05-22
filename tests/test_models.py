@@ -23,6 +23,7 @@ def test_models_create_expected_sqlite_schema() -> None:
         "sync_jobs",
         "repository_engineering_reports",
         "ai_provider_settings",
+        "ai_usage_events",
     }
 
     unique_constraints = {
@@ -59,3 +60,5 @@ def test_models_create_expected_sqlite_schema() -> None:
     assert "ix_reports_public_token" in indexes["repository_engineering_reports"]
     assert "ix_ai_provider_settings_user_id" in indexes["ai_provider_settings"]
     assert "ix_ai_provider_settings_user_default" in indexes["ai_provider_settings"]
+    assert "ix_ai_usage_events_user_created" in indexes["ai_usage_events"]
+    assert "ix_ai_usage_events_provider_created" in indexes["ai_usage_events"]

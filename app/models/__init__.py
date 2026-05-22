@@ -1,4 +1,5 @@
 from app.models.ai_provider_setting import AiProviderSetting
+from app.models.ai_usage_event import AiUsageEvent
 from app.models.branch import Branch
 from app.models.commit import Commit
 from app.models.contributor import Contributor
@@ -11,6 +12,7 @@ from app.models.user import User
 
 __all__ = [
     "AiProviderSetting",
+    "AiUsageEvent",
     "Branch",
     "Commit",
     "Contributor",

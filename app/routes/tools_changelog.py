@@ -7,12 +7,11 @@ from pydantic import BaseModel
 
 from app.templates import templates
 from app.core.config import settings
-from app.core.exceptions import AuthenticationException
-from app.core.session import parse_session_cookie
-from app.repositories import UserRepository, RepositoryRepository
+from app.repositories import RepositoryRepository
 from app.services.changelog_service import ChangelogService
 from app.schemas.response import success_response, error_response
 from app.utils.deps import get_db
+from app.utils.auth import get_optional_user
 
 router = APIRouter(tags=["tools_changelog"])
 
@@ -24,14 +23,7 @@ class ChangelogRequest(BaseModel):
     group_by: str = "week"
 
 def _authenticate(request: Request, db: Session):
-    cookie = request.cookies.get(settings.session_cookie_name)
-    if not cookie:
-        return None
-    try:
-        user_id = parse_session_cookie(cookie)
-    except AuthenticationException:
-        return None
-    return UserRepository(db).get_by_id(user_id)
+    return get_optional_user(request, db)
 
 def _login_redirect() -> Response:
     r = RedirectResponse("/login", status_code=302)

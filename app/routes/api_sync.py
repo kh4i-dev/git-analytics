@@ -2,27 +2,19 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.core.exceptions import AuthenticationException, RepositoryNotFoundException
-from app.core.session import parse_session_cookie
+from app.core.exceptions import RepositoryNotFoundException
 from app.db.session import get_db
-from app.repositories import RepositoryRepository, SyncJobRepository, UserRepository
+from app.repositories import RepositoryRepository, SyncJobRepository
 from app.schemas.response import success_response
 from app.services.sync_queue import sync_queue
+from app.utils.auth import require_user_id
 from app.utils.timezone import isoformat_vn as _vn_iso
 
 router = APIRouter(prefix="/api/v1/sync", tags=["Sync"])
 
 
 def _get_user_id(request: Request, db: Session) -> int:
-    cookie = request.cookies.get(settings.session_cookie_name)
-    if not cookie:
-        raise AuthenticationException("Authentication required.")
-    user_id = parse_session_cookie(cookie)
-    user = UserRepository(db).get_by_id(user_id)
-    if user is None:
-        raise AuthenticationException("User not found.")
-    return user_id
+    return require_user_id(request, db)
 
 
 @router.get("/jobs")

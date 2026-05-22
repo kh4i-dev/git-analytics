@@ -81,8 +81,8 @@ End-to-end user flow for the Engineering Intelligence Platform.
 3. AI answers based on synced data context
 
 ### AI Modes
-- **Local Fallback**: Runs on-device, no API key needed
-- **Future Hosted**: OpenAI/Gemini/BYOK (Phase 2)
+- **BYOK**: Save your OpenAI, Gemini, or Claude key in Settings for encrypted server-side storage
+- **Git Analytics Cloud AI**: Uses server-side provider configuration when Cloud Preview is available
 
 ## 7. Engineering Reports
 

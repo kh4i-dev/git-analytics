@@ -58,7 +58,7 @@ Git Analytics uses a **Layered Architecture (3-layer)** with **Hybrid Routing** 
 ### Single-User Orientation
 - One user per deployment
 - No workspace/team abstraction
-- Manual sync initiation
+- User-triggered sync plus a single-process retry/auto-sync queue
 - Repository-scoped analytics
 
 ### DB Snapshot Reports

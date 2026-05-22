@@ -118,6 +118,36 @@ def test_commit_upsert_updates_existing_row_and_analytics(db_session: Session) -
     assert commit_repo.commits_by_contributor(repo_id)[0]["count"] == 2
 
 
+def test_commit_upsert_merges_same_sha_seen_on_multiple_branches(
+    db_session: Session,
+) -> None:
+    _, repo_id = create_user_and_repo(db_session)
+    now = datetime(2026, 5, 20, 12, 0, tzinfo=UTC)
+    commit_repo = CommitRepository(db_session)
+    row = {
+        "repo_id": repo_id,
+        "sha": "abc123",
+        "message": "shared commit",
+        "author_name": "Demo User",
+        "author_email": "demo@example.com",
+        "author_login": "demo",
+        "committed_at": now,
+        "html_url": "https://github.com/demo/repo/commit/abc123",
+    }
+
+    count = commit_repo.upsert_many(
+        [
+            {**row, "branch_name": "main"},
+            {**row, "branch_name": "release"},
+        ]
+    )
+
+    commits = commit_repo.list_by_repo(repo_id)
+    assert count == 1
+    assert len(commits) == 1
+    assert commits[0].branch_name == "main,release"
+
+
 def test_pull_request_and_issue_upserts_and_summaries(db_session: Session) -> None:
     _, repo_id = create_user_and_repo(db_session)
     now = datetime(2026, 5, 20, 12, 0, tzinfo=UTC)

@@ -77,7 +77,8 @@ class CommitRepository(BaseRepository[Commit]):
         if not rows:
             return 0
 
-        keys = {(int(row["repo_id"]), str(row["sha"])) for row in rows}
+        merged_rows = self._merge_rows_by_sha(rows)
+        keys = {(int(row["repo_id"]), str(row["sha"])) for row in merged_rows}
         try:
             existing_commits = self.db.scalars(
                 select(Commit).where(tuple_(Commit.repo_id, Commit.sha).in_(keys))
@@ -89,7 +90,7 @@ class CommitRepository(BaseRepository[Commit]):
             (commit.repo_id, commit.sha): commit for commit in existing_commits
         }
         count = 0
-        for row in rows:
+        for row in merged_rows:
             key = (int(row["repo_id"]), str(row["sha"]))
             commit = existing_by_key.get(key)
             if commit is None:
@@ -261,3 +262,26 @@ class CommitRepository(BaseRepository[Commit]):
                 names.add(str(value))
                 value = ",".join(sorted(names))
             setattr(commit, field, value)
+
+    def _merge_rows_by_sha(
+        self,
+        rows: Sequence[Mapping[str, Any]],
+    ) -> list[dict[str, Any]]:
+        merged: dict[tuple[int, str], dict[str, Any]] = {}
+        for row in rows:
+            key = (int(row["repo_id"]), str(row["sha"]))
+            current = merged.get(key)
+            if current is None:
+                merged[key] = dict(row)
+                continue
+
+            branch_names = {
+                name.strip()
+                for value in (current.get("branch_name"), row.get("branch_name"))
+                if value
+                for name in str(value).split(",")
+                if name.strip()
+            }
+            current.update(row)
+            current["branch_name"] = ",".join(sorted(branch_names)) or None
+        return list(merged.values())

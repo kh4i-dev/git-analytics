@@ -7,15 +7,14 @@ from sqlalchemy.orm import Session
 from app.clients.github_client import GitHubClient
 from app.templates import templates
 from app.core.config import settings
-from app.core.exceptions import AuthenticationException
 from app.core.security import decrypt_token
-from app.core.session import parse_session_cookie
 from app.models.user import User
-from app.repositories import RepositoryRepository, SyncJobRepository, UserRepository
+from app.repositories import RepositoryRepository, SyncJobRepository
 from app.services.ai_settings_service import AiSettingsService
 from app.services.analytics_service import AnalyticsService
 from app.services.insights_service import InsightsService
 from app.utils.deps import get_db
+from app.utils.auth import get_optional_user
 from app.utils.timezone import VN_TZ, now_utc, utc_to_vn
 
 router = APIRouter(tags=["dashboard"])
@@ -23,14 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def _authenticate(request: Request, db: Session) -> User | None:
-    cookie = request.cookies.get(settings.session_cookie_name)
-    if not cookie:
-        return None
-    try:
-        user_id = parse_session_cookie(cookie)
-    except AuthenticationException:
-        return None
-    return UserRepository(db).get_by_id(user_id)
+    return get_optional_user(request, db)
 
 
 def _login_redirect() -> Response:

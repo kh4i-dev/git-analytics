@@ -4,12 +4,11 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.exceptions import AuthenticationException
-from app.core.session import parse_session_cookie
-from app.repositories import EngineeringReportRepository, RepositoryRepository, UserRepository
+from app.repositories import EngineeringReportRepository, RepositoryRepository
 from app.schemas.response import error_response, success_response
 from app.services.engineering_report_service import EngineeringReportService
 from app.templates import templates
+from app.utils.auth import get_optional_user
 from app.utils.deps import get_db
 
 router = APIRouter(tags=["engineering_reports"])
@@ -32,14 +31,7 @@ class PublishReportRequest(BaseModel):
 
 
 def _authenticate(request: Request, db: Session):
-    cookie = request.cookies.get(settings.session_cookie_name)
-    if not cookie:
-        return None
-    try:
-        user_id = parse_session_cookie(cookie)
-    except AuthenticationException:
-        return None
-    return UserRepository(db).get_by_id(user_id)
+    return get_optional_user(request, db)
 
 
 def _login_redirect() -> Response:

@@ -4,25 +4,17 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response, JSONResp
 from sqlalchemy.orm import Session
 from app.templates import templates
 from app.core.config import settings
-from app.core.exceptions import AuthenticationException
-from app.core.session import parse_session_cookie
-from app.repositories import RepositoryRepository, UserRepository
+from app.repositories import RepositoryRepository
 from app.schemas.response import success_response
 from app.services.explore_service import ExploreService
+from app.utils.auth import get_optional_user
 from app.utils.deps import get_db
 
 router = APIRouter(tags=["explore"])
 
 
 def _authenticate(request: Request, db: Session):
-    cookie = request.cookies.get(settings.session_cookie_name)
-    if not cookie:
-        return None
-    try:
-        user_id = parse_session_cookie(cookie)
-    except AuthenticationException:
-        return None
-    return UserRepository(db).get_by_id(user_id)
+    return get_optional_user(request, db)
 
 
 def _login_redirect() -> Response:

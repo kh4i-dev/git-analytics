@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     gemini_api_key: str | None = None
     claude_api_key: str | None = None
+    openai_model: str = "gpt-4.1-mini"
+    gemini_model: str = "gemini-2.5-flash"
+    claude_model: str = "claude-sonnet-4-20250514"
+    openai_compatible_base_url: str | None = None
+    openai_compatible_api_key: str | None = None
+    openai_compatible_model: str | None = None
+    ai_provider_timeout_seconds: float = 25.0
+    ai_max_input_chars: int = 60_000
+    cloud_ai_preview_daily_limit: int = 30
 
     session_cookie_name: str = "git_analytics_session"
     oauth_state_cookie_name: str = "git_analytics_oauth_state"
@@ -51,6 +60,21 @@ class Settings(BaseSettings):
     @property
     def is_local_workspace(self) -> bool:
         return self.effective_environment == "development" and self.workspace_feature_enabled
+
+    def validate_runtime_security(self) -> None:
+        if not self.is_production:
+            return
+
+        unsafe = []
+        if self.debug:
+            unsafe.append("DEBUG")
+        if not self.secret_key or self.secret_key.startswith("change-"):
+            unsafe.append("SECRET_KEY")
+        if not self.encryption_key:
+            unsafe.append("ENCRYPTION_KEY")
+        if unsafe:
+            names = ", ".join(unsafe)
+            raise RuntimeError(f"Unsafe production settings: {names}.")
 
 
 @lru_cache

@@ -173,6 +173,16 @@ async function postAI(path, payload) {
   return json.data;
 }
 
+function escapeHtml(value) {
+  return String(value || '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[char]));
+}
+
 async function generateCommit() {
   const output = document.getElementById('commit-output');
   output.textContent = 'Äang phÃ¢n tÃ­ch diff...';
@@ -189,7 +199,7 @@ async function reviewDiff() {
   output.textContent = 'Äang rÃ  soÃ¡t diff...';
   try {
     const data = await postAI('/api/v1/ai/review', {diff: document.getElementById('review-diff').value});
-    output.innerHTML = data.findings.map(item => `<div class="review-item"><strong>${item.title}</strong><span>${item.detail}</span></div>`).join('');
+    output.innerHTML = data.findings.map(item => `<div class="review-item"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.detail)}</span></div>`).join('');
   } catch (err) {
     output.textContent = 'ChÆ°a review Ä‘Æ°á»£c diff: ' + err.message;
   }
@@ -197,13 +207,19 @@ async function reviewDiff() {
 
 async function askAssistant() {
   const output = document.getElementById('chat-output');
-  const question = document.getElementById('assistant-question').value;
-  output.innerHTML += `<div class="assistant-msg" style="border-color:var(--text-link);margin-top:8px">${question}</div>`;
+  const input = document.getElementById('assistant-question');
+  const question = input.value.trim();
+  if (!question) {
+    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--warn-text)">Nhập câu hỏi trước khi gửi.</div>`;
+    return;
+  }
+  output.innerHTML += `<div class="assistant-msg" style="border-color:var(--text-link);margin-top:8px">${escapeHtml(question)}</div>`;
+  input.value = '';
   try {
     const data = await postAI('/api/v1/ai/assistant', {question});
-    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px">${data.answer}</div>`;
+    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px">${escapeHtml(data.answer)}</div>`;
   } catch (err) {
-    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--danger-text)">ChÆ°a cÃ³ cÃ¢u tráº£ lá»i: ${err.message}</div>`;
+    output.innerHTML += `<div class="assistant-msg" style="margin-top:8px;color:var(--danger-text)">ChÆ°a cÃ³ cÃ¢u tráº£ lá»i: ${escapeHtml(err.message)}</div>`;
   }
 }
 </script>

@@ -20,10 +20,10 @@
 - Changelog generation
 - Risk insights
 - Public capability URL sharing (revoke, token rotation, anonymization)
-- AI Workspace (commit message gen, PR review, repo assistant, local fallback)
+- AI Workspace (commit message gen, PR review, repo assistant, BYOK/Cloud Preview)
 
 ### NOT in Scope (Phase 1)
-- Background sync worker — sync is manual/button-press
+- Large-scale worker fleet — current sync queue remains single-process
 - Cross-repo aggregation — single-repo only
 - Contributor identity resolution — simple mapping only
 - Scheduled report generation — manual generation only
@@ -45,18 +45,18 @@
 - AI PR review enhancements
 - AI summary engine
 - Scheduled report generation groundwork
-- Hosted AI provider support (OpenAI, Gemini)
-- BYOK (bring-your-own-key) full implementation
+- Provider output quality and repo-context improvements
+- Cloud AI quota/billing hardening
 
 ---
 
 ## Phase 3: Hosted / SaaS Foundation
 
 ### Planned
-- Background workers (Celery / task queue)
-- Async sync engine
-- Retry & recovery logic
-- Queue system for sync jobs
+- External worker deployment model
+- Multi-process async sync engine
+- Retry/recovery observability
+- Durable queue deployment strategy
 - Tenant isolation architecture
 - Rate-limit aware scheduling
 - Stale sync detection & recovery

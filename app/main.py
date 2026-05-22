@@ -34,6 +34,7 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    settings.validate_runtime_security()
     configure_logging(settings.log_level)
 
     app = FastAPI(

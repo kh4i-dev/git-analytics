@@ -21,14 +21,14 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="color:var(--purple)"><path d="M12 2a8 8 0 0 1 8 8 4 4 0 0 1-4 4H4a4 4 0 0 1-4-4 8 8 0 0 1 8-8z"/><path d="M9 22h6"/><path d="M12 19v3"/></svg>
             AI Settings
           </h3>
-          <p>Use your own provider API key for commit messages, PR review, and repo assistant.</p>
+          <p>Configure encrypted BYOK keys or Cloud AI Preview for commit messages, PR review, and repo assistant.</p>
         </div>
-        <span class="ai-mode-badge">BYOK</span>
+        <span class="ai-mode-badge">BYOK / Preview</span>
       </div>
 
       <div class="ai-callout ai-callout-provider">
-        <strong>Provider API keys</strong>
-        <span>This works on localhost too. Local runtime only means the app runs on your machine; AI requests still use your selected provider API key.</span>
+        <strong>Provider execution</strong>
+        <span>This works on localhost too. Local runtime only means the app runs on your machine; BYOK requests still use your selected provider API key.</span>
       </div>
 
       <div class="ai-mode-grid" id="ai-mode-grid" aria-label="AI mode selection">
@@ -82,23 +82,23 @@
           <div class="ai-key-card" data-provider-card="openai">
             <div class="ai-key-card-head"><div><strong>OpenAI</strong><span>Used for GPT-backed commit, PR, and assistant workflows.</span></div><span class="provider-pill">GPT</span></div>
             <div class="secret-input-row"><input id="openai-api-key" type="password" class="secret-input" placeholder="Paste new OpenAI key" autocomplete="off" data-provider-key="openai"></div>
-            <small class="saved-key-state" data-key-status="openai">No saved key in this browser.</small>
+            <small class="saved-key-state" data-key-status="openai">No saved key on the server.</small>
           </div>
           <div class="ai-key-card" data-provider-card="gemini">
             <div class="ai-key-card-head"><div><strong>Gemini</strong><span>Alternative provider for code analysis workflows.</span></div><span class="provider-pill">Gemini</span></div>
             <div class="secret-input-row"><input id="gemini-api-key" type="password" class="secret-input" placeholder="Paste new Gemini key" autocomplete="off" data-provider-key="gemini"></div>
-            <small class="saved-key-state" data-key-status="gemini">No saved key in this browser.</small>
+            <small class="saved-key-state" data-key-status="gemini">No saved key on the server.</small>
           </div>
           <div class="ai-key-card" data-provider-card="claude">
             <div class="ai-key-card-head"><div><strong>Claude</strong><span>Claude API for deeper PR review and repo assistant runs.</span></div><span class="provider-pill">Claude</span></div>
             <div class="secret-input-row"><input id="claude-api-key" type="password" class="secret-input" placeholder="Paste new Claude key" autocomplete="off" data-provider-key="claude"></div>
-            <small class="saved-key-state" data-key-status="claude">No saved key in this browser.</small>
+            <small class="saved-key-state" data-key-status="claude">No saved key on the server.</small>
           </div>
         </div>
 
         <div class="ai-callout ai-callout-warning">
           <strong>Key safety</strong>
-          <span>Do not paste production keys in shared environments. This build stores BYOK settings in browser localStorage because no server-side settings flow exists yet.</span>
+          <span>Do not paste production keys in shared environments. Saved BYOK keys are encrypted server-side and never rendered back here.</span>
         </div>
       </div>
 

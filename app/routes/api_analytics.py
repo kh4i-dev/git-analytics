@@ -4,28 +4,19 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, Response
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
-from app.core.exceptions import AppException, AuthenticationException, RepositoryNotFoundException
-from app.core.session import parse_session_cookie
+from app.core.exceptions import AppException, RepositoryNotFoundException
 from app.db.session import get_db
-from app.repositories import UserRepository
 from app.schemas.response import error_response, success_response
 from app.services.analytics_service import AnalyticsService
 from app.services.export_service import AnalyticsExportService
+from app.utils.auth import require_user_id
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"])
 
 
 def _get_user_id(request: Request, db) -> int:
-    cookie = request.cookies.get(settings.session_cookie_name)
-    if not cookie:
-        raise AuthenticationException("Authentication required.")
-    user_id = parse_session_cookie(cookie)
-    user = UserRepository(db).get_by_id(user_id)
-    if user is None:
-        raise AuthenticationException("User not found.")
-    return user_id
+    return require_user_id(request, db)
 
 
 @router.get("/global")
