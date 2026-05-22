@@ -3,33 +3,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from io import BytesIO
 from typing import Any
-import unicodedata
 from xml.sax.saxutils import escape
 from zipfile import ZIP_DEFLATED, ZipFile
 
-
-def remove_vietnamese_accents(text: str) -> str:
-    char_map = {
-        'đ': 'd', 'Đ': 'D',
-        '—': '-', '–': '-',
-        '“': '"', '”': '"',
-        '‘': "'", '’': "'",
-        '•': '*', '·': '*',
-        '…': '...',
-    }
-    for k, v in char_map.items():
-        text = text.replace(k, v)
-    normalized = unicodedata.normalize('NFKD', text)
-    cleaned = "".join(c for c in normalized if not unicodedata.combining(c))
-    
-    final_chars = []
-    for c in cleaned:
-        try:
-            c.encode('latin-1')
-            final_chars.append(c)
-        except UnicodeEncodeError:
-            final_chars.append('?')
-    return "".join(final_chars)
+from app.pdf_export import PDFLayout, PDFRenderer, ReportSerializer
 
 
 class AnalyticsExportService:
@@ -79,15 +56,11 @@ class AnalyticsExportService:
             xlsx.writestr("xl/worksheets/sheet1.xml", _worksheet_xml(rows))
         return buffer.getvalue()
 
-    def to_pdf(self, rows: list[list[str]]) -> bytes:
-        lines = ["Git Analytics Report"]
-        for row in rows[2:]:
-            if not row:
-                lines.append("")
-            else:
-                lines.append("  ".join(row))
-        stripped_lines = [remove_vietnamese_accents(line) for line in lines]
-        return _simple_pdf(stripped_lines)
+    def to_pdf(self, stats: dict[str, Any], username: str | None = None) -> bytes:
+        layout = PDFLayout()
+        data = ReportSerializer().serialize(stats, username=username)
+        renderer = PDFRenderer(layout, data)
+        return renderer.render()
 
 
 def _worksheet_xml(rows: list[list[str]]) -> str:
@@ -152,44 +125,3 @@ def _workbook_rels_xml() -> str:
         '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
         "</Relationships>"
     )
-
-
-def _simple_pdf(lines: list[str]) -> bytes:
-    escaped_lines = [_pdf_escape(line[:110]) for line in lines[:52]]
-    text_ops = ["BT", "/F1 11 Tf", "50 780 Td"]
-    first = True
-    for line in escaped_lines:
-        if first:
-            first = False
-        else:
-            text_ops.append("0 -15 Td")
-        text_ops.append(f"({line}) Tj")
-    text_ops.append("ET")
-    stream = "\n".join(text_ops).encode("latin-1", "replace")
-    objects = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-        b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
-    ]
-    chunks = [b"%PDF-1.4\n"]
-    offsets = [0]
-    for index, obj in enumerate(objects, start=1):
-        offsets.append(sum(len(chunk) for chunk in chunks))
-        chunks.append(f"{index} 0 obj\n".encode() + obj + b"\nendobj\n")
-    xref_offset = sum(len(chunk) for chunk in chunks)
-    chunks.append(f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode())
-    for offset in offsets[1:]:
-        chunks.append(f"{offset:010d} 00000 n \n".encode())
-    chunks.append(
-        (
-            f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\n"
-            f"startxref\n{xref_offset}\n%%EOF\n"
-        ).encode()
-    )
-    return b"".join(chunks)
-
-
-def _pdf_escape(value: str) -> str:
-    return value.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")

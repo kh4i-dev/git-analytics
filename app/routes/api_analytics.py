@@ -39,8 +39,12 @@ async def export_global_analytics(
     contributor: str | None = None,
     db: Session = Depends(get_db),
 ) -> Response:
+    from app.models.user import User
+    from app.repositories.user_repo import UserRepository
     user_id = _get_user_id(request, db)
     stats = AnalyticsService(db).get_global_overview(user_id, branch=branch, contributor=contributor)
+    user = UserRepository(db).get_by_id(user_id)
+    username = user.github_login if user else None
     exporter = AnalyticsExportService()
     rows = exporter.build_rows(stats)
     if format_name == "xlsx":
@@ -51,7 +55,7 @@ async def export_global_analytics(
         )
     if format_name == "pdf":
         return Response(
-            exporter.to_pdf(rows),
+            exporter.to_pdf(stats, username=username),
             media_type="application/pdf",
             headers={"Content-Disposition": 'attachment; filename="git-analytics-kpi-report.pdf"'},
         )
