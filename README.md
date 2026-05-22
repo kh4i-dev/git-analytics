@@ -322,7 +322,7 @@ flowchart TD
     CommitRepo & PRRepo & IssueRepo --> DB
     DB -->|Raw SQL Aggregations| AnalyticsService
     AnalyticsService -->|Compute Streak & Health Scores| Router
-    Router -->|JSON Shape: { data, error, meta }| Fetch
+    Router -->|"JSON Shape: { data, error, meta }"| Fetch
     Fetch --> Draw
 ```
 
@@ -657,8 +657,8 @@ flowchart TD
     OAuthGuard -->|No Cookie / Invalid| R_401[HTTP 401 Unauthorized Redirect]
     OAuthGuard -->|Valid Cookie| RepoGuard
     
-    RepoGuard -->|Yes (user_id matches repo.user_id)| Access[Grant Access to Private Resource]
-    RepoGuard -->|No (Resource cross-ownership violation)| R_403[HTTP 403 Forbidden]
+    RepoGuard -->|"Yes (user_id matches repo.user_id)"| Access[Grant Access to Private Resource]
+    RepoGuard -->|"No (Resource cross-ownership violation)"| R_403[HTTP 403 Forbidden]
 ```
 
 ---
