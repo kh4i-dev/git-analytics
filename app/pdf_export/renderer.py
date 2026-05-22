@@ -23,7 +23,6 @@ class PDFRenderer:
 
     def render(self) -> bytes:
         p = self.layout
-        p.add_page()
         self._render_title()
         self._render_metadata()
         self._render_kpi_cards()
